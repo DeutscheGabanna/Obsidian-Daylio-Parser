@@ -23,11 +23,11 @@ HOW_PARAMETERS_ARE_DELIMITED_IN_DAYLIO_EXPORT_CSV = "," # TODO: not used anymore
 HOW_ACTIVITIES_ARE_DELIMITED_IN_DAYLIO_EXPORT_CSV = " | "
 NOTE_TITLE_PREFIX = "" # <here's your prefix> YYYY-MM-DD.md
 NOTE_TITLE_SUFFIX = "" # YYYY-MM-DD <here's your suffix>.md
-HEADER_LEVEL_FOR_INDIVIDUAL_ENTRIES = "###"
+HEADER_LEVEL_FOR_INDIVIDUAL_ENTRIES = "##" # H1 headings aren't used because Obsidian introduced automatic inline titles anyway
 DO_YOU_WANT_YOUR_ACTIVITIES_AS_TAGS_IN_OBSIDIAN = True
 
 # ------------------------------
-
+from slugify import slugify
 days = {} # dictionary of days
 
 class Entry(object):
@@ -36,7 +36,8 @@ class Entry(object):
         self.time = parsedLine[3]
         self.mood = parsedLine[4]
         self.activities = self.sliceQm(parsedLine[5]).split(propInsideDelimiter) # table of activities
-        # TODO: slugify the tags
+        for index, item in enumerate(self.activities):
+            self.activities[index] = slugify(self.activities[index])
         self.title = self.sliceQm(parsedLine[6])
         self.note = self.sliceQm(parsedLine[7])
 
@@ -100,4 +101,5 @@ for day in days:
                         file.write(activity + " ")
             
             ## then add the text
-            file.write("\n\n" + entry.note + "\n\n")
+            if entry.note != "": file.write("\n" + entry.note + "\n\n")
+            else: file.write("\n\n")
