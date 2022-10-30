@@ -11,3 +11,4 @@ Knowledge on how to run Python scripts is at the moment necessary to run this th
 - the Daylio export file has to be named **daylio.csv**. I'm sorry you have to rename your file or the code, I might add more flexibility to this later.
 - the Daylio export file has to be in the same directory as the Python script.
 - you can tweak some parameters in the code to adjust it to your preferences. The parameters are at the top of the file.
+- running the script again overwrites the old .md notes. If you have any files in that folder that match "YYYY-MM-DD.md" template, you'd better run the script somewhere else.
