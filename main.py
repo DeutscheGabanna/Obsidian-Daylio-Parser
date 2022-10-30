@@ -92,7 +92,7 @@ for day in days:
             file.write(HEADER_LEVEL_FOR_INDIVIDUAL_ENTRIES + " " + thisEntryTitle)
 
             # compose the mood-tag and the activity-tags into one paragraph
-            file.write("\nI felt #" + entry.mood)
+            file.write("\nI felt #" + slugify(entry.mood))
             if len(entry.activities) > 0 and entry.activities[0] != "":
                 file.write(" with the following: ")
                 for activity in entry.activities:
