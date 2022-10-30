@@ -91,14 +91,16 @@ for day in days:
             thisEntryTitle = entry.mood + " | " + entry.time + " | " + entry.title
             file.write(HEADER_LEVEL_FOR_INDIVIDUAL_ENTRIES + " " + thisEntryTitle)
 
-            # Repeat this for every activity this entry is linked with
+            # compose the mood-tag and the activity-tags into one paragraph
+            file.write("\nI felt #" + entry.mood)
             if len(entry.activities) > 0 and entry.activities[0] != "":
-                file.write("\n")
+                file.write(" with the following: ")
                 for activity in entry.activities:
                     if DO_YOU_WANT_YOUR_ACTIVITIES_AS_TAGS_IN_OBSIDIAN:
                             file.write("#" + activity + " ")
                     else:
                         file.write(activity + " ")
+            else: file.write(".")
             
             ## then add the text
             if entry.note != "": file.write("\n" + entry.note + "\n\n")
