@@ -79,6 +79,7 @@ with open('./daylio.csv', newline='', encoding='UTF-8') as daylioRawImport:
 # <your_entry>
 #
 # [repeat]
+from functools import reduce
 
 for day in days:
     with open('./' + NOTE_TITLE_PREFIX + str(day) + NOTE_TITLE_SUFFIX + '.md', 'w', encoding='UTF-8') as file:
@@ -95,11 +96,8 @@ for day in days:
             file.write("\nI felt #" + slugify(entry.mood))
             if len(entry.activities) > 0 and entry.activities[0] != "":
                 file.write(" with the following: ")
-                for activity in entry.activities:
-                    if DO_YOU_WANT_YOUR_ACTIVITIES_AS_TAGS_IN_OBSIDIAN:
-                            file.write("#" + activity + " ")
-                    else:
-                        file.write(activity + " ")
+                ## first append # to each activity, then mush them together into one string 
+                file.write(reduce(lambda el1,el2 : el1+" "+el2, map(lambda x:"#"+x,entry.activities)))
             else: file.write(".")
             
             ## then add the text
