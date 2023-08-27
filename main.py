@@ -24,7 +24,9 @@ HOW_ACTIVITIES_ARE_DELIMITED_IN_DAYLIO_EXPORT_CSV = " | "
 NOTE_TITLE_PREFIX = "" # <here's your prefix> YYYY-MM-DD.md
 NOTE_TITLE_SUFFIX = "" # YYYY-MM-DD <here's your suffix>.md
 HEADER_LEVEL_FOR_INDIVIDUAL_ENTRIES = "##" # H1 headings aren't used because Obsidian introduced automatic inline titles anyway
-DO_YOU_WANT_YOUR_ACTIVITIES_AS_TAGS_IN_OBSIDIAN = True
+DO_YOU_WANT_YOUR_ACTIVITIES_AS_TAGS_IN_OBSIDIAN = False
+EXPORT_LOCATION = r"D:\Dokumenty\Obsidian Lab\Matt's Vault\04 Daylio"
+GET_COLOUR = False
 
 # ------------------------------
 from slugify import slugify
@@ -67,6 +69,12 @@ with open('./daylio.csv', newline='', encoding='UTF-8') as daylioRawImport:
             its_a_string_trust_me = row[0]
             days[its_a_string_trust_me].append(currentEntry)
 
+# SETTING THE EXPORT DIRECTORY
+if EXPORT_LOCATION:
+    import os 
+    if not os.path.isdir(EXPORT_LOCATION):
+        os.mkdir(EXPORT_LOCATION)
+
 # POPULATING OBSIDIAN JOURNAL WITH ENTRIES
 # ------------------------------
 # According to this schema:
@@ -81,25 +89,47 @@ with open('./daylio.csv', newline='', encoding='UTF-8') as daylioRawImport:
 # [repeat]
 from functools import reduce
 
+def get_colour(data):
+    try:
+        if data.startswith("salto en cuarto"):
+            return "🔴"
+        if data.startswith("algo especial"):
+            return "🟠"
+        if data.startswith("nada especial") or data.startswith("no idea"):
+            return "🟢"
+        if data.startswith("amargado") or data.startswith("abrumado"):
+            return "🔵"
+        if data.startswith("lloro por tristeza"):
+            return "🟣"
+    except:
+        GET_COLOUR = False
+        raise UserWarning("Incorrecly specified colour criteria, skipping.")
+
 for day in days:
-    with open('./' + NOTE_TITLE_PREFIX + str(day) + NOTE_TITLE_SUFFIX + '.md', 'w', encoding='UTF-8') as file:
+    with open(EXPORT_LOCATION + '/' + NOTE_TITLE_PREFIX + str(day) + NOTE_TITLE_SUFFIX + '.md', 'w', encoding='UTF-8') as file:
         file.write("---\ntags: " + TAGS + "\n---\n\n")
         
         # Repeat this for every entry written on this day
         for entry in days[day]:
 
             # compose the title
-            thisEntryTitle = entry.mood + " | " + entry.time + " | " + entry.title
+            thisEntryTitle = entry.mood + " - " + entry.time
+
+            # update title with colour if specified in HEADER
+            if GET_COLOUR:
+                colour = get_colour(entry.mood)
+                thisEntryTitle = colour + " " + thisEntryTitle
+
             file.write(HEADER_LEVEL_FOR_INDIVIDUAL_ENTRIES + " " + thisEntryTitle)
 
-            # compose the mood-tag and the activity-tags into one paragraph
+            ''' # compose the mood-tag and the activity-tags into one paragraph
             file.write("\nI felt #" + slugify(entry.mood))
             if len(entry.activities) > 0 and entry.activities[0] != "":
                 file.write(" with the following: ")
                 ## first append # to each activity, then mush them together into one string 
                 file.write(reduce(lambda el1,el2 : el1+" "+el2, map(lambda x:"#"+x,entry.activities)))
             else: file.write(".")
-            
+            '''
             ## then add the text
             if entry.note != "": file.write("\n" + entry.note + "\n\n")
             else: file.write("\n\n")
