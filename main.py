@@ -1,3 +1,5 @@
+import logging
+
 # ARCHITECTURE
 # ------------------------------
 # [dict] days:
@@ -25,7 +27,7 @@ NOTE_TITLE_SUFFIX = "" # YYYY-MM-DD <here's your suffix>.md
 HEADER_LEVEL_FOR_INDIVIDUAL_ENTRIES = "##" # H1 headings aren't used because Obsidian introduced automatic inline titles anyway
 DO_YOU_WANT_YOUR_ACTIVITIES_AS_TAGS_IN_OBSIDIAN = True
 CUSTOM_EXPORT_LOCATION = r""
-GET_COLOUR = False
+GET_COLOUR = True
 # MOODS are used to determine colour coding for the particular moods if GET_COLOUR = TRUE
 # [0,x] - best, [4,x] - worst
 MOODS=[
@@ -37,8 +39,20 @@ MOODS=[
 ]
 
 # ------------------------------
-from slugify import slugify
-from os import path, mkdir, isdir, join # On Unix and Windows, return the argument with an initial component of ~ or ~user replaced by that user’s home directory.
+import re
+def slugify(text):
+    text = str(text).lower()
+    text = re.sub(re.compile(r"\s+"), '-', text)      # Replace spaces with -
+    text = re.sub(re.compile(r"[^\w\-]+"), '', text)   # Remove all non-word chars
+    text = re.sub(re.compile(r"\-\-+"), '-', text)    # Replace multiple - with single -
+    text = re.sub(re.compile(r"^-+"), '', text)       # Trim - from start of text
+    text = re.sub(re.compile(r"-+$"), '', text)       # Trim - from end of text
+    if (DO_YOU_WANT_YOUR_ACTIVITIES_AS_TAGS_IN_OBSIDIAN):
+        if re.match('[0-9]', text):
+            logging.warning("You want your activities as tags, but " + text + " is an invalid tag in Obsidian")
+    return text
+    
+import os # On Unix and Windows, return the argument with an initial component of ~ or ~user replaced by that user’s home directory.
 days = {} # dictionary of days
 
 class Entry(object):
@@ -52,7 +66,7 @@ class Entry(object):
         self.title = self.sliceQm(parsedLine[6])
         self.note = self.sliceQm(parsedLine[7])
 
-    @staticmethod
+    @staticmethod # because it doesn't need to process any information within the object itself, but relates to it somehow
     def sliceQm(str):
         # all strings are enclosed by Daylio with "" inside a CSV. This function strips the string's starting and final quotation marks.
         if len(str) > 2: return str.strip("\"")
@@ -79,11 +93,9 @@ with open('./_tests/testing_sheet.csv', newline='', encoding='UTF-8') as daylioR
             days[its_a_string_trust_me].append(currentEntry)
 
 # SETTING THE EXPORT DIRECTORY
-save_path=CUSTOM_EXPORT_LOCATION
-if CUSTOM_EXPORT_LOCATION:
-    if not os.path.isdir(CUSTOM_EXPORT_LOCATION):
-        os.mkdir(CUSTOM_EXPORT_LOCATION)
-else save_path=os.path.join(os.path.expanduser('~'), r'/Daylio export')
+save_path = CUSTOM_EXPORT_LOCATION if CUSTOM_EXPORT_LOCATION else os.path.join(os.path.expanduser('~'), r'Daylio export') 
+if not os.path.isdir(save_path):
+    os.mkdir(save_path)
 
 # POPULATING OBSIDIAN JOURNAL WITH ENTRIES
 # ------------------------------
@@ -100,23 +112,29 @@ else save_path=os.path.join(os.path.expanduser('~'), r'/Daylio export')
 from functools import reduce
 
 def get_colour(data):
-    if (GET_COLOUR)
-        mod_colour=["🟣","🟢","🔵","🟠","🔴"] # 0 - best, 4 - worst mood group
-        for i in MOODS:
-            try data in MOODS[i]:
-                return mood_colour # return emoji to be prepended for the given entry
-        except:
-            raise UserWarning("Incorrecly specified colour criteria, skipping.")
+    group = ""
+    if (GET_COLOUR):
+        mood_colour=["🟣","🟢","🔵","🟠","🔴"] # 0 - best, 4 - worst mood group
+        found = False
+        try:
+            for index, item in enumerate(MOODS):
+                if data in MOODS[index]:
+                    group = mood_colour[index] + " " # return emoji to be prepended for the given entry
+                    found = True
+        except IndexError:
+            logging.warning("Index for MOODS out of bounds, skipping.")
+        if not found: logging.warning("Incorrecly specified colour criteria, skipping.")
+    return group
 
 for day in days:
-    with open(EXPORT_LOCATION + '/' + NOTE_TITLE_PREFIX + str(day) + NOTE_TITLE_SUFFIX + '.md', 'w', encoding='UTF-8') as file:
+    with open(save_path + '/' + NOTE_TITLE_PREFIX + str(day) + NOTE_TITLE_SUFFIX + '.md', 'w', encoding='UTF-8') as file:
         file.write("---\ntags: " + TAGS + "\n---\n\n")
         
         # Repeat this for every entry written on this day
         for entry in days[day]:
 
             # compose the title with optional mood colouring
-            thisEntryTitle = get_colour(entry.mood) + " " + entry.mood + " - " + entry.time
+            thisEntryTitle = get_colour(entry.mood) + entry.mood + " - " + entry.time
 
             file.write(HEADER_LEVEL_FOR_INDIVIDUAL_ENTRIES + " " + thisEntryTitle)
 
