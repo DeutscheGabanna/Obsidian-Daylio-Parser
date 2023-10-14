@@ -18,18 +18,27 @@
 # ------------------------------
 # So that you don't need to scroll down to find any easily customatizable parts.
 
-TAGS = "daily, scribbles"
-HOW_PARAMETERS_ARE_DELIMITED_IN_DAYLIO_EXPORT_CSV = "," # TODO: not used anymore, delete
+TAGS = "daily"
 HOW_ACTIVITIES_ARE_DELIMITED_IN_DAYLIO_EXPORT_CSV = " | "
 NOTE_TITLE_PREFIX = "" # <here's your prefix> YYYY-MM-DD.md
 NOTE_TITLE_SUFFIX = "" # YYYY-MM-DD <here's your suffix>.md
 HEADER_LEVEL_FOR_INDIVIDUAL_ENTRIES = "##" # H1 headings aren't used because Obsidian introduced automatic inline titles anyway
-DO_YOU_WANT_YOUR_ACTIVITIES_AS_TAGS_IN_OBSIDIAN = False
-EXPORT_LOCATION = r"D:\Dokumenty\Obsidian Lab\Matt's Vault\04 Daylio"
+DO_YOU_WANT_YOUR_ACTIVITIES_AS_TAGS_IN_OBSIDIAN = True
+CUSTOM_EXPORT_LOCATION = r""
 GET_COLOUR = False
+# MOODS are used to determine colour coding for the particular moods if GET_COLOUR = TRUE
+# [0,x] - best, [4,x] - worst
+MOODS=[
+    ["rad", "blissful", "excited", "relieved", "lecturing", "beyond pleasure"],
+    ["vaguely good", "captivated", "appreciated", "authoritative", "aroused", "in awe", "very relaxed", "laughing", "schadenfreunde", "grateful", "proud", "part of a group", "relived", "hopeful", "social", "on edge", "loving", "rested", "happy exercise"],
+    ["vaguely ok", "a bit helpless", "fatigued", "scared", "bored", "uneasy", "amused", "focused", "relaxed", "intrigued", "somewhat rested", "in a hurry", "conflicted", "surprised", "bit distracted", "reflective", "indifferent", "groggy", "cheering up", "refreshed"],
+    ["vaguely bad", "helpless", "misunderstood", "rejected", "incompetent", "tired", "stressed", "terrified", "very bored", "angry", "aching", "envy", "disgusted", "lonely", "distracted", "cold", "impatient", "hot", "cringe", "uncomfortable", "skimpy", "guilty", "sexual unease", "hungry", "disappointed", "annoyed", "melting brain", "pass-aggressive", "hurt emotionally"],
+    ["vaguely awful", "hollow", "trapped", "dying of pain", "furious", "mortified", "worthless", "longing", "sexually tense", "guilt-ridden", "lifeless", "nauseous", "very stressed", "overwhelmed", "crying", "heart-stabbed"]
+]
 
 # ------------------------------
 from slugify import slugify
+from os import path, mkdir, isdir, join # On Unix and Windows, return the argument with an initial component of ~ or ~user replaced by that user’s home directory.
 days = {} # dictionary of days
 
 class Entry(object):
@@ -53,7 +62,7 @@ class Entry(object):
 # ------------------------------
 import csv
 
-with open('./daylio.csv', newline='', encoding='UTF-8') as daylioRawImport:
+with open('./_tests/testing_sheet.csv', newline='', encoding='UTF-8') as daylioRawImport:
     daylioImport = csv.reader(daylioRawImport, delimiter=',', quotechar='"')
     days = {}
     next(daylioImport) # skip first line where headers are located
@@ -70,10 +79,11 @@ with open('./daylio.csv', newline='', encoding='UTF-8') as daylioRawImport:
             days[its_a_string_trust_me].append(currentEntry)
 
 # SETTING THE EXPORT DIRECTORY
-if EXPORT_LOCATION:
-    import os 
-    if not os.path.isdir(EXPORT_LOCATION):
-        os.mkdir(EXPORT_LOCATION)
+save_path=CUSTOM_EXPORT_LOCATION
+if CUSTOM_EXPORT_LOCATION:
+    if not os.path.isdir(CUSTOM_EXPORT_LOCATION):
+        os.mkdir(CUSTOM_EXPORT_LOCATION)
+else save_path=os.path.join(os.path.expanduser('~'), r'/Daylio export')
 
 # POPULATING OBSIDIAN JOURNAL WITH ENTRIES
 # ------------------------------
@@ -90,20 +100,13 @@ if EXPORT_LOCATION:
 from functools import reduce
 
 def get_colour(data):
-    try:
-        if data.startswith("salto en cuarto"):
-            return "🔴"
-        if data.startswith("algo especial"):
-            return "🟠"
-        if data.startswith("nada especial") or data.startswith("no idea"):
-            return "🟢"
-        if data.startswith("amargado") or data.startswith("abrumado"):
-            return "🔵"
-        if data.startswith("lloro por tristeza"):
-            return "🟣"
-    except:
-        GET_COLOUR = False
-        raise UserWarning("Incorrecly specified colour criteria, skipping.")
+    if (GET_COLOUR)
+        mod_colour=["🟣","🟢","🔵","🟠","🔴"] # 0 - best, 4 - worst mood group
+        for i in MOODS:
+            try data in MOODS[i]:
+                return mood_colour # return emoji to be prepended for the given entry
+        except:
+            raise UserWarning("Incorrecly specified colour criteria, skipping.")
 
 for day in days:
     with open(EXPORT_LOCATION + '/' + NOTE_TITLE_PREFIX + str(day) + NOTE_TITLE_SUFFIX + '.md', 'w', encoding='UTF-8') as file:
@@ -112,24 +115,19 @@ for day in days:
         # Repeat this for every entry written on this day
         for entry in days[day]:
 
-            # compose the title
-            thisEntryTitle = entry.mood + " - " + entry.time
-
-            # update title with colour if specified in HEADER
-            if GET_COLOUR:
-                colour = get_colour(entry.mood)
-                thisEntryTitle = colour + " " + thisEntryTitle
+            # compose the title with optional mood colouring
+            thisEntryTitle = get_colour(entry.mood) + " " + entry.mood + " - " + entry.time
 
             file.write(HEADER_LEVEL_FOR_INDIVIDUAL_ENTRIES + " " + thisEntryTitle)
 
-            ''' # compose the mood-tag and the activity-tags into one paragraph
+            # compose the mood-tag and the activity-tags into one paragraph
             file.write("\nI felt #" + slugify(entry.mood))
             if len(entry.activities) > 0 and entry.activities[0] != "":
                 file.write(" with the following: ")
                 ## first append # to each activity, then mush them together into one string 
                 file.write(reduce(lambda el1,el2 : el1+" "+el2, map(lambda x:"#"+x,entry.activities)))
             else: file.write(".")
-            '''
+            
             ## then add the text
             if entry.note != "": file.write("\n" + entry.note + "\n\n")
             else: file.write("\n\n")
