@@ -110,6 +110,7 @@ if not os.path.isdir(save_path):
 #
 # [repeat]
 from functools import reduce
+import hashlib # for SHA-256 checksum
 
 def get_colour(data):
     group = ""
@@ -126,26 +127,56 @@ def get_colour(data):
         if not found: logging.warning("Incorrecly specified colour criteria, skipping.")
     return group
 
+def compile_entry_contents(entry):
+    # compose the title with optional mood colouring
+    thisEntryTitle = get_colour(entry.mood) + entry.mood + " - " + entry.time
+    contents = HEADER_LEVEL_FOR_INDIVIDUAL_ENTRIES + " " + thisEntryTitle
+
+    # compose the mood-tag and the activity-tags into one paragraph
+    contents += "\nI felt #" + slugify(entry.mood)
+    if len(entry.activities) > 0 and entry.activities[0] != "":
+        contents += " with the following: "
+        ## first append # to each activity, then mush them together into one string 
+        contents += reduce(lambda el1,el2 : el1+" "+el2, map(lambda x:"#"+x,entry.activities))
+    else: contents += "."
+    
+    ## then add the rest of the text
+    if entry.note != "": contents += "\n" + entry.note + "\n\n"
+    else: contents += "\n\n"
+    return contents
+
 for day in days:
-    with open(save_path + '/' + NOTE_TITLE_PREFIX + str(day) + NOTE_TITLE_SUFFIX + '.md', 'w', encoding='UTF-8') as file:
-        file.write("---\ntags: " + TAGS + "\n---\n\n")
-        
-        # Repeat this for every entry written on this day
-        for entry in days[day]:
+    contents = "---\ntags: " + TAGS + "\n---\n\n"
+    for entry in days[day]:
+        contents += compile_entry_contents(entry)
 
-            # compose the title with optional mood colouring
-            thisEntryTitle = get_colour(entry.mood) + entry.mood + " - " + entry.time
-
-            file.write(HEADER_LEVEL_FOR_INDIVIDUAL_ENTRIES + " " + thisEntryTitle)
-
-            # compose the mood-tag and the activity-tags into one paragraph
-            file.write("\nI felt #" + slugify(entry.mood))
-            if len(entry.activities) > 0 and entry.activities[0] != "":
-                file.write(" with the following: ")
-                ## first append # to each activity, then mush them together into one string 
-                file.write(reduce(lambda el1,el2 : el1+" "+el2, map(lambda x:"#"+x,entry.activities)))
-            else: file.write(".")
-            
-            ## then add the text
-            if entry.note != "": file.write("\n" + entry.note + "\n\n")
-            else: file.write("\n\n")
+    # Do we have a file for this day already from previous compilations?
+    path_to_file = save_path + '/' + NOTE_TITLE_PREFIX + str(day) + NOTE_TITLE_SUFFIX + '.md'
+    if os.path.exists(path_to_file):
+        # Check if the file differs in content from the current proposed output
+        ## CALCULATE CHECKSUM FOR FILE
+        sha256_hash_file = hashlib.sha256()
+        with open(path_to_file,"rb") as f:
+            for byte_block in iter(lambda: f.read(4096),b""):
+                sha256_hash_file.update(byte_block)
+        ## CALCULATE CHECKSUM FOR PROPOSED CONTENT
+        sha256_hash_proposed = hashlib.sha256()
+        contents_for_hash = contents
+        for byte_block in iter(lambda: contents_for_hash[:4096].encode('utf-8'), b""):
+            sha256_hash_proposed.update(byte_block)
+            contents_for_hash = contents_for_hash[4096:]
+        # Differs, so we can overwrite if user agrees
+        if not sha256_hash_file.hexdigest() == sha256_hash_proposed.hexdigest():
+            boolean_answer = None # None means user typed neither yes nor no
+            while boolean_answer is None:
+                answer = input("File " + path_to_file + " already exists and differs in content. Overwrite? (y/n) ")
+                if str(answer).lower() in ["yes", "y"]:
+                    with open(path_to_file, 'w', encoding='UTF-8') as file:
+                        boolean_answer = True
+                        file.write(contents)
+                elif str(answer).lower() in ["no", "n"]:
+                    boolean_answer = False
+            # User does not want it to be overwritten
+            if boolean_answer is False: continue
+        # Does not differ, so we can skip this day
+        else: continue
