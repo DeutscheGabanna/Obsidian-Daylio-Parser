@@ -216,6 +216,7 @@ if not os.path.isdir(save_path):
 # <your_entry>
 #
 # [repeat]
+
 def get_colour(data):
     """Prepend appropriate colour for the mood passed in data"""
     group = ""
@@ -232,7 +233,7 @@ def get_colour(data):
         if not found:
             logging.warning("Incorrecly specified colour criteria, skipping.")
     return group
-
+  
 def compile_entry_contents(entry):
     """Return a string that is a parsed entry from Daylio CSV as a string"""
     # compose the title with optional mood colouring
