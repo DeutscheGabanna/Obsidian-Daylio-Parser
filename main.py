@@ -4,7 +4,59 @@ import re
 import os
 import csv
 import hashlib
+import argparse
+import sys
 from functools import reduce
+
+parser = argparse.ArgumentParser(
+    prog="Daylio to Obsidian Parser",
+    description="Converts Daylio .CSV backup file into Markdown files for Obsidian.",
+    epilog="Created by DeutscheGabanna"
+)
+parser.add_argument(
+    "filepath",
+    metavar="file",
+    type=open,
+    help="Specify path to the .CSV file"
+)
+parser.add_argument(
+    "--prefix", # <here's your prefix> YYYY-MM-DD.md
+    default='',
+    help="Prepends a given string to each entry's header."
+)
+parser.add_argument(
+    "--suffix", # YYYY-MM-DD <here's your suffix>.md
+    default='',
+    help="Appends a given string at the end of each entry's header."
+)
+parser.add_argument(
+    "--tag_activities", "-a",
+    action="store_false",
+    help="Tries to convert activities into valid tags.",
+    dest="ACTIVITIES_AS_TAGS"
+)
+parser.add_argument(
+    "-colour", "--color",
+    action="store_true",
+    help="Prepends a colour emoji to each entry depending on mood.",
+    dest="colour"
+)
+parser.add_argument('--version', action='version', version='%(prog)s 2.0')
+parser.add_argument(
+    "--header",
+    type=int,
+    default=2,
+    help="Headings level for each entry.",
+    dest="HEADER_LEVEL"
+)
+parser.add_argument(
+    "--tags",
+    help="Tags in the YAML metadata of each note.",
+    default="daily",
+    dest="TAGS"
+)
+
+settings = parser.parse_args()
 
 # ARCHITECTURE
 # ------------------------------
@@ -26,16 +78,9 @@ from functools import reduce
 # ------------------------------
 # So that you don't need to scroll down to find any easily customatizable parts.
 
-TAGS = "daily"
-# "one | two | three", compare with prop_delimiter -> key:value,key:value,key:value in typical CSV
 DELIMITER_IN_DAYLIO_EXPORT_CSV = " | "
-NOTE_TITLE_PREFIX = "" # <here's your prefix> YYYY-MM-DD.md
-NOTE_TITLE_SUFFIX = "" # YYYY-MM-DD <here's your suffix>.md
-HEADER_LEVEL_FOR_INDIVIDUAL_ENTRIES = "##" # I suggest reserving # for Obsidian inline titles
-DO_YOU_WANT_YOUR_ACTIVITIES_AS_TAGS_IN_OBSIDIAN = True
 CUSTOM_EXPORT_LOCATION = r""
-GET_COLOUR = True
-# MOODS are used to determine colour coding for the particular moods if GET_COLOUR = TRUE
+# MOODS are used to determine colour coding for the particular moods if colour = TRUE
 # [0,x] - best, [4,x] - worst
 MOODS=[
     [
@@ -148,7 +193,7 @@ def slugify(text):
     text = re.sub(re.compile(r"\-\-+"), '-', text)    # Replace multiple - with single -
     text = re.sub(re.compile(r"^-+"), '', text)       # Trim - from start of text
     text = re.sub(re.compile(r"-+$"), '', text)       # Trim - from end of text
-    if DO_YOU_WANT_YOUR_ACTIVITIES_AS_TAGS_IN_OBSIDIAN:
+    if settings.ACTIVITIES_AS_TAGS:
         if re.match('[0-9]', text):
             logging.warning("You want your activities as tags, but %s is invalid.", text)
     return text
@@ -220,7 +265,7 @@ if not os.path.isdir(save_path):
 def get_colour(data):
     """Prepend appropriate colour for the mood passed in data"""
     group = ""
-    if GET_COLOUR:
+    if settings.colour:
         mood_colour=["🟣","🟢","🔵","🟠","🔴"] # 0 - best, 4 - worst mood group
         found = False
         try:
@@ -238,7 +283,7 @@ def compile_entry_contents(entry):
     """Return a string that is a parsed entry from Daylio CSV as a string"""
     # compose the title with optional mood colouring
     this_entry_title = get_colour(entry.mood) + entry.mood + " - " + entry.time
-    returned_contents = HEADER_LEVEL_FOR_INDIVIDUAL_ENTRIES + " " + this_entry_title
+    returned_contents = settings.HEADER_LEVEL*'#' + " " + this_entry_title
 
     # compose the mood-tag and the activity-tags into one paragraph
     returned_contents += "\nI felt #" + slugify(entry.mood)
@@ -256,12 +301,12 @@ def compile_entry_contents(entry):
     return returned_contents
 
 for day in days:
-    contents = "---\ntags: " + TAGS + "\n---\n\n"
+    contents = "---\ntags: " + settings.TAGS + "\n---\n\n"
     for current_entry in days[day]:
         contents += compile_entry_contents(current_entry)
 
     # Do we have a file for this day already from previous compilations?
-    path_to_file = save_path + '/' + NOTE_TITLE_PREFIX + str(day) + NOTE_TITLE_SUFFIX + '.md'
+    path_to_file = f"{save_path}/{settings.prefix}{day}{settings.suffix}.md"
     if os.path.exists(path_to_file):
         # Check if the file differs in content from the current proposed output
         ## CALCULATE CHECKSUM FOR FILE
