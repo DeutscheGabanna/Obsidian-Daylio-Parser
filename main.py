@@ -5,7 +5,6 @@ import os
 import csv
 import hashlib
 import argparse
-import sys
 from functools import reduce
 
 parser = argparse.ArgumentParser(
