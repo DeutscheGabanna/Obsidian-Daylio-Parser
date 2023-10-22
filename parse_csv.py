@@ -1,9 +1,9 @@
 """Creates structured data from Daylio .CSV"""
 import csv
 import utils
-import cmd_args
+from cmd_args import settings
 
-delimiter = f" {cmd_args.settings.csv_delimiter} "
+delimiter = f" {settings.csv_delimiter} "
 
 class Entry:
     """Journal entry made at a given moment in time, and describing a particular emotional state"""
@@ -16,7 +16,7 @@ class Entry:
         for index, _ in enumerate(self.activities):
             self.activities[index] = utils.slugify(
                 self.activities[index],
-                cmd_args.settings.ACTIVITIES_AS_TAGS
+                settings.ACTIVITIES_AS_TAGS
             )
         self.title = self.slice_quotes(parsed_line[6])
         self.note = self.slice_quotes(parsed_line[7])

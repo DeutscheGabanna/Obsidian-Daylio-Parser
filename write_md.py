@@ -2,14 +2,14 @@
 import hashlib
 import os
 # Custom
-import cmd_args
+from cmd_args import settings
 
 class Note:
     """Note is a file encompassing every entry made on a given date"""
     def __init__(self, day, contents):
         self.day = day
         self.contents = contents
-        self.path = f"{os.path.join(cmd_args.settings.destination, cmd_args.settings.prefix)}{day}{cmd_args.settings.suffix}.md"
+        self.path = f"{os.path.join(settings.destination, settings.prefix)}{day}{settings.suffix}.md"
         self.control_sum = hashlib.sha256()
         temp_contents = self.contents # we need a temporary contents var to be consumed
         for byte_block in iter(lambda: temp_contents[:4096].encode('utf-8'), b""):

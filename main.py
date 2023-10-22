@@ -42,7 +42,7 @@ logger.info(
 )
 
 for day, entries in days.items():
-    note_contents = compile_md.compile_note_YAML()
+    note_contents = compile_md.compile_note_yaml()
     for current_entry in entries:
         note_contents += compile_md.compile_entry_contents(current_entry)
     current_note = write_md.Note(day, note_contents)

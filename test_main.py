@@ -1,12 +1,8 @@
 """Test cases for main.py"""
 import unittest
-import os
 # Custom
 import parse_csv
-import write_md
-import compile_md
 import utils
-import cmd_args
 
 class TestScript(unittest.TestCase):
     def setUp(self):
