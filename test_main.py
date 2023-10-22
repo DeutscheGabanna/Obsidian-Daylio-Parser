@@ -88,4 +88,4 @@ class TestScript(unittest.TestCase):
 
 ## is this run as a main program, not component?
 if __name__ == '__main__':
-    unittest.main(argv=['first-arg-is-ignored'], exit=False)
+    unittest.main(argv=["first-arg-is-ignored"], exit=False)
