@@ -1,2 +1,2 @@
-*.md
 __pycache__/
+_tests/computed_results

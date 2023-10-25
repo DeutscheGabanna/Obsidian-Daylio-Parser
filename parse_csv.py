@@ -9,7 +9,8 @@ class Entry:
     """Journal entry made at a given moment in time, and describing a particular emotional state"""
     def __init__(self, parsed_line, prop_inside_delimiter = delimiter):
         # expected CSV row structure: full_date,date,weekday,time,mood,activities,note_title,note
-        # TODO: incomplete CSV support
+        if len(parsed_line)<7:
+            raise IndexError(f"{parsed_line} contains too few elements")
         self.time = parsed_line[3]
         self.mood = parsed_line[4]
         self.activities = self.slice_quotes(parsed_line[5]).split(prop_inside_delimiter)

@@ -10,11 +10,11 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": true,
-            "args": [
-                "./_tests/testing_sheet.csv",
-                "~/Daylio export/"
-            ]
+            "justMyCode": true
+            // "args": [
+            //     "./_tests/testing_sheet.csv",
+            //     "~/Daylio export/"
+            // ]
         }
     ]
 }
