@@ -1,0 +1,28 @@
+name: Test
+on: [ pull_request ]
+jobs:
+  test:
+    strategy:
+      matrix:
+        # https://devguide.python.org/versions/
+        python: [ 3.11, 3.12 ]
+        os: [ ubuntu-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
+    env: 
+      PYTHONUTF8: 1
+    permissions:
+      pull-requests: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pipenv
+      - run: python -m pip install --upgrade pipenv wheel
+      - run: pipenv install --dev
+      - run: pipenv run coverage run -m unittest discover -s ./_tests
+      - uses: py-cov-action/python-coverage-comment-action@v3
+        if: runner.os == 'Linux'
+        with:
+          GITHUB_TOKEN: ${{ github.token }}
