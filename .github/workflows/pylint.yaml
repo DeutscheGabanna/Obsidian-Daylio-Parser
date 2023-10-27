@@ -19,4 +19,9 @@ jobs:
         pip install pylint
     - name: Analysing the code with pylint
       run: |
-        find . -name '*.py' -exec pylint {} \;
+        find . -name '*.py' -exec pylint {} --fail-under=8 \;
+        pylint_exit_code=$?
+        if [ $pylint_exit_code -ne 0 ]; then
+          echo "Pylint check failed with exit code $pylint_exit_code"
+          exit $pylint_exit_code
+        fi
