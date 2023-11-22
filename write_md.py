@@ -2,7 +2,7 @@
 import hashlib
 import os
 # Custom
-from cmd_args import settings
+from config import settings
 
 class Note:
     """Note is a file encompassing every entry made on a given date"""

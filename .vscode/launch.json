@@ -12,7 +12,7 @@
             "console": "integratedTerminal",
             "justMyCode": true
             // "args": [
-            //     "./_tests/testing_sheet.csv",
+            //     "./_tests/sheet-1-valid-data.csv",
             //     "~/Daylio export/"
             // ]
         }

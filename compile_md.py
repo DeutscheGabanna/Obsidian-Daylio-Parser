@@ -14,7 +14,7 @@ tags: <your_custom_tags>
 import logging
 from functools import reduce
 # Other
-from cmd_args import settings
+from config import settings
 import load_moods
 import utils
 
@@ -57,14 +57,4 @@ def compile_entry_contents(entry):
         final_output += "\n\n"
     return final_output
 
-def get_colour(mood_to_check):
-    """Prepend appropriate colour for the mood passed in mood_to_check"""
-    prepended_colour = ""
-    mood_colour=["🟣","🟢","🔵","🟠","🔴"] # 0 - best, 4 - worst mood group
-    if settings.colour:
-        for i, (_, this_group) in enumerate(load_moods.available_moods.items()):
-            if mood_to_check in this_group:
-                prepended_colour = f"{mood_colour[i]} "
-        if not prepended_colour:
-            logging.warning("%s was not found in moods.json database.", mood_to_check)
-    return prepended_colour
+
