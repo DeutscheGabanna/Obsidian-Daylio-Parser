@@ -22,6 +22,11 @@ logging.getLogger().addHandler(console_log_handler)
 
 
 class ErrorMsgBase:
+    """
+    Used for common errors that will be logged by almost (if not all) loggers.
+    Therefore, it is the base class of other Error child classes in specific files.
+    It also provides a shorthand method for inserting variables into error messages - print().
+    """
     # some common errors have been raised in scope into base class instead of child classes
     OBJECT_FOUND = "{}-class object found."
     OBJECT_NOT_FOUND = "{} object not found. Creating and returning to caller."
@@ -30,4 +35,8 @@ class ErrorMsgBase:
 
     @staticmethod
     def print(message, *args):
+        """
+        Insert the args into an error message. If the error message expects n variables, provide n arguments.
+        Returns a string with the already filled out message.
+        """
         return message.format(*args)

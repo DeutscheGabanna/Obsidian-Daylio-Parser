@@ -1,4 +1,6 @@
-"""Contains universally useful functions"""
+"""
+Contains universally useful functions
+"""
 import re
 import os
 import logging

@@ -1,4 +1,13 @@
-"""Provides a 2D array of mood groups and associated moods based on the moods.json file"""
+"""
+Librarian is a builder/singleton type class. It creates and initialises other builder objects - e.g. DatedEntriesGroup.
+It sets up the process, parses the CSV file and passes extracted values to DatedEntriesGroup.
+Imagine Librarian is an actual person, reading the contents of the file out-loud to a scribe (DatedEntriesGroup).
+Each date is a different scribe, but they all listen to the same Librarian.
+Librarian knows their identity and can call upon them when needed to recite their contents back to the Librarian.
+
+Here's a quick breakdown of what is the specialisation of this file in the journaling process:
+_ALL NOTES_ -> notes written on a particular date -> a particular note
+"""
 import csv
 import json
 import logging
@@ -146,7 +155,7 @@ class Librarian:
             # Do any of the rows lack required fields?
             lines_parsed = 0
             for line in raw_lines:
-                line: dict[str]     # fix parser incorrectly assuming type
+                line: dict[str]  # fix parser incorrectly assuming type
                 if len(line) < 7:
                     self.__logger.warning(ErrorMsg.print(ErrorMsg.FILE_INCOMPLETE, line))
                 else:

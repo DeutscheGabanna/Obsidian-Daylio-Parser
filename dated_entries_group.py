@@ -1,3 +1,10 @@
+"""
+This file specialises in building the middleware between actual journal entries and the whole journal.
+It creates and organises only those entries written on a particular date. This way they can be handled easier.
+
+Here's a quick breakdown of what is the specialisation of this file in the journaling process:
+all notes -> _NOTES WRITTEN ON A PARTICULAR DATE_ -> a particular note
+"""
 import re
 import logging
 import errors
@@ -46,6 +53,10 @@ class DatedEntriesGroup(utils.Core):
     A particular date which groups entries written that day.
     Raises ValueError if instantiated with a wrong date format.
     Otherwise, it is truthy if it has any DatedEntry children, or falsy if it does not.
+
+    Imagine it as a scribe, holding a stack of papers in his hand.
+    The master Librarian knows each one of the scribes, including this one.
+    However, the scribe knows only his papers. The papers contain all entries written that particular date.
     """
 
     def __init__(self, date):

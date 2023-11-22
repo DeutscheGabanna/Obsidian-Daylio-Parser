@@ -1,4 +1,10 @@
-"""Creates structured data from Daylio .CSV"""
+"""
+dated_entry focuses on building the individual entries, made at a particular moment, as objects.
+It is the most atomic level of the journaling process.
+
+Here's a quick breakdown of what is the specialisation of this file in the journaling process:
+all notes -> notes written on a particular date -> _A PARTICULAR NOTE_
+"""
 import logging
 import re
 
