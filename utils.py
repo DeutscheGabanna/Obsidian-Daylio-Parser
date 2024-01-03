@@ -21,26 +21,32 @@ class Core:
     def __str__(self):
         return str(self.__uid)
 
+    # TODO: These are supposed to be pythonic setters, not this imitation
     def set_uid(self, value):
         self.__uid = value
-        return True
 
     def get_uid(self):
         return str(self.__uid)
 
 
-def slugify(text, taggify):
+class CustomException(Exception):
+    def __init__(self, message=None):
+        super().__init__(message)
+        self.message = message
+
+
+def slugify(text: str, taggify: bool):
     # noinspection SpellCheckingInspection
     """
     Simple slugification function to transform text. Works on non-latin characters too.
     """
     logger = logging.getLogger(__name__)
     text = str(text).lower()
-    text = re.sub(re.compile(r"\s+"), '-', text)        # Replace spaces with -
-    text = re.sub(re.compile(r"[^\w\-]+"), '', text)    # Remove all non-word chars
-    text = re.sub(re.compile(r"--+"), '-', text)        # Replace multiple - with single -
-    text = re.sub(re.compile(r"^-+"), '', text)         # Trim - from start of text
-    text = re.sub(re.compile(r"-+$"), '', text)         # Trim - from end of text
+    text = re.sub(re.compile(r"\s+"), '-', text)  # Replace spaces with -
+    text = re.sub(re.compile(r"[^\w\-]+"), '', text)  # Remove all non-word chars
+    text = re.sub(re.compile(r"--+"), '-', text)  # Replace multiple - with single -
+    text = re.sub(re.compile(r"^-+"), '', text)  # Trim - from start of text
+    text = re.sub(re.compile(r"-+$"), '', text)  # Trim - from end of text
     if taggify:
         if re.match('[0-9]', text):
             logger.warning(ErrorMsg.print(ErrorMsg.INVALID_OBSIDIAN_TAGS, text))

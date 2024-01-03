@@ -13,6 +13,8 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.8
-    - name: Unittest main.py
+    - name: Discover tests
       run: |
-        python _tests/test_main.py
+        echo "Starting discovery..."
+        python -m unittest discover -s "./_tests"
+        

@@ -10,13 +10,10 @@ class TestLibrarian(TestCase):
     The Librarian is responsible for parsing files and outputting the final journal.
     We use internal class methods to check proper handling of data throughout the process.
     """
-    def setUp(self):
-        self.lib = Librarian(
-            path_to_file="sheet-1-valid-data.csv",
-            path_to_moods="moods.json"
-        )
-
     def test_set_custom_moods(self):
+        """
+        Pass faulty moods and see if Librarian notices it does not know any custom moods while parsing.
+        """
         # assertTrue is not needed, because it would have already failed at setUp()
         self.assertFalse(Librarian("sheet-2-corrupted-bytes.csv").has_custom_moods())
         self.assertFalse(Librarian("sheet-3-wrong-format.txt").has_custom_moods())
@@ -46,29 +43,34 @@ class TestLibrarian(TestCase):
         - return False if lib does not contain Date obj, and return empty obj
         - throw ValueError if the string does not follow day format
         """
+        lib = Librarian(
+            path_to_file="sheet-1-valid-data.csv",
+            path_to_moods="../moods.json"
+        )
         # obj is truthy if it has uid and at least one child DatedEntry (debatable)
-        self.assertTrue(self.lib.access_date("2022-10-25"))
-        self.assertTrue(self.lib.access_date("2022-10-26"))
-        self.assertTrue(self.lib.access_date("2022-10-27"))
-        self.assertTrue(self.lib.access_date("2022-10-30"))
+        self.assertTrue(lib.access_date("2022-10-25"))
+        self.assertTrue(lib.access_date("2022-10-26"))
+        self.assertTrue(lib.access_date("2022-10-27"))
+        self.assertTrue(lib.access_date("2022-10-30"))
 
         # obj is falsy if the object has no child DatedEntry (debatable)
-        self.assertRaises(FileNotFoundError, self.lib.access_date, "2022-10-21")
-        self.assertRaises(FileNotFoundError, self.lib.access_date, "2022-10-20")
-        self.assertRaises(FileNotFoundError, self.lib.access_date, "2017-10-20")
-        self.assertRaises(FileNotFoundError, self.lib.access_date, "1819-10-20")
+        self.assertRaises(FileNotFoundError, lib.access_date, "2022-10-21")
+        self.assertRaises(FileNotFoundError, lib.access_date, "2022-10-20")
+        self.assertRaises(FileNotFoundError, lib.access_date, "2017-10-20")
+        self.assertRaises(FileNotFoundError, lib.access_date, "1819-10-20")
 
-        self.assertRaises(ValueError, self.lib.access_date, "ABC")
-        self.assertRaises(ValueError, self.lib.access_date, "2022")
-        self.assertRaises(ValueError, self.lib.access_date, "1999-1-1")
-        self.assertRaises(ValueError, self.lib.access_date, "12:00 AM")
+        self.assertRaises(ValueError, lib.access_date, "ABC")
+        self.assertRaises(ValueError, lib.access_date, "2022")
+        self.assertRaises(ValueError, lib.access_date, "1999-1-1")
+        self.assertRaises(ValueError, lib.access_date, "12:00 AM")
 
     def test_has_custom_moods(self):
-        self.assertTrue(self.lib.has_custom_moods())
+        self.assertTrue(Librarian(
+            path_to_file="sheet-1-valid-data.csv",
+            path_to_moods="../moods.json"
+        ).has_custom_moods())
         self.assertFalse(Librarian("sheet-1-valid-data.csv"))
         self.assertRaises(json.JSONDecodeError, Librarian, "sheet-1-valid-data.csv", "empty_sheet.csv")
         self.assertRaises(FileNotFoundError, Librarian, "sheet-1-valid-data.csv", "missing-file.json")
         self.assertRaises(PermissionError, Librarian, "sheet-1-valid-data.csv", "locked-dir/locked_file.csv")
         self.assertRaises(KeyError, Librarian, "sheet-1-valid-data.csv", "incomplete-moods.json")
-
-

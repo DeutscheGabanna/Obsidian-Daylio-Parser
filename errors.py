@@ -1,20 +1,43 @@
 import logging
 
+
+# Formatter with fancy additions - colour and bold support - used in the console logger handler
+class FancyFormatter(logging.Formatter):
+    grey = "\x1b[38;20m"
+    yellow = "\x1b[33;20m"
+    red = "\x1b[31;20m"
+    bold_red = "\x1b[31;1m"
+    reset = "\x1b[0m"
+    # TODO: seems like format does not apply, only colouring works
+    format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
+
+    FORMATS = {
+        logging.DEBUG: grey + format + reset,
+        logging.INFO: grey + format + reset,
+        logging.WARNING: yellow + format + reset,
+        logging.ERROR: red + format + reset,
+        logging.CRITICAL: bold_red + format + reset
+    }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
+
+
 # Common logging configuration for the root logger
 # noinspection SpellCheckingInspection
-msg_format = "(%(asctime)s) %(name)s [%(levelname)s]: %(message)s"
-logging.basicConfig(level=logging.DEBUG, format=msg_format)
-formatter = logging.Formatter(msg_format)
+logging.basicConfig(level=logging.DEBUG)
 
 # Create a file handler for the root logger
 file_log_handler = logging.FileHandler("debug.log")
 file_log_handler.setLevel(logging.DEBUG)
-file_log_handler.setFormatter(formatter)
+file_log_handler.setFormatter(FancyFormatter())
 
 # Create a console handler for the root logger
 console_log_handler = logging.StreamHandler()
 console_log_handler.setLevel(logging.WARNING)
-console_log_handler.setFormatter(formatter)
+console_log_handler.setFormatter(FancyFormatter())
 
 # Add the handlers to the root logger
 logging.getLogger().addHandler(file_log_handler)
@@ -34,9 +57,17 @@ class ErrorMsgBase:
     WRONG_VALUE = "Received {}, expected {}."
 
     @staticmethod
-    def print(message, *args):
+    def print(message: str, *args: str) -> str | None:
         """
         Insert the args into an error message. If the error message expects n variables, provide n arguments.
         Returns a string with the already filled out message.
         """
-        return message.format(*args)
+        expected_args = message.count("{}")
+
+        if len(args) != expected_args:
+            logging.getLogger(__name__).warning(
+                f"Expected {expected_args} arguments for \"{message}\", but got {len(args)} instead."
+            )
+            return None
+        else:
+            return message.format(*args)
