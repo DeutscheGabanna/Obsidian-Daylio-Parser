@@ -23,7 +23,7 @@ Sets up all necessary options and arguments.
 """
 import argparse
 import logging
-from typing import List
+from typing import List, Any
 
 # Logging for config library
 logger = logging.getLogger(__name__)
@@ -43,11 +43,10 @@ class SettingsManager:
         # ---
         # Librarian
         # ---
+        self.filepath = None
+        self.destination = None
+        # TODO: Force-argument does nothing yet.
         self.force = None
-        # if you're wondering about these two below - I'd rather omit here positional arguments like these
-        # it makes more sense for them to be passed as function arguments when initialising Librarian object
-        #   self.filepath = "/_tests/sheet-1-valid-data.csv"
-        #   self.destination = "/_tests/output_results/"
         # ---
         # Dated Entry
         # ---
@@ -58,6 +57,7 @@ class SettingsManager:
         self.suffix = ''
         self.tag_activities = True
         self.colour = True
+        # TODO: User should be able to set verbosity level in logging
 
     def get_console(self):
         """
@@ -66,9 +66,10 @@ class SettingsManager:
         """
         return self.__console_arguments
 
-    def parse_console(self):
+    def parse_console(self, args: List[Any]):
         """
         Configures SettingsManager by accessing the console and retrieving the arguments used to run the script.
+        :param args: either console arguments from sys.argv or spoofed ones
         """
         # namespace=self adds the properties to the SettingsManager obj, instead of creating a new Namespace obj
         # Without namespace=self
@@ -81,25 +82,7 @@ class SettingsManager:
         # - SettingsManager
         #   - foo = foo
         #   - bar = bar
-        self.__console_arguments.parse_args(namespace=self)
-
-    def parse_spoofed_console(self, spoofed_string_of_args: List[str]):
-        """
-        Configures SettingsManager without accessing the console. Useful for testing purposes. Don't use it elsewhere.
-        :param spoofed_string_of_args: Set of strs with positional and optional arguments as if written in CMD.
-        """
-        # namespace=self adds the properties to the SettingsManager obj, instead of creating a new Namespace obj
-        # Without namespace=self
-        # ---
-        # - SettingsManager
-        #   - Namespace obj that holds actual settings
-        #       - foo = foo
-        #       - bar = bar
-        # With namespace=self
-        # - SettingsManager
-        #   - foo = foo
-        #   - bar = bar
-        self.__console_arguments.parse_args(args=spoofed_string_of_args, namespace=self)
+        self.__console_arguments.parse_args(args=args, namespace=self)
 
 
 # Global configuration
@@ -112,6 +95,3 @@ options.get_console().add_argument(
     action='version',
     version='%(prog)s 3.0'
 )
-
-# TODO: User should be able to set verbosity level in logging
-# TODO: Force-argument does nothing yet.
