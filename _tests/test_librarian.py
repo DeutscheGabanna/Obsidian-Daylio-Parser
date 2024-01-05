@@ -1,6 +1,8 @@
 import csv
 import json
 from unittest import TestCase
+
+import librarian
 from librarian import Librarian
 
 
@@ -12,13 +14,12 @@ class TestLibrarian(TestCase):
     """
     def test_set_custom_moods(self):
         """
-        Pass faulty moods and see if Librarian notices it does not know any custom moods while parsing.
+        Pass faulty moods and see if it fails as expected.
         """
-        # assertTrue is not needed, because it would have already failed at setUp()
-        self.assertFalse(Librarian("sheet-2-corrupted-bytes.csv").has_custom_moods())
-        self.assertFalse(Librarian("sheet-3-wrong-format.txt").has_custom_moods())
-        self.assertFalse(Librarian("sheet-4-no-extension.csv").has_custom_moods())
-        self.assertFalse(Librarian("incomplete-moods.json").has_custom_moods())
+        self.assertRaises(librarian.CannotAccessFileError, Librarian("sheet-2-corrupted-bytes.csv"))
+        self.assertFalse(librarian.CannotAccessFileError, Librarian("sheet-3-wrong-format.txt"))
+        self.assertFalse(librarian.CannotAccessFileError, Librarian("sheet-4-no-extension.csv"))
+        self.assertFalse(librarian.CannotAccessFileError, Librarian("incomplete-moods.json"))
 
     def test_pass_file(self):
         """
@@ -68,7 +69,7 @@ class TestLibrarian(TestCase):
         self.assertTrue(Librarian(
             path_to_file="sheet-1-valid-data.csv",
             path_to_moods="../moods.json"
-        ).has_custom_moods())
+        ).custom_moods)
         self.assertFalse(Librarian("sheet-1-valid-data.csv"))
         self.assertRaises(json.JSONDecodeError, Librarian, "sheet-1-valid-data.csv", "empty_sheet.csv")
         self.assertRaises(FileNotFoundError, Librarian, "sheet-1-valid-data.csv", "missing-file.json")

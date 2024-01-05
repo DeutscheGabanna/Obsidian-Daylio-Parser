@@ -10,7 +10,6 @@ import re
 from typing import Match
 from typing import List
 
-import dated_entries_group
 from config import options
 import errors
 import utils
@@ -63,11 +62,15 @@ dated_entry_settings.add_argument(
 )
 
 
+class IsNotTimeError(utils.CustomException):
+    """Expected a string in a valid time format - HH:MM with optional AM/PM suffix."""
+
+
 def is_time_format_valid(string: str) -> Match[str] | None:
     """
     Is the time format of :param:`str` valid?
     :param string: time to check
-    :return: True if :param:`str` follows the ``HH:MM`` format, with optional AM/PM appended
+    :return: ``True`` if :param:`str` follows the ``HH:MM`` format, with optional AM/PM appended, ``False`` otherwise
     """
     return re.compile(r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]($|\sAM|\sPM)').match(string)
 
@@ -76,7 +79,7 @@ def is_time_range_valid(string: str) -> bool:
     """
     Is the time range of :param:`str` valid?
     :param string: time to check
-    :return: True if hour and minute ranges are both ok, False otherwise
+    :return: ``True`` if hour and minute ranges are both ok, ``False`` otherwise
     """
     time_array = string.strip().split(':')
 
@@ -98,7 +101,7 @@ def slice_quotes(string: str) -> str:
     :param string: string to be sliced
     :returns: string without quotation marks in the beginning and end of the initial string, even if it means empty str.
     """
-    if len(string) > 2:
+    if string is not None and len(string) > 2:
         return string.strip("\"")
     # only 2 characters? Then it is an empty cell.
     return ""
@@ -113,76 +116,85 @@ class Time:
     """
     Hour and minutes of a particular moment in time. Validates the time string on instantiation.
     str(instance) returns the valid time in the ``HH:MM`` format.
-    :raises ValueError: if string is not a valid time in ``HH:MM`` format (either AM/PM or 24h)
+    :raises IsNotTimeError: if string is not a valid time in ``HH:MM`` format (either AM/PM or 24h)
     """
 
-    def __init__(self, string):
+    def __init__(self, string: str):
         """
         Upon instantiation checks if the time is valid.
         Used in :class:`DatedEntry` to create an instance of this class.
-        :raises ValueError: if string is not a valid time in ``HH:MM`` format with optional AM/PM appended
+        :raises IsNotTime: if string is not a valid time in ``HH:MM`` format with optional AM/PM appended
         :param string: time in ``HH:MM`` format - can have AM/PM appended
         """
         self.__logger = logging.getLogger(self.__class__.__name__)
 
+        # OK
         if is_time_format_valid(string) and is_time_range_valid(string):
             time_array = string.strip().split(':')
             self.__hour = time_array[0]
             self.__minutes = time_array[1]
+
+        # NOT OK
         else:
             msg_on_error = ErrorMsg.print(ErrorMsg.WRONG_VALUE, string, "HH:MM (AM/PM/)")
             self.__logger.warning(msg_on_error)
-            raise ValueError(msg_on_error)
+            raise IsNotTimeError(msg_on_error)
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        :return: Outputs its hour and minutes attributes as a string in valid time format - HH:MM.
+        """
         return ':'.join([self.__hour, self.__minutes])
 
 
 class DatedEntry(utils.Core):
     """
-    Journal entry made at a given moment in time, and describing a particular emotional state.
-    It inherits None uid from utils.Core which is then set to self.time. Object is unusable without uid.
+    Journal entry.
+    **A journal entry cannot exists without:**
+
+    * Time it was written at, as :class:`Time`
+    * Mood, that is -  a dominant emotional state during that particular moment in time.
+
+    **Other, optional attributes:**
+
+    * title
+    * note
+    * activities performed during or around this time
+
+    :raises ValueError: if at least one of the required attributes cannot be set properly
     """
 
     def __init__(self,
                  time: str,
                  mood: str,
-                 parent: dated_entries_group.DatedEntriesGroup,
-                 known_moods: dict[List[str]],
+                 known_moods: dict[str, List[str]],
                  activities: str = None,
                  title: str = None,
                  note: str = None):
         # TODO: have to test the whole instantiation function again after refactoring
         self.__logger = logging.getLogger(self.__class__.__name__)
-        super().__init__()
 
         # Processing required properties
         # ---
         # Time
         try:
-            self.set_uid(Time(time))
-        except ValueError:
-            raise ValueError
+            super().__init__(Time(time))
+        except IsNotTimeError:
+            raise ValueError("Cannot create object without valid Time attribute")
 
         # Mood
-        if len(mood) == 0:
-            raise ValueError
+        if len(mood) == 0 or mood is None:
+            raise ValueError("Cannot create object without valid Mood attribute")
         else:
-            is_mood_valid = False
+            mood_is_in_dictionary = False
             for i, (_, this_group) in enumerate(known_moods.items()):
                 if mood in this_group:
-                    is_mood_valid = True
+                    mood_is_in_dictionary = True
                     break
-            if not is_mood_valid:
+            if not mood_is_in_dictionary:
                 self.__logger.warning(ErrorMsg.print(ErrorMsg.INVALID_MOOD, mood))
             # Assign it anyway. Warning is enough.
             self.__mood = mood
-
-        # Parent
-        if not isinstance(parent, dated_entries_group.DatedEntriesGroup):
-            raise ValueError
-        else:
-            self.__parent = parent
 
         # Processing other, optional properties
         # ---
@@ -198,34 +210,26 @@ class DatedEntry(utils.Core):
 
         # Process title
         self.__title = None
-        if len(title) > 0:
+        if title is not None and len(title) > 0:
             self.__title = slice_quotes(title)
 
         # Process note
         self.__note = None
-        if len(note) > 0:
+        if note is not None and len(note) > 0:
             self.__note = slice_quotes(note)
 
-    def __bool__(self):
-        # A DatedEntry is truthy only if it contains a healthy parent, time/uid and mood
-        return all([
-            super().__bool__(),
-            self.get_uid(),
-            self.get_mood(),
-            self.get_parent()
-        ])
-
-    def get_mood(self):
+    @property
+    def mood(self):
         return self.__mood
 
-    def get_activities(self):
+    @property
+    def activities(self):
         return self.__activities
 
-    def get_title(self):
+    @property
+    def title(self):
         return self.__title
 
-    def get_note(self):
+    @property
+    def note(self):
         return self.__note
-
-    def get_parent(self):
-        return self.__parent

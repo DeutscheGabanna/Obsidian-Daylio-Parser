@@ -17,19 +17,19 @@ from config import options
 
 
 class DatedEntryMissingError(utils.CustomException):
-    pass
+    """The :class:`DatedEntry` does not exist."""
 
 
 class IncompleteDataRow(utils.CustomException):
-    pass
+    """Passed a row of data from CSV file that does not have all required fields."""
 
 
 class InvalidDateError(utils.CustomException):
-    pass
+    """String is not a valid date. Check :class:`Date` for details."""
 
 
 class TriedCreatingDuplicateDatedEntryError(utils.CustomException):
-    pass
+    """Tried to create object of :class:`DatedEntry` that would be a duplicate of one that already exists."""
 
 
 class ErrorMsg(errors.ErrorMsgBase):
@@ -79,40 +79,35 @@ class DatedEntriesGroup(utils.Core):
     Imagine it as a scribe, holding a stack of papers in his hand.
     The master Librarian knows each one of the scribes, including this one.
     However, the scribe knows only his papers. The papers contain all entries written that particular date.
+
+    Truthy if it knows at least one :class:`DatedEntry` made on this :class:`Date`.
+    :raises ValueError: if the date string is deemed invalid by :class:`Date`
     """
 
     def __init__(self, date):
         self.__logger = logging.getLogger(self.__class__.__name__)
-        super().__init__()
 
         try:
-            self.set_uid(Date(date))
+            super().__init__(Date(date))
         except InvalidDateError:
-            self.__logger.warning(ErrorMsg.print(ErrorMsg.WRONG_VALUE, date, "YYYY-MM-DD"))
-            raise ValueError
+            msg = ErrorMsg.print(ErrorMsg.WRONG_VALUE, date, "YYYY-MM-DD")
+            self.__logger.warning(msg)
+            raise ValueError(msg)
         else:
-            self.__hash = hash(self.get_uid())
-            self.__known_dated_entries = {}
+            self.__hash = hash(self.uid)
+            self.__known_entries_for_this_date = {}
 
     def __hash__(self):
         return self.__hash
 
-    def __bool__(self):
-        """
-        :return: ``True`` if itself has any :class:`DatedEntry` children
-        """
-        return all((
-            super().__bool__(),
-            len(self.__known_dated_entries) > 0
-        ))
-
     def create_dated_entry_from_row(self,
                                     line: dict[str],
-                                    known_moods: dict[List[str]] = None) -> dated_entry.DatedEntry:
+                                    known_moods: dict[str, List[str]] = None) -> dated_entry.DatedEntry:
         """
         :func:`access_dated_entry` of :class:`DatedEntry` object with the specified parameters.
         :raises TriedCreatingDuplicateDatedEntryError: if it would result in making a duplicate :class:`DatedEntry`
         :raises IncompleteDataRow: if ``line`` does not have ``time`` and ``mood`` keys at the very least
+        :raises ValueError: re-raises ValueError from :class:`DatedEntry`
         :param line: a dictionary of strings. Required keys: mood, activities, note_title & note.
         :param known_moods: each key of the dict should have a set of strings containing moods.
         """
@@ -125,20 +120,23 @@ class DatedEntriesGroup(utils.Core):
                 raise IncompleteDataRow(key)
 
         # Check if there's already an object with this time
-        if line["time"] in self.__known_dated_entries:
+        if line["time"] in self.__known_entries_for_this_date:
             raise TriedCreatingDuplicateDatedEntryError
-        else:
-            # Instantiate the entry
+
+        # Instantiate the entry
+        try:
             entry = dated_entry.DatedEntry(
                 line["time"],
                 line["mood"],
-                self,
                 known_moods,
                 activities=line["activities"],
-                title=line["title"],
+                title=line["note_title"],
                 note=line["note"]
             )
-        return entry
+        except ValueError:
+            raise ValueError
+        else:
+            return entry
 
     def access_dated_entry(self, time: str) -> DatedEntry:
         """
@@ -148,7 +146,7 @@ class DatedEntriesGroup(utils.Core):
         :returns: :class:`DatedEntry`
         """
         try:
-            ref = self.__known_dated_entries[time]
+            ref = self.__known_entries_for_this_date[time]
         except KeyError:
             msg = ErrorMsg.print(ErrorMsg.OBJECT_NOT_FOUND, time)
             self.__logger.warning(msg)
@@ -156,3 +154,7 @@ class DatedEntriesGroup(utils.Core):
         else:
             self.__logger.debug(ErrorMsg.print(ErrorMsg.OBJECT_FOUND, time))
             return ref
+
+    @property
+    def known_entries_from_this_day(self):
+        return self.__known_entries_for_this_date

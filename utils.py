@@ -12,8 +12,8 @@ class ErrorMsg(errors.ErrorMsgBase):
 
 
 class Core:
-    def __init__(self):
-        self.__uid = None
+    def __init__(self, uid):
+        self.__uid = uid
 
     def __bool__(self):
         return self.__uid is not None
@@ -21,12 +21,9 @@ class Core:
     def __str__(self):
         return str(self.__uid)
 
-    # TODO: These are supposed to be pythonic setters, not this imitation
-    def set_uid(self, value):
-        self.__uid = value
-
-    def get_uid(self):
-        return str(self.__uid)
+    @property
+    def uid(self):
+        return self.__uid
 
 
 class CustomException(Exception):
@@ -58,8 +55,9 @@ def expand_path(path):
     Expand all %variables%, ~/home-directories and relative parts in the path. Return the expanded path.
     It does not use os.path.abspath() because it treats current script directory as root.
     """
-    # Converts the filepath to an absolute path and then expands the tilde (~) character to the user's home directory
-    return os.path.expanduser(
-        # Expands environment variables in the path, such as %appdata%
-        os.path.expandvars(path)
+    # Gets full path, resolving things like ../
+    return os.path.realpath(
+        # Expands the tilde (~) character to the user's home directory
+        os.path.expanduser(path)
     )
+

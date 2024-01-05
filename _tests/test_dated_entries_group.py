@@ -7,9 +7,9 @@ class TestDate(TestCase):
         self.sample_date = DatedEntriesGroup("2011-10-10")
 
     def test_get_date(self):
-        self.assertEqual(DatedEntriesGroup("2023-10-15").get_uid(), "2023-10-15")
-        self.assertEqual(DatedEntriesGroup("2019-5-9").get_uid(), "2019-5-9")
-        self.assertEqual(DatedEntriesGroup("2023-11-25").get_uid(), "2023-11-25")
+        self.assertEqual(DatedEntriesGroup("2023-10-15").uid, "2023-10-15")
+        self.assertEqual(DatedEntriesGroup("2019-5-9").uid, "2019-5-9")
+        self.assertEqual(DatedEntriesGroup("2023-11-25").uid, "2023-11-25")
 
         self.assertRaises(ValueError, DatedEntriesGroup, "00-")
         self.assertRaises(ValueError, DatedEntriesGroup, "2199-32-32")
@@ -48,17 +48,19 @@ class TestDate(TestCase):
         - former will raise ValueError if time is invalid
         - latter will raise KeyError if time is invalid
         """
-        self.assertEqual(self.sample_date.access_dated_entry("10:00 AM").get_uid(), "10:00 AM")
-        self.assertEqual(self.sample_date.access_dated_entry("9:30 PM").get_uid(), "9:30 PM")
+        self.assertEqual(self.sample_date.access_dated_entry("10:00 AM").uid, "10:00 AM")
+        self.assertEqual(self.sample_date.access_dated_entry("9:30 PM").uid, "9:30 PM")
 
         # Test cases for 12-hour format
         self.assertRaises(ValueError, self.sample_date.access_dated_entry, "2: AM")  # Invalid format
         self.assertRaises(ValueError, self.sample_date.access_dated_entry, "15:45 PM")  # Invalid hour (more than 12)
+        # noinspection SpellCheckingInspection
         self.assertRaises(ValueError, self.sample_date.access_dated_entry, "11:30 XM")  # Invalid meridiem indicator
 
         # Test cases for 24-hour format
         self.assertRaises(ValueError, self.sample_date.access_dated_entry, "25:15")  # Invalid hour (more than 24)
         self.assertRaises(ValueError, self.sample_date.access_dated_entry, "14:45 PM")
+        # noinspection SpellCheckingInspection
         self.assertRaises(ValueError, self.sample_date.access_dated_entry,
                           "03:20 XM")  # Invalid meridiem indicator in 24-hour format
 
@@ -83,13 +85,13 @@ class TestDate(TestCase):
         self.sample_date.access_dated_entry("12:12")
         self.sample_date.access_dated_entry("13:13")
 
-        self.assertEqual(self.sample_date.get_known_dated_entries()["11:11"].get_uid(), "11:11")
-        self.assertEqual(self.sample_date.get_known_dated_entries()["12:12"].get_uid(), "12:12")
-        self.assertEqual(self.sample_date.get_known_dated_entries()["13:13"].get_uid(), "13:13")
+        self.assertEqual(self.sample_date.known_entries_from_this_day["11:11"].uid, "11:11")
+        self.assertEqual(self.sample_date.known_entries_from_this_day["12:12"].uid, "12:12")
+        self.assertEqual(self.sample_date.known_entries_from_this_day["13:13"].uid, "13:13")
 
-        self.assertRaises(KeyError, lambda: self.sample_date.get_known_dated_entries()["23:00"])
-        self.assertRaises(KeyError, lambda: self.sample_date.get_known_dated_entries()["9:30 PM"])
-        self.assertRaises(KeyError, lambda: self.sample_date.get_known_dated_entries()["11:50 AM"])
+        self.assertRaises(KeyError, lambda: self.sample_date.known_entries_from_this_day["23:00"])
+        self.assertRaises(KeyError, lambda: self.sample_date.known_entries_from_this_day["9:30 PM"])
+        self.assertRaises(KeyError, lambda: self.sample_date.known_entries_from_this_day["11:50 AM"])
 
     def test_truthiness_of_dated_entries_group(self):
         """
@@ -112,15 +114,15 @@ class TestDate(TestCase):
         DatedEntriesGroup should return the already existing entry if it is known, instead of creating a duplicate.
         """
         obj = self.sample_date.access_dated_entry("11:11")
-        obj.set_note("I already exist, see?")
+        obj.note = "I already exist, see?"
 
-        self.assertEqual(self.sample_date.access_dated_entry("11:11").get_note(), obj.get_note())
+        self.assertEqual(self.sample_date.access_dated_entry("11:11").note, obj.note)
 
     def test_retrieve_known_entries(self):
         obj1 = self.sample_date.access_dated_entry("11:11")
         obj2 = self.sample_date.access_dated_entry("12:12")
         obj3 = self.sample_date.access_dated_entry("13:13")
 
-        self.assertEqual(self.sample_date.get_known_dated_entries()["11:11"], obj1)
-        self.assertEqual(self.sample_date.get_known_dated_entries()["12:12"], obj2)
-        self.assertEqual(self.sample_date.get_known_dated_entries()["13:13"], obj3)
+        self.assertEqual(self.sample_date.known_entries_from_this_day["11:11"], obj1)
+        self.assertEqual(self.sample_date.known_entries_from_this_day["12:12"], obj2)
+        self.assertEqual(self.sample_date.known_entries_from_this_day["13:13"], obj3)
