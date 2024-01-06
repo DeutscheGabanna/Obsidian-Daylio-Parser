@@ -159,3 +159,10 @@ class DatedEntriesGroup(utils.Core):
     @property
     def known_entries_from_this_day(self):
         return self.__known_entries_for_this_date
+
+    @property
+    def date(self):
+        """
+        :return: String in the format of YYYY-MM-DD that identifies this specific object of :class:`DatedEntryGroup`.
+        """
+        return str(self)
