@@ -45,7 +45,7 @@ class Date:
         :raises InvalidDateError: if :param:`string` is not a valid date (for example the month number > 12)
         :param string: on which entries have been created (`YYYY-MM-DD`)
         """
-        self.__logger = logging.getLogger(self.__class__.__name__)
+        # self.__logger = logging.getLogger(self.__class__.__name__)
 
         # does it have a valid format YYYY-MM-DD
         valid_date_pattern = re.compile(r'^\d{4}-\d{1,2}-\d{1,2}$')
@@ -80,24 +80,25 @@ class DatedEntriesGroup(utils.Core):
     However, the scribe knows only his papers. The papers contain all entries written that particular date.
 
     Truthy if it knows at least one :class:`DatedEntry` made on this :class:`Date`.
-    :raises ValueError: if the date string is deemed invalid by :class:`Date`
+    :raises InvalidDateError: if the date string is deemed invalid by :class:`Date`
     """
 
     def __init__(self, date):
         self.__logger = logging.getLogger(self.__class__.__name__)
 
+        # Try parsing the date and assigning it as your identification (uid)
         try:
             super().__init__(Date(date))
+
+        # Date is no good?
         except InvalidDateError:
             msg = ErrorMsg.print(ErrorMsg.WRONG_VALUE, date, "YYYY-MM-DD")
             self.__logger.warning(msg)
-            raise ValueError(msg)
-        else:
-            self.__hash = hash(self.uid)
-            self.__known_entries_for_this_date = {}
+            raise InvalidDateError(msg)
 
-    def __hash__(self):
-        return self.__hash
+        # All good - initialise
+        else:
+            self.__known_entries_for_this_date = {}
 
     def create_dated_entry_from_row(self,
                                     line: dict[str],

@@ -21,6 +21,9 @@ class Core:
     def __str__(self):
         return str(self.__uid)
 
+    def __hash__(self):
+        return hash(self.uid)
+
     @property
     def uid(self):
         return self.__uid
