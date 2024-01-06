@@ -186,14 +186,15 @@ class DatedEntry(utils.Core):
         if len(mood) == 0 or mood is None:
             raise ValueError("Cannot create object without valid Mood attribute")
         else:
-            mood_is_in_dictionary = False
-            for i, (_, this_group) in enumerate(known_moods.items()):
-                if mood in this_group:
-                    mood_is_in_dictionary = True
-                    break
-            if not mood_is_in_dictionary:
-                self.__logger.warning(ErrorMsg.print(ErrorMsg.INVALID_MOOD, mood))
-            # Assign it anyway. Warning is enough.
+            if known_moods is True:
+                mood_is_in_dictionary = False
+                for i, (_, this_group) in enumerate(known_moods.items()):
+                    if mood in this_group:
+                        mood_is_in_dictionary = True
+                        break
+                if not mood_is_in_dictionary:
+                    self.__logger.warning(ErrorMsg.print(ErrorMsg.INVALID_MOOD, mood))
+                # Assign it anyway. Warning is enough.
             self.__mood = mood
 
         # Processing other, optional properties

@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 # Compile global settings
 # ---
 # Read arguments from console and update the global_settings accordingly
-options.get_console().parse_console(sys.argv[1:])  # [1:] skips the program name, such as ["foo.py", ...]
+options.parse_console(sys.argv[1:])  # [1:] skips the program name, such as ["foo.py", ...]
 
 # And now let's start processing
 # ---
-Librarian(path_to_file=options.settings.filepath)
+Librarian(path_to_file=options.filepath)

@@ -136,6 +136,7 @@ class DatedEntriesGroup(utils.Core):
         except ValueError:
             raise ValueError
         else:
+            self.__known_entries_for_this_date[str(entry.uid)] = entry
             return entry
 
     def access_dated_entry(self, time: str) -> DatedEntry:

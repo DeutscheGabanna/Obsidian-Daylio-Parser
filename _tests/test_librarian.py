@@ -1,5 +1,3 @@
-import csv
-import json
 from unittest import TestCase
 
 import librarian
@@ -12,66 +10,99 @@ class TestLibrarian(TestCase):
     The Librarian is responsible for parsing files and outputting the final journal.
     We use internal class methods to check proper handling of data throughout the process.
     """
-    def test_set_custom_moods(self):
-        """
-        Pass faulty moods and see if it fails as expected.
-        """
-        self.assertRaises(librarian.CannotAccessFileError, Librarian("sheet-2-corrupted-bytes.csv"))
-        self.assertFalse(librarian.CannotAccessFileError, Librarian("sheet-3-wrong-format.txt"))
-        self.assertFalse(librarian.CannotAccessFileError, Librarian("sheet-4-no-extension.csv"))
-        self.assertFalse(librarian.CannotAccessFileError, Librarian("incomplete-moods.json"))
+    def test_valid_journal_files(self):
+        self.assertTrue(Librarian("sheet-1-valid-data.csv"))
 
-    def test_pass_file(self):
+    def test_wrong_journal_files(self):
         """
-        Pass some faulty files at the librarian and see if it exists.
-        There is no point in continuing the script if a crucial CSV file is faulty.
+        Pass faulty files and see if it fails as expected.
         """
+        self.assertRaises(librarian.CannotAccessFileError, Librarian, "sheet-2-corrupted-bytes.csv")
+        self.assertRaises(librarian.CannotAccessFileError, Librarian, "sheet-3-wrong-format.txt")
+        self.assertRaises(librarian.CannotAccessFileError, Librarian, "sheet-4-no-extension.csv")
+        self.assertRaises(librarian.CannotAccessFileError, Librarian, "sheet-5-missing-file.csv")
+        self.assertRaises(librarian.CannotAccessFileError, Librarian, "sheet-6-empty-file.csv")
+
         # TODO: maybe generate corrupted_sheet and wrong_format during runner setup in workflow mode?
         # dd if=/dev/urandom of="$corrupted_file" bs=1024 count=10
         # generates random bytes and writes them into a given file
-        self.assertRaises(csv.Error, Librarian, "sheet-2-corrupted-bytes.csv")
-        self.assertRaises(csv.Error, Librarian, "sheet-3-wrong-format.txt")
-        self.assertRaises(csv.Error, Librarian, "sheet-4-no-extension")
-        self.assertRaises(FileNotFoundError, Librarian, "sheet-5-missing-file.csv")
-        self.assertRaises(StopIteration, Librarian, "sheet-6-empty-file.csv")
-        # TODO: make this file locked during runner workflow with chmod 600
-        self.assertRaises(PermissionError, Librarian, "locked-dir/locked_file.csv")
 
-    def test_access_date(self):
+        # TODO: make this file locked during runner workflow with chmod 600
+        self.assertRaises(librarian.CannotAccessFileError, Librarian, "locked-dir/locked_file.csv")
+
+    def test_valid_custom_moods(self):
+        self.assertTrue(Librarian("sheet-1-valid-data.csv", "../moods.json"))
+
+    def test_wrong_custom_moods(self):
         """
-        accessDate() should:
-        - return True if lib contains Date obj, and return obj
-        - return False if lib does not contain Date obj, and return empty obj
-        - throw ValueError if the string does not follow day format
+        Pass faulty moods and see if it fails as expected.
         """
+        self.assertRaises(
+            librarian.CannotAccessCustomMoodsError,
+            Librarian, "sheet-1-valid-data.csv", "_tests/output-results", "incomplete-moods.json"
+        )
+
+    def test_valid_access_dates(self):
+        """
+        All the following dates exist in the sheet-1-valid-data.csv and should be accessible by ``lib``.
+        """
+        # When
         lib = Librarian(
             path_to_file="sheet-1-valid-data.csv",
             path_to_moods="../moods.json"
         )
-        # obj is truthy if it has uid and at least one child DatedEntry (debatable)
+
+        # Then
         self.assertTrue(lib.access_date("2022-10-25"))
         self.assertTrue(lib.access_date("2022-10-26"))
         self.assertTrue(lib.access_date("2022-10-27"))
         self.assertTrue(lib.access_date("2022-10-30"))
 
-        # obj is falsy if the object has no child DatedEntry (debatable)
-        self.assertRaises(FileNotFoundError, lib.access_date, "2022-10-21")
-        self.assertRaises(FileNotFoundError, lib.access_date, "2022-10-20")
-        self.assertRaises(FileNotFoundError, lib.access_date, "2017-10-20")
-        self.assertRaises(FileNotFoundError, lib.access_date, "1819-10-20")
+    def test_wrong_access_dates(self):
+        """
+        **None** of the following dates exist in the sheet-1-valid-data.csv and should **NOT** be accessible by ``lib``.
+        """
+        # When
+        lib = Librarian(
+            path_to_file="sheet-1-valid-data.csv",
+            path_to_moods="../moods.json"
+        )
+
+        # Then can access valid dates, even if they weren't in the file
+        self.assertTrue(lib.access_date("2022-10-21"))
+        self.assertTrue(lib.access_date("2022-10-20"))
+        self.assertTrue(lib.access_date("2022-10-2"))
+        self.assertTrue(lib.access_date("1999-10-22"))
+
+        # But once I try to access the actual entries attached to those dates, they should be empty
+        self.assertFalse(lib.access_date("2022-10-21").known_entries_from_this_day)
+        self.assertFalse(lib.access_date("2022-10-20").known_entries_from_this_day)
+        self.assertFalse(lib.access_date("2022-10-2").known_entries_from_this_day)
+        self.assertFalse(lib.access_date("2022-10-22").known_entries_from_this_day)
+        self.assertFalse(lib.access_date("1999-1-1").known_entries_from_this_day)
 
         self.assertRaises(ValueError, lib.access_date, "ABC")
         self.assertRaises(ValueError, lib.access_date, "2022")
-        self.assertRaises(ValueError, lib.access_date, "1999-1-1")
         self.assertRaises(ValueError, lib.access_date, "12:00 AM")
+        self.assertRaises(ValueError, lib.access_date, "1795-12-05")  # year range suspicious
 
-    def test_has_custom_moods(self):
+    def test_custom_moods_when_passed_correctly(self):
         self.assertTrue(Librarian(
             path_to_file="sheet-1-valid-data.csv",
             path_to_moods="../moods.json"
         ).custom_moods)
-        self.assertFalse(Librarian("sheet-1-valid-data.csv"))
-        self.assertRaises(json.JSONDecodeError, Librarian, "sheet-1-valid-data.csv", "empty_sheet.csv")
-        self.assertRaises(FileNotFoundError, Librarian, "sheet-1-valid-data.csv", "missing-file.json")
-        self.assertRaises(PermissionError, Librarian, "sheet-1-valid-data.csv", "locked-dir/locked_file.csv")
-        self.assertRaises(KeyError, Librarian, "sheet-1-valid-data.csv", "incomplete-moods.json")
+
+    def test_custom_moods_when_not_passed(self):
+        self.assertFalse(Librarian(
+            path_to_file="sheet-1-valid-data.csv"
+        ).custom_moods)
+
+    def test_custom_moods_when_json_invalid(self):
+        self.assertRaises(librarian.CannotAccessCustomMoodsError,
+                          Librarian, "sheet-1-valid-data.csv", "_tests/output-results/", "empty_sheet.csv")
+        self.assertRaises(librarian.CannotAccessCustomMoodsError,
+                          Librarian, "sheet-1-valid-data.csv", "_tests/output-results/", "missing-file.json")
+        self.assertRaises(librarian.CannotAccessCustomMoodsError,
+                          Librarian, "sheet-1-valid-data.csv", "_tests/output-results/", "locked-dir/locked_file.csv")
+        self.assertRaises(librarian.CannotAccessCustomMoodsError,
+                          Librarian, "sheet-1-valid-data.csv", "_tests/output-results/", "incomplete-moods.json")

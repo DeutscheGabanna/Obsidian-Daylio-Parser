@@ -1,46 +1,43 @@
 import logging
+import sys
 
 
-# Formatter with fancy additions - colour and bold support - used in the console logger handler
-class FancyFormatter(logging.Formatter):
-    grey = "\x1b[38;20m"
-    yellow = "\x1b[33;20m"
-    red = "\x1b[31;20m"
-    bold_red = "\x1b[31;1m"
-    reset = "\x1b[0m"
-    # TODO: seems like format does not apply, only colouring works
-    format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
+class ColorHandler(logging.StreamHandler):
+    # https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
+    GRAY8 = "38;5;8"
+    GRAY7 = "38;5;7"
+    ORANGE = "33"
+    RED = "31"
+    WHITE = "0"
 
-    FORMATS = {
-        logging.DEBUG: grey + format + reset,
-        logging.INFO: grey + format + reset,
-        logging.WARNING: yellow + format + reset,
-        logging.ERROR: red + format + reset,
-        logging.CRITICAL: bold_red + format + reset
-    }
+    def emit(self, record):
+        # We don't use white for any logging, to help distinguish from user print statements
+        level_color_map = {
+            logging.DEBUG: self.GRAY8,
+            logging.INFO: self.GRAY7,
+            logging.WARNING: self.ORANGE,
+            logging.ERROR: self.RED,
+            logging.CRITICAL: f"1;{self.RED}",  # Bold for critical errors
+        }
 
-    def format(self, record):
-        log_fmt = self.FORMATS.get(record.levelno)
-        formatter = logging.Formatter(log_fmt)
-        return formatter.format(record)
+        csi = f"{chr(27)}["  # control sequence introducer
+        color = level_color_map.get(record.levelno, self.WHITE)
 
+        # Apply the formatter to format the log message
+        formatted_msg = self.format(record)
 
-# Common logging configuration for the root logger
-# noinspection SpellCheckingInspection
-logging.basicConfig(level=logging.DEBUG)
+        self.stream.write(f"{csi}{color}m{formatted_msg}{csi}m\n")
 
-# Create a file handler for the root logger
-file_log_handler = logging.FileHandler("debug.log")
-file_log_handler.setLevel(logging.DEBUG)
-file_log_handler.setFormatter(FancyFormatter())
 
 # Create a console handler for the root logger
-console_log_handler = logging.StreamHandler()
-console_log_handler.setLevel(logging.WARNING)
-console_log_handler.setFormatter(FancyFormatter())
+# noinspection SpellCheckingInspection
+console_log_handler = ColorHandler(sys.stdout)
+console_log_handler.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)")
+console_log_handler.setFormatter(formatter)
 
 # Add the handlers to the root logger
-logging.getLogger().addHandler(file_log_handler)
 logging.getLogger().addHandler(console_log_handler)
 
 
@@ -52,7 +49,7 @@ class ErrorMsgBase:
     """
     # some common errors have been raised in scope into base class instead of child classes
     OBJECT_FOUND = "{}-class object found."
-    OBJECT_NOT_FOUND = "{} object not found. Creating and returning to caller."
+    OBJECT_NOT_FOUND = "{} object not found."
     FAULTY_OBJECT = "Called a {}-class object method but the object has been incorrectly instantiated."
     WRONG_VALUE = "Received {}, expected {}."
 

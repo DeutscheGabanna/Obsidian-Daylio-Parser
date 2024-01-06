@@ -13,7 +13,6 @@ Here's a quick breakdown of what is the specialisation of this file in the journ
 import csv
 import json
 import logging
-import sys
 from typing import List
 
 from config import options
@@ -56,7 +55,7 @@ class ErrorMsg(errors.ErrorMsgBase):
     DECODE_ERROR = "Error while decoding {}"
     NOT_A_FILE = "{} is not a file."
     CSV_ALL_FIELDS_PRESENT = "All expected columns are present in the CSV file columns."
-    CSV_FIELDS_MISSING = "The following expected columns are missing: "
+    CSV_FIELDS_MISSING = "The following expected columns are missing: {}"
     COUNT_ROWS = "Found {} rows of data in {}."
 
 
@@ -77,6 +76,14 @@ class MissingValuesInRowError(utils.CustomException):
 
 class CannotAccessFileError(utils.CustomException):
     """The file could not be accessed."""
+
+
+class CannotAccessJournalError(CannotAccessFileError):
+    """The journal CSV could not be accessed or parsed."""
+
+
+class CannotAccessCustomMoodsError(CannotAccessFileError):
+    """The custom moods JSON could not be accessed or parsed."""
 
 
 class InvalidDataInFileError(utils.CustomException):
@@ -129,15 +136,15 @@ class Librarian:
         if path_to_moods is not None:
             try:
                 self.__set_custom_moods(path_to_moods)
-            except CannotAccessFileError:
-                pass
+            except (CannotAccessFileError, InvalidDataInFileError):
+                raise CannotAccessCustomMoodsError
 
         # 2. Access the CSV file and get all the rows with content
         #    then pass the data to specialised data objects that can handle them in a structured way
         try:
             self.__process_file(path_to_file)
-        except CannotAccessFileError:
-            raise CannotAccessFileError
+        except (CannotAccessFileError, InvalidDataInFileError):
+            raise CannotAccessJournalError
 
     @property
     def custom_moods(self) -> dict[str, List[str]] | None:
@@ -196,7 +203,8 @@ class Librarian:
         Validates CSV file and processes it into iterable rows.
 
         :param filepath: path to CSV to be read
-        :raises CannotAccessFileError: if any problems occur during accessing or decoding the CSV file.
+        :raises CannotAccessFileError: if any problems occur during accessing the CSV file.
+        :raises InvalidDataInFileError: if any problems occur during parsing the CSV file.
         :returns: True if parsed > 0, False otherwise
         """
         if not self.custom_moods:
@@ -249,15 +257,25 @@ class Librarian:
                 "note_title",
                 "note"
             ]
-            missing_strings = [expected_field for expected_field in expected_fields if
-                               expected_field not in raw_lines.fieldnames]
+
+            # Let's have a look at what columns we have in the parsed CSV
+            # It seems that even files with random bytes occasionally pass through previous checks with no errors
+            # Therefore this 'try' block is also necessary, we do not know if the entire file is now fault-free
+            try:
+                missing_strings = [
+                    expected_field for expected_field in expected_fields if expected_field not in raw_lines.fieldnames
+                ]
+            except (csv.Error, UnicodeDecodeError):
+                msg = ErrorMsg.print(ErrorMsg.DECODE_ERROR, filepath)
+                self.__logger.critical(msg)
+                raise InvalidDataInFileError(msg)
 
             if not missing_strings:
                 self.__logger.debug(ErrorMsg.print(ErrorMsg.CSV_ALL_FIELDS_PRESENT))
             else:
                 msg = ErrorMsg.print(
-                        ErrorMsg.CSV_FIELDS_MISSING,
-                        ', '.join(missing_strings)  # which ones are missing - e.g. "date, mood, note"
+                    ErrorMsg.CSV_FIELDS_MISSING,
+                    ', '.join(missing_strings)  # which ones are missing - e.g. "date, mood, note"
                 )
                 self.__logger.critical(msg)
                 raise InvalidDataInFileError(msg)
