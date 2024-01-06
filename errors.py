@@ -1,5 +1,6 @@
 import logging
 import sys
+from typing import Optional
 
 
 class ColorHandler(logging.StreamHandler):
@@ -34,6 +35,7 @@ class ColorHandler(logging.StreamHandler):
 console_log_handler = ColorHandler(sys.stdout)
 console_log_handler.setLevel(logging.DEBUG)
 
+# noinspection SpellCheckingInspection
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)")
 console_log_handler.setFormatter(formatter)
 
@@ -49,12 +51,12 @@ class ErrorMsgBase:
     """
     # some common errors have been raised in scope into base class instead of child classes
     OBJECT_FOUND = "{}-class object found."
-    OBJECT_NOT_FOUND = "{} object not found."
+    OBJECT_NOT_FOUND = "{}-class object not found."
     FAULTY_OBJECT = "Called a {}-class object method but the object has been incorrectly instantiated."
     WRONG_VALUE = "Received {}, expected {}."
 
     @staticmethod
-    def print(message: str, *args: str) -> str | None:
+    def print(message: str, *args: str) -> Optional[str]:
         """
         Insert the args into an error message. If the error message expects n variables, provide n arguments.
         Returns a string with the already filled out message.

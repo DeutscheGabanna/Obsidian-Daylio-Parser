@@ -6,7 +6,7 @@
       <excludeFolder url="file://$MODULE_DIR$/_tests/locked-dir" />
       <excludeFolder url="file://$MODULE_DIR$/_tests/output-results" />
     </content>
-    <orderEntry type="jdk" jdkName="$USER_HOME$/miniconda3" jdkType="Python SDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PackageRequirementsSettings">

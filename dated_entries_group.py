@@ -5,13 +5,17 @@ It creates and organises only those entries written on a particular date. This w
 Here's a quick breakdown of what is the specialisation of this file in the journaling process:
 all notes -> _NOTES WRITTEN ON A PARTICULAR DATE_ -> a particular note
 """
+from __future__ import annotations
+
 import re
 import logging
 
 import dated_entry
+import entry.mood
 import errors
 from typing import List
 from dated_entry import DatedEntry
+from entry.mood import Moodverse
 import utils
 
 
@@ -39,6 +43,17 @@ class Date:
     """
     Day, month and year of a particular date. Validates the date string on instantiation.
     """
+    _instances = {}  # Class variable to store instances based on date
+
+    def __new__(cls, string: str):
+        # Check if an instance for the given date already exists
+        if string in cls._instances:
+            return cls._instances[string]
+        else:
+            # If not, create a new instance
+            instance = super(Date, cls).__new__(cls)
+            cls._instances[string] = instance
+            return instance
 
     def __init__(self, string: str):
         """
@@ -70,6 +85,27 @@ class Date:
         """
         return '-'.join([self.__year, self.__month, self.__day])
 
+    def __eq__(self, other: 'Date') -> bool:
+        """Used only for comparing two :class:`Date` objects - itself and another one."""
+        if isinstance(other, Date):
+            return all((other.year == self.year,
+                        other.month == self.month,
+                        other.day == self.day))
+        else:
+            super().__eq__(other)
+
+    @property
+    def year(self):
+        return self.__year
+
+    @property
+    def month(self):
+        return self.__month
+
+    @property
+    def day(self):
+        return self.__day
+
 
 class DatedEntriesGroup(utils.Core):
     """
@@ -80,16 +116,29 @@ class DatedEntriesGroup(utils.Core):
     However, the scribe knows only his papers. The papers contain all entries written that particular date.
 
     Truthy if it knows at least one :class:`DatedEntry` made on this :class:`Date`.
-    :raises InvalidDateError: if the date string is deemed invalid by :class:`Date`
     """
+    _instances = {}
 
-    def __init__(self, date):
+    def __new__(cls, date: str, current_mood_set: Moodverse):
+        # Check if an instance for the given date already exists
+        if date in cls._instances:
+            return cls._instances[date]
+        else:
+            # If not, create a new instance
+            instance = super(DatedEntriesGroup, cls).__new__(cls)
+            cls._instances[date] = instance
+            return instance
+
+    def __init__(self, date, current_mood_set: Moodverse):
+        """
+        :raises InvalidDateError: if the date string is deemed invalid by :class:`Date`
+        :param date: The date for all child entries within.
+        """
         self.__logger = logging.getLogger(self.__class__.__name__)
 
         # Try parsing the date and assigning it as your identification (uid)
         try:
             super().__init__(Date(date))
-
         # Date is no good?
         except InvalidDateError:
             msg = ErrorMsg.print(ErrorMsg.WRONG_VALUE, date, "YYYY-MM-DD")
@@ -98,18 +147,19 @@ class DatedEntriesGroup(utils.Core):
 
         # All good - initialise
         else:
-            self.__known_entries_for_this_date = {}
+            self.__known_entries_for_this_date: dict[str, DatedEntry] = {}
+            self.__known_moods: Moodverse = current_mood_set
 
     def create_dated_entry_from_row(self,
                                     line: dict[str],
-                                    known_moods: dict[str, List[str]] = None) -> dated_entry.DatedEntry:
+                                    override_mood_set: Moodverse = Moodverse()) -> dated_entry.DatedEntry:
         """
         :func:`access_dated_entry` of :class:`DatedEntry` object with the specified parameters.
         :raises TriedCreatingDuplicateDatedEntryError: if it would result in making a duplicate :class:`DatedEntry`
         :raises IncompleteDataRow: if ``line`` does not have ``time`` and ``mood`` keys at the very least
         :raises ValueError: re-raises ValueError from :class:`DatedEntry`
         :param line: a dictionary of strings. Required keys: mood, activities, note_title & note.
-        :param known_moods: each key of the dict should have a set of strings containing moods.
+        :param override_mood_set: each key of the dict should have a set of strings containing moods.
         """
         # TODO: test case this
         # Try accessing the minimum required keys
@@ -125,19 +175,19 @@ class DatedEntriesGroup(utils.Core):
 
         # Instantiate the entry
         try:
-            entry = dated_entry.DatedEntry(
+            this_entry = dated_entry.DatedEntry(
                 line["time"],
                 line["mood"],
-                known_moods,
                 activities=line["activities"],
                 title=line["note_title"],
-                note=line["note"]
+                note=line["note"],
+                override_mood_set=self.__known_moods
             )
         except ValueError:
             raise ValueError
         else:
-            self.__known_entries_for_this_date[str(entry.uid)] = entry
-            return entry
+            self.__known_entries_for_this_date[str(this_entry.uid)] = this_entry
+            return this_entry
 
     def access_dated_entry(self, time: str) -> DatedEntry:
         """

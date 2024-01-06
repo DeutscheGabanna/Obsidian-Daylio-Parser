@@ -41,7 +41,7 @@ class TestDatedEntry(TestCase):
         bare_minimum_dated_entry = DatedEntry(
             time="1:49 AM",
             mood="vaguely ok",
-            known_moods={
+            override_mood_set={
                 "neutral": ["vaguely ok"]
             }
         )

@@ -1,8 +1,8 @@
 from unittest import TestCase
 
-import dated_entries_group
 from dated_entries_group import DatedEntriesGroup, InvalidDateError, \
-    DatedEntryMissingError, TriedCreatingDuplicateDatedEntryError
+    DatedEntryMissingError, TriedCreatingDuplicateDatedEntryError, \
+    IncompleteDataRow
 
 
 class TestDate(TestCase):
@@ -43,11 +43,23 @@ class TestDate(TestCase):
                 "note": ""
             }
         )
+        # This would be a duplicate from the one already created
         with self.assertRaises(TriedCreatingDuplicateDatedEntryError):
             my_date.create_dated_entry_from_row(
                 {
                     "time": "10:00 AM",
                     "mood": "vaguely ok",
+                    "activities": "",
+                    "note_title": "",
+                    "note": ""
+                }
+            )
+        # This lacks the minimum required keys - time and mood - to function correctly
+        with self.assertRaises(IncompleteDataRow):
+            my_date.create_dated_entry_from_row(
+                {
+                    "time": "5:00 PM",
+                    "mood": "",
                     "activities": "",
                     "note_title": "",
                     "note": ""

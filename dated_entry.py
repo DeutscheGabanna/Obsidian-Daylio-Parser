@@ -5,11 +5,13 @@ It is the most atomic level of the journaling process.
 Here's a quick breakdown of what is the specialisation of this file in the journaling process:
 all notes -> notes written on a particular date -> _A PARTICULAR NOTE_
 """
+from __future__ import annotations
+
 import logging
 import re
 from typing import Match
-from typing import List
 
+from entry.mood import Moodverse
 from config import options
 import errors
 import utils
@@ -108,8 +110,11 @@ def slice_quotes(string: str) -> str:
 
 
 class ErrorMsg(errors.ErrorMsgBase):
-    INVALID_MOOD = "Mood {} is missing from a list of known moods. Colouring won't work for this one."
-    WRONG_PARENT = "Object of class {} is trying to instantiate {} as child. This will end badly."
+    INVALID_MOOD = "Mood {} is missing from a list of known moods. Not critical, but colouring won't work on the entry."
+    WRONG_TIME = "Received {}, expected valid time. Cannot create this entry without a valid time."
+    WRONG_ACTIVITIES = "Expected a non-empty list of activities. In that case just omit this argument in function call."
+    WRONG_TITLE = "Expected a non-empty title. Omit this argument in function call rather than pass a falsy string."
+    WRONG_NOTE = "Expected a non-empty note. Omit this argument in function call rather than pass a falsy string."
 
 
 class Time:
@@ -167,39 +172,44 @@ class DatedEntry(utils.Core):
     def __init__(self,
                  time: str,
                  mood: str,
-                 known_moods: dict[str, List[str]],
                  activities: str = None,
                  title: str = None,
-                 note: str = None):
+                 note: str = None,
+                 override_mood_set: Moodverse = Moodverse()):
+        """
+        :param time: Time at which this note was created
+        :param mood: Mood felt during writing this note
+        :param activities: (opt.) Activities carried out around or at the time of writing the note
+        :param title: (opt.) Title of the note
+        :param note: (opt.) The contents of the journal note itself
+        :param override_mood_set: Set if you want to use custom :class:`Moodverse` for mood handling
+        """
         # TODO: have to test the whole instantiation function again after refactoring
         self.__logger = logging.getLogger(self.__class__.__name__)
 
         # Processing required properties
         # ---
-        # Time
+        # TIME
+        # ---
         try:
             super().__init__(Time(time))
         except IsNotTimeError:
-            raise ValueError("Cannot create object without valid Time attribute")
+            errors.ErrorMsgBase.print(ErrorMsg.WRONG_TIME, time)
+            raise ValueError
 
-        # Mood
-        if len(mood) == 0 or mood is None:
-            raise ValueError("Cannot create object without valid Mood attribute")
-        else:
-            if known_moods is True:
-                mood_is_in_dictionary = False
-                for i, (_, this_group) in enumerate(known_moods.items()):
-                    if mood in this_group:
-                        mood_is_in_dictionary = True
-                        break
-                if not mood_is_in_dictionary:
-                    self.__logger.warning(ErrorMsg.print(ErrorMsg.INVALID_MOOD, mood))
-                # Assign it anyway. Warning is enough.
-            self.__mood = mood
+        # ---
+        # MOOD
+        # ---
+        # Check if the mood is valid - i.e. it does exist in the currently used Moodverse
+        if not override_mood_set.get_mood(mood):
+            errors.ErrorMsgBase.print(ErrorMsg.INVALID_MOOD, mood)
+        # Warning is enough, it just disables colouring so not big of a deal
+        self.__mood = mood
 
         # Processing other, optional properties
         # ---
         # Process activities
+        # ---
         self.__activities = []
         array = slice_quotes(activities).split(options.csv_delimiter)
         if len(array) > 0:
@@ -208,16 +218,24 @@ class DatedEntry(utils.Core):
                     activity,
                     options.tag_activities
                 ))
-
+        else:
+            errors.ErrorMsgBase.print(ErrorMsg.WRONG_ACTIVITIES)
+        # ---
         # Process title
+        # ---
         self.__title = None
-        if title is not None and len(title) > 0:
+        if title is True and len(title) > 0:
             self.__title = slice_quotes(title)
-
+        else:
+            errors.ErrorMsgBase.print(ErrorMsg.WRONG_TITLE)
+        # ---
         # Process note
+        # ---
         self.__note = None
-        if note is not None and len(note) > 0:
+        if note is True and len(note) > 0:
             self.__note = slice_quotes(note)
+        else:
+            errors.ErrorMsgBase.print(ErrorMsg.WRONG_NOTE)
 
     @property
     def mood(self):

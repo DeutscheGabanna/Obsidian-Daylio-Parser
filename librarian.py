@@ -6,16 +6,20 @@ Each date is a different scribe, but they all listen to the same Librarian.
 Librarian knows their identity and can call upon them when needed to recite their contents back to the Librarian.
 
 Here's a quick breakdown of what is the specialisation of this file in the journaling process:
-└── ALL NOTES
-    └── notes written on a particular date
-        └── a particular note
+
+``└── ALL NOTES``
+    ``└── all notes written on a particular date``
+        ``└── a particular note``
 """
+from __future__ import annotations
+
 import csv
 import json
 import logging
-from typing import List
 
+import dated_entries_group
 from config import options
+from entry.mood import Moodverse
 import errors
 import utils
 from dated_entries_group import DatedEntriesGroup
@@ -56,18 +60,7 @@ class ErrorMsg(errors.ErrorMsgBase):
     NOT_A_FILE = "{} is not a file."
     CSV_ALL_FIELDS_PRESENT = "All expected columns are present in the CSV file columns."
     CSV_FIELDS_MISSING = "The following expected columns are missing: {}"
-    COUNT_ROWS = "Found {} rows of data in {}."
-
-
-# Here's a quick reference what a "minimal viable" JSON there needs to be if you want to have custom mood-sets.
-# If you do not pass a custom one, the application uses the following structure as a fallback mood-set.
-standard_mood_set = {
-    "rad": ["rad"],
-    "good": ["good"],
-    "neutral": ["neutral"],
-    "bad": ["bad"],
-    "awful": ["awful"]
-}
+    COUNT_ROWS = "{} rows of data found in {}. Of that {} were processed correctly."
 
 
 class MissingValuesInRowError(utils.CustomException):
@@ -124,39 +117,31 @@ class Librarian:
         :raises CannotAccessFileError: if any problems occur during accessing or decoding the CSV file.
         :param path_to_moods: The path for a custom mood set file.
         """
-
-        self.__known_moods = standard_mood_set
-        self.__known_dates = {}
         self.__logger = logging.getLogger(self.__class__.__name__)
-        self.__destination = path_to_output
+        self.__known_dates = {}
 
         # Let's start processing the file
         # ---
-        # 1. Parse the path_to_moods JSON to see if a custom mood-set has to be used
-        if path_to_moods is not None:
-            try:
-                self.__set_custom_moods(path_to_moods)
-            except (CannotAccessFileError, InvalidDataInFileError):
-                raise CannotAccessCustomMoodsError
+        # 1. Parse the path_to_moods JSON for a custom mood set, if possible, or otherwise use standard mood set
+        #
+        # P.S Why am I starting first with moods? Because process_file first checks if it has moods installed.
+        try:
+            self.__mood_set = self.__create_mood_set(path_to_moods)
+        except CannotAccessFileError:
+            raise CannotAccessCustomMoodsError
 
         # 2. Access the CSV file and get all the rows with content
         #    then pass the data to specialised data objects that can handle them in a structured way
+        # TODO: Deal with files that are valid but at the end of parsing have zero lines successfully parsed
         try:
             self.__process_file(path_to_file)
         except (CannotAccessFileError, InvalidDataInFileError):
             raise CannotAccessJournalError
 
-    @property
-    def custom_moods(self) -> dict[str, List[str]] | None:
-        """
-        :returns: dictionary of rad, good, neutral, bad and awful moods that this Librarian instance knows about
-        """
-        if self.__known_moods != standard_mood_set:
-            return self.__known_moods
-        else:
-            return None
+        # Ok, if no exceptions were raised so far, the file is good, let's go through the rest of the attributes
+        self.__destination = path_to_output
 
-    def __set_custom_moods(self, json_file: str):
+    def __create_mood_set(self, json_file: str = None) -> 'Moodverse':
         """
         Overwrite the standard mood-set with a custom one. Mood-sets are used in colour-coding each dated entry.
 
@@ -164,50 +149,43 @@ class Librarian:
          Should have five keys: ``rad``, ``good``, ``neutral``, ``bad`` and ``awful``.
          Each of those keys should hold an array of any number of strings indicating various moods.
          **Example**: ``[{"good": ["good"]},...]``
-        :raises CannotAccessFileError: if any problems occur during accessing or decoding the JSON.
-        :returns: success or failure to set
+        :returns: reference to the :class:`Moodverse` object
         """
-        exp_path = utils.expand_path(json_file)
-        try:
-            with open(exp_path, encoding="UTF-8") as file:
-                tmp_mood_set = json.load(file)
-        except FileNotFoundError:
-            msg = ErrorMsg.print(ErrorMsg.FILE_MISSING, exp_path)
-            self.__logger.warning(msg)
-            raise CannotAccessFileError(msg)
-        except PermissionError:
-            msg = ErrorMsg.print(ErrorMsg.PERMISSION_ERROR, exp_path)
-            self.__logger.warning(msg)
-            raise CannotAccessFileError(msg)
-        except json.JSONDecodeError:
-            msg = ErrorMsg.print(ErrorMsg.DECODE_ERROR, exp_path)
-            self.__logger.warning(msg)
-            raise CannotAccessFileError(msg)
-
-        # Try accessing each mood key to watch for KeyError if missing
-        for mood_key in self.__known_moods.keys():
+        if json_file:
+            exp_path = utils.expand_path(json_file)
             try:
-                tmp_mood_set[mood_key]
-            except KeyError:
-                msg = ErrorMsg.print(ErrorMsg.FILE_INCOMPLETE, exp_path)
+                with open(exp_path, encoding="UTF-8") as file:
+                    custom_mood_set_from_file = json.load(file)
+            except FileNotFoundError:
+                msg = ErrorMsg.print(ErrorMsg.FILE_MISSING, exp_path)
                 self.__logger.warning(msg)
-                raise InvalidDataInFileError(msg)
-            else:
-                continue
+                raise CannotAccessFileError(msg)
+            except PermissionError:
+                msg = ErrorMsg.print(ErrorMsg.PERMISSION_ERROR, exp_path)
+                self.__logger.warning(msg)
+                raise CannotAccessFileError(msg)
+            except json.JSONDecodeError:
+                msg = ErrorMsg.print(ErrorMsg.DECODE_ERROR, exp_path)
+                self.__logger.warning(msg)
+                raise CannotAccessFileError(msg)
+        else:
+            custom_mood_set_from_file = None
 
-        # At this point, we know each mood key is present so the dictionary is valid
-        self.__known_moods = tmp_mood_set
+        # the command works with or without the argument
+        # - Case 1: no argument = default mood-set
+        # - Case 2: argument passed, but invalid = default mood-set
+        # - Case 3: argument passed, it is valid = default mood-set expanded by the custom mood-set
+        return Moodverse(custom_mood_set_from_file)
 
     def __process_file(self, filepath: str) -> bool:
         """
         Validates CSV file and processes it into iterable rows.
-
         :param filepath: path to CSV to be read
         :raises CannotAccessFileError: if any problems occur during accessing the CSV file.
         :raises InvalidDataInFileError: if any problems occur during parsing the CSV file.
         :returns: True if parsed > 0, False otherwise
         """
-        if not self.custom_moods:
+        if not self.__mood_set.has_custom_moods:
             self.__logger.info(ErrorMsg.print(ErrorMsg.STANDARD_MOODS_USED))
 
         # Let's determine if the file can be opened
@@ -237,7 +215,6 @@ class Librarian:
             # Is it a valid CSV?
             try:
                 # strict parameter throws csv.Error if parsing fails
-                # if the parsing fails, exit immediately
                 raw_lines = csv.DictReader(file, delimiter=',', quotechar='"', strict=True)
             except csv.Error:
                 msg = ErrorMsg.print(ErrorMsg.DECODE_ERROR, filepath)
@@ -245,7 +222,7 @@ class Librarian:
                 raise InvalidDataInFileError(msg)
 
             # Does it have all the fields? Push any missing field into an array for later reference
-            # Even if only one column from the list below is missing in the CSV, exit immediately
+            # Even if only one column from the list below is missing in the CSV, it's a problem while parsing later
             expected_fields = [
                 "full_date",
                 "date",
@@ -293,14 +270,20 @@ class Librarian:
             # Processing
             # ---
             lines_parsed = 0
+            lines_parsed_successfully = 0
             for line in raw_lines:
                 line: dict[str]
                 try:
                     lines_parsed += self.__process_line(line)
                 except MissingValuesInRowError:
                     pass
+                else:
+                    lines_parsed_successfully += 1
 
-            self.__logger.info(ErrorMsg.print(ErrorMsg.COUNT_ROWS, str(lines_parsed), filepath))
+            # Report back how many lines were parsed successfully out of all tried
+            self.__logger.info(ErrorMsg.print(
+                ErrorMsg.COUNT_ROWS, str(lines_parsed), filepath, str(lines_parsed_successfully))
+            )
 
             # If at least one line has been parsed, the following return resolves to True
             return bool(lines_parsed)
@@ -324,8 +307,11 @@ class Librarian:
         else:
             # Let DatedEntriesGroup handle the rest and increment the counter (True == 1)
             try:
-                self.access_date(line["full_date"]).create_dated_entry_from_row(line, known_moods=self.__known_moods)
-            except:
+                self.access_date(line["full_date"]).create_dated_entry_from_row(line, self.__mood_set)
+            except (dated_entries_group.TriedCreatingDuplicateDatedEntryError,
+                    dated_entries_group.IncompleteDataRow,
+                    dated_entries_group.InvalidDateError,
+                    ValueError):
                 return False
             else:
                 return True
@@ -333,17 +319,34 @@ class Librarian:
     def access_date(self, target_date: str) -> DatedEntriesGroup:
         """
         Accesses an already existing or creates a new :class:`DatedEntriesGroup` for the specified ``target_date``.
+        :raises ValueError: if ``target_date`` is an invalid Date as indicated by :class:`Date` object
         :param target_date: the date for which a unique :class:`DatedEntriesGroup` object should be created or accessed.
         :return: reference to :class:`DatedEntriesGroup` object
         """
-        date_obj = DatedEntriesGroup(target_date)
+        try:
+            this_date_group = dated_entries_group.DatedEntriesGroup(target_date, self.__mood_set)
+        except dated_entries_group.InvalidDateError:
+            raise ValueError
 
         # have you already filed this date?
-        # TODO: maybe I should use a Date object instead of a string for comparison in the dict?
-        if target_date in self.__known_dates:
+        if this_date_group.date in self.__known_dates:
+            # yes
             self.__logger.debug(ErrorMsg.print(ErrorMsg.OBJECT_FOUND, target_date))
         else:
+            # no, add it to my dict
             self.__logger.debug(ErrorMsg.print(ErrorMsg.OBJECT_NOT_FOUND, target_date))
-            self.__known_dates[date_obj.uid] = date_obj
+            self.__known_dates[this_date_group.date] = this_date_group
 
-        return date_obj
+        # in any case
+        return this_date_group
+
+    # Use a dunder overload of getitem to access groups in either way
+    # 1. my_librarian["2022-10-10"]
+    # 2. my_librarian.access_date("2022-10-10")
+    def __getitem__(self, item: str) -> DatedEntriesGroup:
+        ref = self.access_date(item)
+        return ref
+
+    @property
+    def current_mood_set(self):
+        return self.__mood_set
