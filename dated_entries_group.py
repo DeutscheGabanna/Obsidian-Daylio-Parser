@@ -13,7 +13,6 @@ import errors
 from typing import List
 from dated_entry import DatedEntry
 import utils
-from config import options
 
 
 class DatedEntryMissingError(utils.CustomException):
