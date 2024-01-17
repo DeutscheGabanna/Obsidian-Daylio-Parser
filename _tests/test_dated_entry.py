@@ -40,10 +40,7 @@ class TestDatedEntry(TestCase):
         # When
         bare_minimum_dated_entry = DatedEntry(
             time="1:49 AM",
-            mood="vaguely ok",
-            override_mood_set={
-                "neutral": ["vaguely ok"]
-            }
+            mood="vaguely ok"
         )
 
         # Then
@@ -54,4 +51,4 @@ class TestDatedEntry(TestCase):
         self.assertTrue(bare_minimum_dated_entry.activities, [])
 
     def test_insufficient_dated_entries(self):
-        self.assertRaises(ValueError, DatedEntry, "2:00", mood="", known_moods={"neutral": ["vaguely ok"]})
+        self.assertRaises(ValueError, DatedEntry, time="2:00", mood="")

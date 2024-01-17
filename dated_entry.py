@@ -200,6 +200,8 @@ class DatedEntry(utils.Core):
         # ---
         # MOOD
         # ---
+        if len(mood) == 0:
+            raise ValueError
         # Check if the mood is valid - i.e. it does exist in the currently used Moodverse
         if not override_mood_set.get_mood(mood):
             errors.ErrorMsgBase.print(ErrorMsg.INVALID_MOOD, mood)

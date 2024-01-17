@@ -7,9 +7,12 @@ import utils
 class TestUtils(TestCase):
     def test_slugify(self):
         # no need to check if slug is a valid tag
+        # noinspection SpellCheckingInspection
         self.assertEqual(utils.slugify("ConvertThis to-------a SLUG", False), "convertthis-to-a-slug")
+        # noinspection SpellCheckingInspection
         self.assertEqual(utils.slugify("Zażółć gęślą jaźń    ", False), "zażółć-gęślą-jaźń")
-        self.assertEqual(utils.slugify("  Multiple   spaces    between    words", False), "multiple-spaces-between-words")
+        self.assertEqual(utils.slugify("  Multiple   spaces  between    words", False), "multiple-spaces-between-words")
+        # noinspection SpellCheckingInspection
         self.assertEqual(utils.slugify("Хлеба нашего повшеднего", False), "хлеба-нашего-повшеднего")
 
         # check if the slug is a valid tag
@@ -23,5 +26,7 @@ class TestUtils(TestCase):
             utils.slugify("Digits at the end of the string are also ok 456", True)
 
     def test_expand_path(self):
+        # noinspection SpellCheckingInspection
         self.assertEqual(utils.expand_path("$HOME/whatever"), "/home/deutschegabanna/whatever")
-        self.assertEqual(utils.expand_path('~'), "/home/deutschegabanna")
+        # noinspection SpellCheckingInspection
+        self.assertEqual(utils.expand_path('~/yes'), "/home/deutschegabanna/yes")

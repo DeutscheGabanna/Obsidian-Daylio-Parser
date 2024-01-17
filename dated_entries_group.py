@@ -7,6 +7,7 @@ all notes -> _NOTES WRITTEN ON A PARTICULAR DATE_ -> a particular note
 """
 from __future__ import annotations
 
+from typing import Optional
 import re
 import logging
 
@@ -119,7 +120,7 @@ class DatedEntriesGroup(utils.Core):
     """
     _instances = {}
 
-    def __new__(cls, date: str, current_mood_set: Moodverse):
+    def __new__(cls, date: str, current_mood_set: Moodverse = Moodverse()):
         # Check if an instance for the given date already exists
         if date in cls._instances:
             return cls._instances[date]
@@ -129,10 +130,11 @@ class DatedEntriesGroup(utils.Core):
             cls._instances[date] = instance
             return instance
 
-    def __init__(self, date, current_mood_set: Moodverse):
+    def __init__(self, date, current_mood_set: Moodverse = Moodverse()):
         """
         :raises InvalidDateError: if the date string is deemed invalid by :class:`Date`
         :param date: The date for all child entries within.
+        :param current_mood_set: Use custom :class:`Moodverse` or default if not provided.
         """
         self.__logger = logging.getLogger(self.__class__.__name__)
 
@@ -151,15 +153,13 @@ class DatedEntriesGroup(utils.Core):
             self.__known_moods: Moodverse = current_mood_set
 
     def create_dated_entry_from_row(self,
-                                    line: dict[str],
-                                    override_mood_set: Moodverse = Moodverse()) -> dated_entry.DatedEntry:
+                                    line: dict[str, str]) -> dated_entry.DatedEntry:
         """
         :func:`access_dated_entry` of :class:`DatedEntry` object with the specified parameters.
         :raises TriedCreatingDuplicateDatedEntryError: if it would result in making a duplicate :class:`DatedEntry`
-        :raises IncompleteDataRow: if ``line`` does not have ``time`` and ``mood`` keys at the very least
+        :raises IncompleteDataRow: if ``line`` does not have ``time mood`` keys at the very least, or either is empty
         :raises ValueError: re-raises ValueError from :class:`DatedEntry`
         :param line: a dictionary of strings. Required keys: mood, activities, note_title & note.
-        :param override_mood_set: each key of the dict should have a set of strings containing moods.
         """
         # TODO: test case this
         # Try accessing the minimum required keys
@@ -168,6 +168,10 @@ class DatedEntriesGroup(utils.Core):
                 line[key]
             except KeyError:
                 raise IncompleteDataRow(key)
+            # is it empty then, maybe?
+            else:
+                if not line[key]:
+                    raise IncompleteDataRow(key)
 
         # Check if there's already an object with this time
         if line["time"] in self.__known_entries_for_this_date:

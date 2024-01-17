@@ -115,8 +115,9 @@ class TestLibrarian(TestCase):
 
     def test_custom_moods_that_are_incomplete(self):
         """
-        Moodverse can deal with incomplete moods because the file merely expands its default knowledge
-        Therefore it will still be truthy.
+        Moodverse can deal with incomplete moods because the file merely expands its default knowledge.
+        However, it can only expand it (and be truthy) if the dict with moods has all required groups.
+        Therefore, since ``incomplete-moods`` lacks the ``good`` group, the assertion will evaluate to False.
         """
         lib_to_test = Librarian("sheet-1-valid-data.csv", "_tests/output-results/", "incomplete-moods.json")
         self.assertFalse(lib_to_test.current_mood_set.has_custom_moods)

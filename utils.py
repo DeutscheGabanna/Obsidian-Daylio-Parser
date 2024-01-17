@@ -61,6 +61,8 @@ def expand_path(path):
     # Gets full path, resolving things like ../
     return os.path.realpath(
         # Expands the tilde (~) character to the user's home directory
-        os.path.expanduser(path)
+        os.path.expanduser(
+            os.path.expandvars(path)
+        )
     )
 

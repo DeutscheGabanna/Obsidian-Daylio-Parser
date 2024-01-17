@@ -3,3 +3,4 @@ _tests/debug.log
 /_tests/output-results/
 /debug.log
 .idea/
+.vscode/

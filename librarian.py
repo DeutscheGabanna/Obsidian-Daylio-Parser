@@ -307,7 +307,7 @@ class Librarian:
         else:
             # Let DatedEntriesGroup handle the rest and increment the counter (True == 1)
             try:
-                self.access_date(line["full_date"]).create_dated_entry_from_row(line, self.__mood_set)
+                self.access_date(line["full_date"]).create_dated_entry_from_row(line)
             except (dated_entries_group.TriedCreatingDuplicateDatedEntryError,
                     dated_entries_group.IncompleteDataRow,
                     dated_entries_group.InvalidDateError,
