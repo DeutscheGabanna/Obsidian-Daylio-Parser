@@ -59,14 +59,15 @@ class SettingsManager:
         self.colour = True
         # TODO: User should be able to set verbosity level in logging
 
-    def get_console(self):
+    @property
+    def arg_console(self) -> argparse.ArgumentParser:
         """
         Retrieves the :class:`argparse.ArgumentParser` object from :class:`SettingsManager` so you can modify it.
         :return: :class:`argparse.ArgumentParser`
         """
         return self.__console_arguments
 
-    def parse_console(self, args: List[Any]):
+    def parse_console(self, args: List[Any]) -> None:
         """
         Configures SettingsManager by accessing the console and retrieving the arguments used to run the script.
         :param args: either console arguments from sys.argv or spoofed ones
@@ -90,7 +91,7 @@ class SettingsManager:
 options = SettingsManager()
 
 # Add some common options
-options.get_console().add_argument(
+options.arg_console.add_argument(
     '--version',
     action='version',
     version='%(prog)s 3.0'

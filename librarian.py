@@ -25,7 +25,7 @@ import utils
 from dated_entries_group import DatedEntriesGroup
 
 # Adding Librarian-specific options in global_settings
-librarian_settings = options.get_console().add_argument_group(
+librarian_settings = options.arg_console.add_argument_group(
     "Librarian",
     "Handles main options"
 )

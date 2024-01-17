@@ -17,7 +17,7 @@ import errors
 import utils
 
 # Adding DatedEntry-specific options in global_settings
-dated_entry_settings = options.get_console().add_argument_group(
+dated_entry_settings = options.arg_console.add_argument_group(
     "Dated Entries",
     "Handles how entries should be formatted"
 )

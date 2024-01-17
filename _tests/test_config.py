@@ -11,7 +11,7 @@ class TestSettingsManager(TestCase):
         """
         # Setup
         options_to_check = config.SettingsManager()
-        options_to_check.get_console().add_argument(
+        options_to_check.arg_console.add_argument(
             "--force",
             choices=["accept", "refuse"],
             default=None
@@ -38,7 +38,7 @@ class TestSettingsManager(TestCase):
         """
         # Setup
         options_to_check = config.SettingsManager()
-        options_to_check.get_console().add_argument(
+        options_to_check.arg_console.add_argument(
             "--force",
             choices=["accept", "refuse"],
             default=None
@@ -65,11 +65,11 @@ class TestSettingsManager(TestCase):
     def test_check_if_required_arguments_passed(self):
         # Setup
         options_to_check = config.SettingsManager()
-        options_to_check.get_console().add_argument(
+        options_to_check.arg_console.add_argument(
             "filepath",
             type=str
         )
-        options_to_check.get_console().add_argument(
+        options_to_check.arg_console.add_argument(
             "--optional_arg",
             type=str
         )
@@ -87,7 +87,7 @@ class TestSettingsManager(TestCase):
     def test_expected_failure_empty_argument_array(self):
         # Setup
         options_to_check = config.SettingsManager()
-        options_to_check.get_console().add_argument(
+        options_to_check.arg_console.add_argument(
             "filepath",
             type=str
         )
@@ -107,16 +107,16 @@ class TestSettingsManager(TestCase):
         options_to_check = config.SettingsManager()
         options_to_check.filepath = "this is the default value"
 
-        options_to_check.get_console().add_argument(
+        options_to_check.arg_console.add_argument(
             "filepath",
             type=str
         )
-        options_to_check.get_console().add_argument(
+        options_to_check.arg_console.add_argument(
             "foo",
             type=str,
             help="this type of argument does not appear in the SettingsManager list of attributes at setup"
         )
-        options_to_check.get_console().add_argument(
+        options_to_check.arg_console.add_argument(
             "bar",
             type=str,
             help="this type of argument does not appear in the SettingsManager list of attributes at setup"
