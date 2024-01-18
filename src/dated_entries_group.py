@@ -10,11 +10,11 @@ from __future__ import annotations
 import logging
 import re
 
-import dated_entry
-import errors
-import utils
-from dated_entry import DatedEntry
-from entry.mood import Moodverse
+from src import dated_entry
+from src import errors
+from src import utils
+from src.dated_entry import DatedEntry
+from src.entry.mood import Moodverse
 
 
 class DatedEntryMissingError(utils.CustomException):

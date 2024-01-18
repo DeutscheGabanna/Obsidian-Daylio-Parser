@@ -1,6 +1,10 @@
 from unittest import TestCase
 
-from dated_entry import Time, slice_quotes, DatedEntry, IsNotTimeError
+from src.dated_entry import \
+    Time, \
+    slice_quotes, \
+    DatedEntry, \
+    IsNotTimeError
 
 
 class TestDatedEntryUtils(TestCase):

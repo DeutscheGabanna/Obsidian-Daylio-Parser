@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-import config
+from src import config
 
 
 class TestSettingsManager(TestCase):

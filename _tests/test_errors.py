@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-import errors
+from src import errors
 
 
 class TestErrorMsgBase(TestCase):

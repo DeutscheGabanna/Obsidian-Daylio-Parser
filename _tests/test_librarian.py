@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-import librarian
-from librarian import Librarian
+from src import librarian
+from src.librarian import Librarian
 
 
 class TestLibrarian(TestCase):

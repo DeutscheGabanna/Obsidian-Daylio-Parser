@@ -11,10 +11,10 @@ import logging
 import re
 from typing import Match
 
-import errors
-import utils
-from config import options
-from entry.mood import Moodverse
+from src import errors
+from src import utils
+from src.config import options
+from src.entry.mood import Moodverse
 
 # Adding DatedEntry-specific options in global_settings
 dated_entry_settings = options.arg_console.add_argument_group(

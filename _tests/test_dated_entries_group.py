@@ -1,8 +1,11 @@
 import unittest
 from unittest import TestCase
 
-from dated_entries_group import DatedEntriesGroup, InvalidDateError, \
-    DatedEntryMissingError, TriedCreatingDuplicateDatedEntryError, \
+from src.dated_entries_group import \
+    DatedEntriesGroup,\
+    InvalidDateError, \
+    DatedEntryMissingError,\
+    TriedCreatingDuplicateDatedEntryError, \
     IncompleteDataRow
 
 

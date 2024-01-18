@@ -1,7 +1,9 @@
 import logging
 from unittest import TestCase
 
-from entry.mood import Moodverse, MoodGroup
+from src.entry.mood import \
+    Moodverse, \
+    MoodGroup
 
 
 # noinspection SpellCheckingInspection

@@ -2,8 +2,8 @@
 import logging
 import sys
 
-from config import options
-from librarian import Librarian
+from src.config import options
+from src.librarian import Librarian
 
 logger = logging.getLogger(__name__)
 

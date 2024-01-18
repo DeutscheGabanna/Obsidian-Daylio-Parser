@@ -5,7 +5,7 @@ import logging
 import os
 import re
 
-import errors
+from src import errors
 
 
 class ErrorMsg(errors.ErrorMsgBase):

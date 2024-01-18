@@ -17,12 +17,12 @@ import csv
 import json
 import logging
 
-import dated_entries_group
-import errors
-import utils
-from config import options
-from dated_entries_group import DatedEntriesGroup
-from entry.mood import Moodverse
+from src import dated_entries_group
+from src import errors
+from src import utils
+from src.config import options
+from src.dated_entries_group import DatedEntriesGroup
+from src.entry.mood import Moodverse
 
 # Adding Librarian-specific options in global_settings
 librarian_settings = options.arg_console.add_argument_group(
