@@ -1,6 +1,6 @@
-import os.path
-from unittest import TestCase
 import logging
+from unittest import TestCase
+
 import utils
 
 
@@ -27,6 +27,6 @@ class TestUtils(TestCase):
 
     def test_expand_path(self):
         # noinspection SpellCheckingInspection
-        self.assertEqual(utils.expand_path("$HOME/whatever"), "/home/deutschegabanna/whatever")
+        self.assertFalse(utils.expand_path("$HOME/whatever").startswith("$HOME"))
         # noinspection SpellCheckingInspection
-        self.assertEqual(utils.expand_path('~/yes'), "/home/deutschegabanna/yes")
+        self.assertFalse(utils.expand_path('~/yes').startswith('~'))

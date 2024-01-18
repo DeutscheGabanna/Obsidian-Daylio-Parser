@@ -108,9 +108,8 @@ class Moodverse:
                 self.__logger.warning(msg)
                 raise MoodNotFoundError(msg)
             # Go through each mood in this mood group - e.g. rad - and transfer them in the form of Mood objects
-            else:
-                for mood in mood_group_to_transfer:
-                    self.__mood_set[expected_mood_group].create_mood(mood)
+            for mood in mood_group_to_transfer:
+                self.__mood_set[expected_mood_group].create_mood(mood)
 
     def get_mood(self, value_to_check: str) -> Optional['Mood']:
         """
@@ -140,8 +139,7 @@ class AbstractMood:
     def __init__(self, value):
         if not value or isinstance(value, str) is False:
             raise ValueError
-        else:
-            self.__name = value
+        self.__name = value
 
     @property
     def name(self) -> str:
@@ -153,8 +151,7 @@ class AbstractMood:
     def __eq__(self, other) -> bool:
         if isinstance(other, str):
             return str(self) == other
-        else:
-            return super().__eq__(other)  # of object object
+        return super().__eq__(other)  # of object object
 
 
 class MoodGroup(AbstractMood):
@@ -217,8 +214,7 @@ class MoodGroup(AbstractMood):
         """
         if item in self.__known_moods:
             return self.__known_moods[item]
-        else:
-            raise KeyError
+        raise KeyError
 
     def __eq__(self, other: List[str]) -> bool:
         """
@@ -232,9 +228,8 @@ class MoodGroup(AbstractMood):
             # I'm not sure why, but set() instead of pure array makes sure that the order is irrelevant
             # therefore ["nice", "good"] == ["good", "nice"] is Truthy, as expected
             return set([str(obj) for obj in self.known_moods]) == set(other)
-        else:
-            # Call the superclass' __eq__ for any other comparison
-            return super().__eq__(other)
+        # Call the superclass' __eq__ for any other comparison
+        return super().__eq__(other)
 
 
 class Mood(AbstractMood):

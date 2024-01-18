@@ -68,5 +68,4 @@ class ErrorMsgBase:
                 f"Expected {expected_args} arguments for \"{message}\", but got {len(args)} instead."
             )
             return None
-        else:
-            return message.format(*args)
+        return message.format(*args)

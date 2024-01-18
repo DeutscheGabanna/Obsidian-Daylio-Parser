@@ -1,20 +1,17 @@
 name: Test
-
-on: [push]
-
+on: [ pull_request ]
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
+  test:
+    strategy:
+      matrix:
+        # https://devguide.python.org/versions/
+        python: [ 3.11, 3.12 ]
+        os: [ ubuntu-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.8
-    - name: Discover tests
-      run: |
-        echo "Starting discovery..."
-        python -m unittest discover -s "./_tests"
-        
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Discover tests
+        run: python -m unittest discover -s ./_tests

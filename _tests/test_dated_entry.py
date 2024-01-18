@@ -1,4 +1,5 @@
 from unittest import TestCase
+
 from dated_entry import Time, slice_quotes, DatedEntry, IsNotTimeError
 
 

@@ -7,17 +7,14 @@ all notes -> _NOTES WRITTEN ON A PARTICULAR DATE_ -> a particular note
 """
 from __future__ import annotations
 
-from typing import Optional
-import re
 import logging
+import re
 
 import dated_entry
-import entry.mood
 import errors
-from typing import List
+import utils
 from dated_entry import DatedEntry
 from entry.mood import Moodverse
-import utils
 
 
 class DatedEntryMissingError(utils.CustomException):
@@ -50,11 +47,10 @@ class Date:
         # Check if an instance for the given date already exists
         if string in cls._instances:
             return cls._instances[string]
-        else:
-            # If not, create a new instance
-            instance = super(Date, cls).__new__(cls)
-            cls._instances[string] = instance
-            return instance
+        # If not, create a new instance
+        instance = super(Date, cls).__new__(cls)
+        cls._instances[string] = instance
+        return instance
 
     def __init__(self, string: str):
         """
@@ -92,8 +88,7 @@ class Date:
             return all((other.year == self.year,
                         other.month == self.month,
                         other.day == self.day))
-        else:
-            super().__eq__(other)
+        super().__eq__(other)
 
     @property
     def year(self):
@@ -124,11 +119,10 @@ class DatedEntriesGroup(utils.Core):
         # Check if an instance for the given date already exists
         if date in cls._instances:
             return cls._instances[date]
-        else:
-            # If not, create a new instance
-            instance = super(DatedEntriesGroup, cls).__new__(cls)
-            cls._instances[date] = instance
-            return instance
+        # If not, create a new instance
+        instance = super(DatedEntriesGroup, cls).__new__(cls)
+        cls._instances[date] = instance
+        return instance
 
     def __init__(self, date, current_mood_set: Moodverse = Moodverse()):
         """
@@ -148,9 +142,8 @@ class DatedEntriesGroup(utils.Core):
             raise InvalidDateError(msg)
 
         # All good - initialise
-        else:
-            self.__known_entries_for_this_date: dict[str, DatedEntry] = {}
-            self.__known_moods: Moodverse = current_mood_set
+        self.__known_entries_for_this_date: dict[str, DatedEntry] = {}
+        self.__known_moods: Moodverse = current_mood_set
 
     def create_dated_entry_from_row(self,
                                     line: dict[str, str]) -> dated_entry.DatedEntry:
@@ -169,9 +162,8 @@ class DatedEntriesGroup(utils.Core):
             except KeyError:
                 raise IncompleteDataRow(key)
             # is it empty then, maybe?
-            else:
-                if not line[key]:
-                    raise IncompleteDataRow(key)
+            if not line[key]:
+                raise IncompleteDataRow(key)
 
         # Check if there's already an object with this time
         if line["time"] in self.__known_entries_for_this_date:
@@ -189,9 +181,8 @@ class DatedEntriesGroup(utils.Core):
             )
         except ValueError:
             raise ValueError
-        else:
-            self.__known_entries_for_this_date[str(this_entry.uid)] = this_entry
-            return this_entry
+        self.__known_entries_for_this_date[str(this_entry.uid)] = this_entry
+        return this_entry
 
     def access_dated_entry(self, time: str) -> DatedEntry:
         """
@@ -206,9 +197,8 @@ class DatedEntriesGroup(utils.Core):
             msg = ErrorMsg.print(ErrorMsg.OBJECT_NOT_FOUND, time)
             self.__logger.warning(msg)
             raise DatedEntryMissingError(msg)
-        else:
-            self.__logger.debug(ErrorMsg.print(ErrorMsg.OBJECT_FOUND, time))
-            return ref
+        self.__logger.debug(ErrorMsg.print(ErrorMsg.OBJECT_FOUND, time))
+        return ref
 
     @property
     def known_entries_from_this_day(self):

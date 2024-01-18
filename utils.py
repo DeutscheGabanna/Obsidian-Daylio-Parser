@@ -1,9 +1,10 @@
 """
 Contains universally useful functions
 """
-import re
-import os
 import logging
+import os
+import re
+
 import errors
 
 
@@ -65,4 +66,3 @@ def expand_path(path):
             os.path.expandvars(path)
         )
     )
-

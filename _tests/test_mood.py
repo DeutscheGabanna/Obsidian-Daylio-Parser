@@ -1,9 +1,7 @@
 import logging
 from unittest import TestCase
 
-import utils
-from entry.mood import Moodverse, MoodGroup, Mood, MoodNotFoundError
-from typing import List
+from entry.mood import Moodverse, MoodGroup
 
 
 # noinspection SpellCheckingInspection

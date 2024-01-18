@@ -18,11 +18,11 @@ import json
 import logging
 
 import dated_entries_group
-from config import options
-from entry.mood import Moodverse
 import errors
 import utils
+from config import options
 from dated_entries_group import DatedEntriesGroup
+from entry.mood import Moodverse
 
 # Adding Librarian-specific options in global_settings
 librarian_settings = options.arg_console.add_argument_group(
@@ -304,17 +304,15 @@ class Librarian:
             msg = ErrorMsg.print(ErrorMsg.FILE_INCOMPLETE, str(line))
             self.__logger.warning(msg)
             raise MissingValuesInRowError(msg)
-        else:
-            # Let DatedEntriesGroup handle the rest and increment the counter (True == 1)
-            try:
-                self.access_date(line["full_date"]).create_dated_entry_from_row(line)
-            except (dated_entries_group.TriedCreatingDuplicateDatedEntryError,
-                    dated_entries_group.IncompleteDataRow,
-                    dated_entries_group.InvalidDateError,
-                    ValueError):
-                return False
-            else:
-                return True
+        # Let DatedEntriesGroup handle the rest and increment the counter (True == 1)
+        try:
+            self.access_date(line["full_date"]).create_dated_entry_from_row(line)
+        except (dated_entries_group.TriedCreatingDuplicateDatedEntryError,
+                dated_entries_group.IncompleteDataRow,
+                dated_entries_group.InvalidDateError,
+                ValueError):
+            return False
+        return True
 
     def access_date(self, target_date: str) -> DatedEntriesGroup:
         """

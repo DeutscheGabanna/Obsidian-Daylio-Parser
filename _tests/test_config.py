@@ -125,7 +125,7 @@ class TestSettingsManager(TestCase):
         # User input correct - should pass
         options_to_check.parse_console(["this is NOT the default value", "hello", "world"])
         self.assertEqual(options_to_check.filepath, "this is NOT the default value")
-        self.assertNotEquals(options_to_check.filepath, "this is the default value")
+        self.assertNotEqual(options_to_check.filepath, "this is the default value")
         # because neither "foo" nor "bar" is part of the SettingsManager class, I need to access it like a key in dict
         self.assertEqual(vars(options_to_check)["foo"], "hello")
         self.assertEqual(vars(options_to_check)["bar"], "world")

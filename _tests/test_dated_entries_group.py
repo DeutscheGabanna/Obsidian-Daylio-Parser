@@ -1,3 +1,4 @@
+import unittest
 from unittest import TestCase
 
 from dated_entries_group import DatedEntriesGroup, InvalidDateError, \
@@ -162,11 +163,13 @@ class TestDate(TestCase):
         self.assertEqual(len(another_day.known_entries_from_this_day), 0)
         self.assertFalse(another_day.known_entries_from_this_day)
 
+    @unittest.skip("not yet implemented")
     def test_no_duplicate_entries_created(self):
         """
         DatedEntriesGroup should return the already existing entry if it is known, instead of creating a duplicate.
         """
-        pass
+        self.assertEqual(True, True)
 
+    @unittest.skip("not yet implemented")
     def test_retrieve_known_entries(self):
-        pass
+        self.assertEqual(True, True)
