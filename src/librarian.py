@@ -91,7 +91,7 @@ class NoDestinationSelectedError(utils.CustomException):
 
 def create_and_open(filename: str, mode: str) -> IO:
     os.makedirs(os.path.dirname(filename), exist_ok=True)
-    return open(filename, mode, encoding="UTF-8")
+    return open(filename, mode, encoding="UTF-8", newline='')
 
 
 # I've found a term that describes what this class does - it is a Director - even sounds similar to Librarian
