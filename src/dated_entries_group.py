@@ -10,6 +10,7 @@ from __future__ import annotations
 import io
 import logging
 import re
+import os  # used for linesep only
 
 import typing
 
@@ -227,9 +228,9 @@ class DatedEntriesGroup(utils.Core):
         # sorted() is used to have a deterministic order, set() was random, so I couldn't properly test the output
         valid_tags = sorted(set(val for val in options.tags if val))
         if valid_tags:
-            chars_written += stream.write("---\r\n")
-            chars_written += stream.write("tags: " + ",".join(valid_tags) + "\r\n")
-            chars_written += stream.write("---\r\n\r\n")
+            chars_written += stream.write("---" + os.linesep)
+            chars_written += stream.write("tags: " + ",".join(valid_tags) + os.linesep)
+            chars_written += stream.write("---" + os.linesep*2)
 
         # THE ACTUAL ENTRY CONTENTS
         # Each DatedEntry object now appends its contents into the stream
@@ -237,7 +238,7 @@ class DatedEntriesGroup(utils.Core):
             # write returns the number of characters successfully written
             # https://docs.python.org/3/library/io.html#io.TextIOBase.write
             if entry.output(stream) > 0:
-                chars_written += stream.write("\r\n\r\n")
+                chars_written += stream.write(os.linesep*2)
 
         return chars_written
 

@@ -8,6 +8,7 @@ all notes -> notes written on a particular date -> _A PARTICULAR NOTE_
 from __future__ import annotations
 
 import logging
+import os  # used only for linesep
 import re
 import io
 from typing import Match
@@ -271,11 +272,11 @@ class DatedEntry(utils.Core):
         # ACTIVITIES
         # e.g. "bicycle skating pool swimming"
         if len(self.__activities) > 0:
-            chars_written += stream.write('\r\n' + ' '.join(self.__activities))
+            chars_written += stream.write(os.linesep + ' '.join(self.__activities))
         # NOTE
         # e.g. "Went swimming this evening."
         if self.__note is not None:
-            chars_written += stream.write('\r\n' + self.__note)
+            chars_written += stream.write(os.linesep + self.__note)
 
         return chars_written
 

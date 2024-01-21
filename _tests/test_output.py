@@ -37,7 +37,7 @@ class TestDatedEntryOutput(TestCase):
             # ---
             # Then create another stream and fill it with the same content, but written directly, not through object
             with io.StringIO() as compare_stream:
-                compare_stream.write("## great | 11:00\r\n")
+                compare_stream.write("## great | 11:00" + os.linesep)
                 compare_stream.write("#bicycle #chess")
 
                 # THEN
@@ -66,7 +66,7 @@ class TestDatedEntryOutput(TestCase):
             # ---
             # Then create another stream and fill it with the same content, but written directly, not through object
             with io.StringIO() as compare_stream:
-                compare_stream.write("## great | 11:00 | I'm super pumped!\r\n")
+                compare_stream.write("## great | 11:00 | I'm super pumped!" + os.linesep)
                 compare_stream.write("#bicycle #chess")
 
                 # THEN
@@ -96,8 +96,8 @@ class TestDatedEntryOutput(TestCase):
             # ---
             # Then create another stream and fill it with the same content, but written directly, not through object
             with io.StringIO() as compare_stream:
-                compare_stream.write("## great | 11:00 | I'm super pumped!\r\n")
-                compare_stream.write("#bicycle #chess\r\n")
+                compare_stream.write("## great | 11:00 | I'm super pumped!" + os.linesep)
+                compare_stream.write("#bicycle #chess" + os.linesep)
                 compare_stream.write("I believe I can fly, I believe I can touch the sky.")
 
                 # THEN
@@ -124,7 +124,7 @@ class TestDatedEntryOutput(TestCase):
             # ---
             # Then create another stream and fill it with the same content, but written directly, not through object
             with io.StringIO() as compare_stream:
-                compare_stream.write("## great | 11:00\r\n")
+                compare_stream.write("## great | 11:00" + os.linesep)
                 compare_stream.write("#bicycle #chess")
 
                 # THEN
@@ -143,7 +143,7 @@ class TestDatedEntryOutput(TestCase):
             # ---
             # Then create another stream and fill it with the same content, but written directly, not through object
             with io.StringIO() as compare_stream:
-                compare_stream.write("## great | 11:00\r\n")
+                compare_stream.write("## great | 11:00" + os.linesep)
                 compare_stream.write("bicycle chess")
 
                 # THEN
@@ -171,11 +171,11 @@ class TestDatedEntriesGroup(TestCase):
             # ---
             # Then create another stream and fill it with the same content, but written directly, not through object
             with io.StringIO() as compare_stream:
-                compare_stream.write("---\r\n")
-                compare_stream.write("tags: daily\r\n")
-                compare_stream.write("---\r\n\r\n")
+                compare_stream.write("---" + os.linesep)
+                compare_stream.write("tags: daily" + os.linesep)
+                compare_stream.write("---" + os.linesep*2)
 
-                compare_stream.write("## vaguely ok | 10:00 AM\r\n\r\n")
+                compare_stream.write("## vaguely ok | 10:00 AM" + os.linesep*2)
 
                 # THEN
                 # ---
@@ -207,15 +207,15 @@ class TestDatedEntriesGroup(TestCase):
             # ---
             # Then create another stream and fill it with the same content, but written directly, not through object
             with io.StringIO() as compare_stream:
-                compare_stream.write("---\r\n")
-                compare_stream.write("tags: daily\r\n")
-                compare_stream.write("---\r\n\r\n")
+                compare_stream.write("---" + os.linesep)
+                compare_stream.write("tags: daily" + os.linesep)
+                compare_stream.write("---" + os.linesep*2)
 
-                compare_stream.write("## vaguely ok | 10:00 AM\r\n")
-                compare_stream.write("#bowling\r\n")
-                compare_stream.write("Feeling kinda ok.\r\n\r\n")
+                compare_stream.write("## vaguely ok | 10:00 AM" + os.linesep)
+                compare_stream.write("#bowling" + os.linesep)
+                compare_stream.write("Feeling kinda ok." + os.linesep*2)
 
-                compare_stream.write("## awful | 9:30 PM | Everything is going downhill for me\r\n\r\n")
+                compare_stream.write("## awful | 9:30 PM | Everything is going downhill for me" + os.linesep*2)
 
                 # THEN
                 # ---
@@ -251,11 +251,11 @@ class TestDatedEntriesGroup(TestCase):
             # ---
             # Then create another stream and fill it with the same content, but written directly, not through object
             with io.StringIO() as compare_stream:
-                compare_stream.write("## vaguely ok | 10:00 AM\r\n")
-                compare_stream.write("#bowling\r\n")
-                compare_stream.write("Feeling kinda meh.\r\n\r\n")
+                compare_stream.write("## vaguely ok | 10:00 AM" + os.linesep)
+                compare_stream.write("#bowling" + os.linesep)
+                compare_stream.write("Feeling kinda meh." + os.linesep*2)
 
-                compare_stream.write("## awful | 9:30 PM | Everything is going downhill for me\r\n\r\n")
+                compare_stream.write("## awful | 9:30 PM | Everything is going downhill for me" + os.linesep*2)
 
                 # THEN
                 # ---
@@ -291,15 +291,15 @@ class TestDatedEntriesGroup(TestCase):
             # ---
             # Then create another stream and fill it with the same content, but written directly, not through object
             with io.StringIO() as compare_stream:
-                compare_stream.write("---\r\n")
-                compare_stream.write("tags: bar,foo\r\n")
-                compare_stream.write("---\r\n\r\n")
+                compare_stream.write("---" + os.linesep)
+                compare_stream.write("tags: bar,foo" + os.linesep)
+                compare_stream.write("---" + os.linesep*2)
 
-                compare_stream.write("## vaguely ok | 10:00 AM\r\n")
-                compare_stream.write("#bowling\r\n")
-                compare_stream.write("Feeling fine, I guess.\r\n\r\n")
+                compare_stream.write("## vaguely ok | 10:00 AM" + os.linesep)
+                compare_stream.write("#bowling" + os.linesep)
+                compare_stream.write("Feeling fine, I guess." + os.linesep*2)
 
-                compare_stream.write("## awful | 9:30 PM | Everything is going downhill for me\r\n\r\n")
+                compare_stream.write("## awful | 9:30 PM | Everything is going downhill for me" + os.linesep*2)
 
                 # THEN
                 # ---
