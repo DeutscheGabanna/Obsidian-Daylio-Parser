@@ -7,10 +7,14 @@ from src.dated_entry import \
     IsNotTimeError
 
 
+# TODO: more test coverage needed
+
 class TestDatedEntryUtils(TestCase):
     def test_slice_quotes(self):
+        # TODO: Flip values in assertions, because unittest's 'first' param is expected, 'second' is actual.
         self.assertEqual(slice_quotes("\"test\""), "test")
         self.assertEqual(slice_quotes("\"\""), "")
+        self.assertEqual(slice_quotes("\" bicycle   \""), "bicycle")
 
 
 class TestTime(TestCase):
@@ -53,7 +57,7 @@ class TestDatedEntry(TestCase):
         self.assertTrue(bare_minimum_dated_entry.uid, "1:49 AM")
         self.assertIsNone(bare_minimum_dated_entry.title)
         self.assertIsNone(bare_minimum_dated_entry.note)
-        self.assertTrue(bare_minimum_dated_entry.activities, [])
+        self.assertListEqual(bare_minimum_dated_entry.activities, [])
 
     def test_insufficient_dated_entries(self):
         self.assertRaises(ValueError, DatedEntry, time="2:00", mood="")

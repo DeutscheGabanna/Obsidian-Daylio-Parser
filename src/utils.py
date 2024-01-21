@@ -36,22 +36,27 @@ class CustomException(Exception):
         self.message = message
 
 
+class StreamError(CustomException):
+    pass
+
+
 def slugify(text: str, taggify: bool):
     # noinspection SpellCheckingInspection
     """
     Simple slugification function to transform text. Works on non-latin characters too.
     """
     logger = logging.getLogger(__name__)
-    text = str(text).lower()
+    text = str(text).lower().strip()  # get rid of trailing spaces left after splitting activities apart from one string
     text = re.sub(re.compile(r"\s+"), '-', text)  # Replace spaces with -
     text = re.sub(re.compile(r"[^\w\-]+"), '', text)  # Remove all non-word chars
     text = re.sub(re.compile(r"--+"), '-', text)  # Replace multiple - with single -
     text = re.sub(re.compile(r"^-+"), '', text)  # Trim - from start of text
     text = re.sub(re.compile(r"-+$"), '', text)  # Trim - from end of text
+    # Checks if the tag is actually a valid tag in Obsidian - still appends the hash even if not, but warns at least
     if taggify:
         if re.match('[0-9]', text):
             logger.warning(ErrorMsg.print(ErrorMsg.INVALID_OBSIDIAN_TAGS, text))
-    return text
+    return '#' + text if taggify else text
 
 
 def expand_path(path):

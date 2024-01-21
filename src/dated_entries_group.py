@@ -7,14 +7,18 @@ all notes -> _NOTES WRITTEN ON A PARTICULAR DATE_ -> a particular note
 """
 from __future__ import annotations
 
+import io
 import logging
 import re
+
+import typing
 
 from src import dated_entry
 from src import errors
 from src import utils
 from src.dated_entry import DatedEntry
 from src.entry.mood import Moodverse
+from src.config import options
 
 
 class DatedEntryMissingError(utils.CustomException):
@@ -145,6 +149,9 @@ class DatedEntriesGroup(utils.Core):
         self.__known_entries_for_this_date: dict[str, DatedEntry] = {}
         self.__known_moods: Moodverse = current_mood_set
 
+    def append_to_known(self, entry: DatedEntry) -> None:
+        self.__known_entries_for_this_date[str(entry.uid)] = entry
+
     def create_dated_entry_from_row(self,
                                     line: dict[str, str]) -> dated_entry.DatedEntry:
         """
@@ -166,6 +173,7 @@ class DatedEntriesGroup(utils.Core):
                 raise IncompleteDataRow(key)
 
         # Check if there's already an object with this time
+        # TODO: Daylio actually allows creating multiple entries and mark them as written at the same time
         if line["time"] in self.__known_entries_for_this_date:
             raise TriedCreatingDuplicateDatedEntryError
 
@@ -181,7 +189,8 @@ class DatedEntriesGroup(utils.Core):
             )
         except ValueError:
             raise ValueError
-        self.__known_entries_for_this_date[str(this_entry.uid)] = this_entry
+
+        self.append_to_known(this_entry)
         return this_entry
 
     def access_dated_entry(self, time: str) -> DatedEntry:
@@ -200,6 +209,38 @@ class DatedEntriesGroup(utils.Core):
         self.__logger.debug(ErrorMsg.print(ErrorMsg.OBJECT_FOUND, time))
         return ref
 
+    def output(self, stream: io.IOBase | typing.IO) -> int:
+        """
+        Write entry contents of all :class:`DatedEntry` known directly into the provided buffer stream.
+        It is the responsibility of the caller to handle the stream afterward.
+        :raises utils.StreamError: if the passed stream does not support writing to it.
+        :raises OSError: likely due to lack of space in memory or filesystem, depending on the stream
+        :param stream: Since it expects the base :class:`io.IOBase` class, it accepts both file and file-like streams.
+        :returns: how many characters were successfully written into the stream.
+        """
+        if not stream.writable():
+            raise utils.StreamError
+
+        chars_written = 0
+        # THE BEGINNING OF THE FILE
+        # when appending file tags at the beginning of the file, discard any duplicates or falsy strings
+        # sorted() is used to have a deterministic order, set() was random, so I couldn't properly test the output
+        valid_tags = sorted(set(val for val in options.tags if val))
+        if valid_tags:
+            chars_written += stream.write("---\r\n")
+            chars_written += stream.write("tags: " + ",".join(valid_tags) + "\r\n")
+            chars_written += stream.write("---\r\n\r\n")
+
+        # THE ACTUAL ENTRY CONTENTS
+        # Each DatedEntry object now appends its contents into the stream
+        for entry in self.__known_entries_for_this_date.values():
+            # write returns the number of characters successfully written
+            # https://docs.python.org/3/library/io.html#io.TextIOBase.write
+            if entry.output(stream) > 0:
+                chars_written += stream.write("\r\n\r\n")
+
+        return chars_written
+
     @property
     def known_entries_from_this_day(self):
         return self.__known_entries_for_this_date
@@ -209,4 +250,4 @@ class DatedEntriesGroup(utils.Core):
         """
         :return: String in the format of YYYY-MM-DD that identifies this specific object of :class:`DatedEntryGroup`.
         """
-        return str(self)
+        return self.uid

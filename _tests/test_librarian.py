@@ -30,7 +30,7 @@ class TestLibrarian(TestCase):
         # generates random bytes and writes them into a given file
 
         # TODO: make this file locked during runner workflow with chmod 600
-        self.assertRaises(librarian.CannotAccessFileError, Librarian, "locked-dir/locked_file.csv")
+        self.assertRaises(librarian.CannotAccessFileError, Librarian, "_tests/locked-dir/locked_file.csv")
 
     def test_valid_access_dates(self):
         """
@@ -104,16 +104,25 @@ class TestLibrarian(TestCase):
         """Pass faulty moods and see if it fails as expected."""
         self.assertRaises(
             librarian.CannotAccessCustomMoodsError,
-            Librarian, "_tests/_tests/sheet-1-valid-data.csv", "_tests/output-results", "empty_sheet.csv"
+            Librarian, "_tests/sheet-1-valid-data.csv", "_tests/output-results/", "_tests/empty_sheet.csv"
         )
 
     def test_custom_moods_when_json_invalid(self):
         self.assertRaises(librarian.CannotAccessCustomMoodsError,
-                          Librarian, "_tests/_tests/sheet-1-valid-data.csv", "_tests/output-results/", "empty_sheet.csv")
+                          Librarian,
+                          "_tests/sheet-1-valid-data.csv",
+                          "_tests/output-results/",
+                          "_tests/empty_sheet.csv")
         self.assertRaises(librarian.CannotAccessCustomMoodsError,
-                          Librarian, "_tests/_tests/sheet-1-valid-data.csv", "_tests/output-results/", "missing-file.json")
+                          Librarian,
+                          "_tests/sheet-1-valid-data.csv",
+                          "_tests/output-results/",
+                          "_tests/missing-file.json")
         self.assertRaises(librarian.CannotAccessCustomMoodsError,
-                          Librarian, "_tests/_tests/sheet-1-valid-data.csv", "_tests/output-results/", "locked-dir/locked_file.csv")
+                          Librarian,
+                          "_tests/sheet-1-valid-data.csv",
+                          "_tests/output-results/",
+                          "_tests/locked-dir/locked_file.csv")
 
     def test_custom_moods_that_are_incomplete(self):
         """
@@ -121,5 +130,9 @@ class TestLibrarian(TestCase):
         However, it can only expand it (and be truthy) if the dict with moods has all required groups.
         Therefore, since ``incomplete-moods`` lacks the ``good`` group, the assertion will evaluate to False.
         """
-        lib_to_test = Librarian("_tests/sheet-1-valid-data.csv", "_tests/output-results/", "_tests/incomplete-moods.json")
+        lib_to_test = Librarian(
+            "_tests/sheet-1-valid-data.csv",
+            "_tests/output-results/",
+            "_tests/incomplete-moods.json"
+        )
         self.assertFalse(lib_to_test.current_mood_set.has_custom_moods)

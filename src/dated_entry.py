@@ -9,7 +9,10 @@ from __future__ import annotations
 
 import logging
 import re
+import io
 from typing import Match
+
+import typing
 
 from src import errors
 from src import utils
@@ -104,7 +107,7 @@ def slice_quotes(string: str) -> str:
     :returns: string without quotation marks in the beginning and end of the initial string, even if it means empty str.
     """
     if string is not None and len(string) > 2:
-        return string.strip("\"")
+        return string.strip("\"").strip()
     # only 2 characters? Then it is an empty cell.
     return ""
 
@@ -212,8 +215,11 @@ class DatedEntry(utils.Core):
         # ---
         # Process activities
         # ---
+        # TODO: I could make a decouple_and_sanitise() func to strip() and slice the string into a valid array
         self.__activities = []
-        array = slice_quotes(activities).split(options.csv_delimiter)
+        # empty string "" is unfortunately still a valid element of array which makes it truthy
+        # I use list comprehension to discard such falsy values from the temporary array
+        array = [activity for activity in slice_quotes(activities).split(options.csv_delimiter) if activity]
         if len(array) > 0:
             for activity in array:
                 self.__activities.append(utils.slugify(
@@ -226,7 +232,7 @@ class DatedEntry(utils.Core):
         # Process title
         # ---
         self.__title = None
-        if title is True and len(title) > 0:
+        if title:
             self.__title = slice_quotes(title)
         else:
             errors.ErrorMsgBase.print(ErrorMsg.WRONG_TITLE)
@@ -234,10 +240,44 @@ class DatedEntry(utils.Core):
         # Process note
         # ---
         self.__note = None
-        if note is True and len(note) > 0:
+        if note:
             self.__note = slice_quotes(note)
         else:
             errors.ErrorMsgBase.print(ErrorMsg.WRONG_NOTE)
+
+    def output(self, stream: io.IOBase | typing.IO) -> int:
+        """
+        Write entry contents directly into the provided buffer stream.
+        It is the responsibility of the caller to handle the stream afterward.
+        :raises utils.StreamError: if the passed stream does not support writing to it.
+        :raises OSError: likely due to lack of space in memory or filesystem, depending on the stream
+        :param stream: Since it expects the base :class:`io.IOBase` class, it accepts both file and file-like streams.
+        :returns: how many characters were successfully written into the stream.
+        """
+        if not stream.writable():
+            raise utils.StreamError
+
+        chars_written = 0
+        # HEADER OF THE NOTE
+        # e.g. "## great | 11:00 AM | Oh my, what a night!"
+        # options.header is an int that multiplies the # to create headers in markdown
+        header_elements = [
+            options.header * "#" + ' ' + self.__mood,
+            self.time,
+            self.__title
+        ]
+        header = ' | '.join([el for el in header_elements if el is not None])
+        chars_written += stream.write(header)
+        # ACTIVITIES
+        # e.g. "bicycle skating pool swimming"
+        if len(self.__activities) > 0:
+            chars_written += stream.write('\r\n' + ' '.join(self.__activities))
+        # NOTE
+        # e.g. "Went swimming this evening."
+        if self.__note is not None:
+            chars_written += stream.write('\r\n' + self.__note)
+
+        return chars_written
 
     @property
     def mood(self):
@@ -254,3 +294,7 @@ class DatedEntry(utils.Core):
     @property
     def note(self):
         return self.__note
+
+    @property
+    def time(self):
+        return str(self.uid)

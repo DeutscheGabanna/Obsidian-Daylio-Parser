@@ -15,7 +15,9 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import logging
+from typing import IO
 
 from src import dated_entries_group
 from src import errors
@@ -83,6 +85,15 @@ class InvalidDataInFileError(utils.CustomException):
     """The file does not follow the expected structure."""
 
 
+class NoDestinationSelectedError(utils.CustomException):
+    """You have not specified where to output the files when instantiating this Librarian object."""
+
+
+def create_and_open(filename: str, mode: str) -> IO:
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    return open(filename, mode)
+
+
 # I've found a term that describes what this class does - it is a Director - even sounds similar to Librarian
 # https://refactoring.guru/design-patterns/builder
 class Librarian:
@@ -108,7 +119,7 @@ class Librarian:
 
     def __init__(self,
                  path_to_file: str,  # the only crucial parameter at this stage
-                 path_to_output: str = None,  # TODO: `None` should block any outputting functions
+                 path_to_output: str = None,
                  path_to_moods: str = None):
         """
         :param path_to_file: The path to the CSV file for processing.
@@ -118,7 +129,7 @@ class Librarian:
         :param path_to_moods: The path for a custom mood set file.
         """
         self.__logger = logging.getLogger(self.__class__.__name__)
-        self.__known_dates = {}
+        self.__known_dates: dict[str, DatedEntriesGroup] = {}
 
         # Let's start processing the file
         # ---
@@ -177,6 +188,7 @@ class Librarian:
         # - Case 3: argument passed, it is valid = default mood-set expanded by the custom mood-set
         return Moodverse(custom_mood_set_from_file)
 
+    # TODO: should return a tuple of { lines_processed_correctly, all_lines_processed }
     def __process_file(self, filepath: str) -> bool:
         """
         Validates CSV file and processes it into iterable rows.
@@ -257,14 +269,14 @@ class Librarian:
                 self.__logger.critical(msg)
                 raise InvalidDataInFileError(msg)
 
-            # Does it have any rows besides the header?
-            # If the file is empty or only has column headers, exit immediately
-            try:
-                next(raw_lines)
-            except StopIteration:
-                msg = ErrorMsg.print(ErrorMsg.FILE_EMPTY, filepath)
-                self.__logger.critical(msg)
-                raise InvalidDataInFileError(msg)
+            # # Does it have any rows besides the header?
+            # # If the file is empty or only has column headers, exit immediately
+            # try:
+            #     next(raw_lines)
+            # except StopIteration:
+            #     msg = ErrorMsg.print(ErrorMsg.FILE_EMPTY, filepath)
+            #     self.__logger.critical(msg)
+            #     raise InvalidDataInFileError(msg)
 
             # If the code has reached this point and has not exited, it means both file and contents have to be ok
             # Processing
@@ -322,21 +334,31 @@ class Librarian:
         :return: reference to :class:`DatedEntriesGroup` object
         """
         try:
-            this_date_group = dated_entries_group.DatedEntriesGroup(target_date, self.__mood_set)
+            date_lookup = dated_entries_group.Date(target_date)
         except dated_entries_group.InvalidDateError:
             raise ValueError
 
-        # have you already filed this date?
-        if this_date_group.date in self.__known_dates:
-            # yes
-            self.__logger.debug(ErrorMsg.print(ErrorMsg.OBJECT_FOUND, target_date))
+        if str(date_lookup) in self.__known_dates:
+            return self.__known_dates[str(date_lookup)]
         else:
-            # no, add it to my dict
-            self.__logger.debug(ErrorMsg.print(ErrorMsg.OBJECT_NOT_FOUND, target_date))
-            self.__known_dates[this_date_group.date] = this_date_group
+            new_obj = DatedEntriesGroup(str(date_lookup), self.__mood_set)
+            self.__known_dates[str(date_lookup)] = new_obj
+            return new_obj
 
-        # in any case
-        return this_date_group
+    def output_all(self):
+        """
+        Loops through known dates and calls :class:`DatedEntriesGroup` to output its contents inside the destination.
+        :raises NoDestinationSelectedError: when the parent object has been instantiated without a destination set.
+        """
+        if self.__destination is None:
+            raise NoDestinationSelectedError
+
+        for known_date in self.__known_dates.values():
+            # "2022/11/09/2022-11-09.md"
+            filename = str(known_date.date) + ".md"
+            filepath = "/".join([self.__destination, known_date.date.year, known_date.date.month, filename])
+            with create_and_open(filepath, 'a') as file:
+                known_date.output(file)
 
     # Use a dunder overload of getitem to access groups in either way
     # 1. my_librarian["2022-10-10"]

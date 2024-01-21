@@ -74,9 +74,9 @@ class TestDate(TestCase):
         """
         Try to instantiate an object of :class:`DatedEntriesGroup` with either valid or invalid dates
         """
-        self.assertEqual(DatedEntriesGroup("2023-10-15").date, "2023-10-15")
-        self.assertEqual(DatedEntriesGroup("2019-5-9").date, "2019-5-9")
-        self.assertEqual(DatedEntriesGroup("2023-11-25").date, "2023-11-25")
+        self.assertEqual(str(DatedEntriesGroup("2023-10-15")), "2023-10-15")
+        self.assertEqual(str(DatedEntriesGroup("2019-5-9")), "2019-5-9")
+        self.assertEqual(str(DatedEntriesGroup("2023-11-25")), "2023-11-25")
 
         self.assertRaises(InvalidDateError, DatedEntriesGroup, "00-")
         self.assertRaises(InvalidDateError, DatedEntriesGroup, "2199-32-32")
