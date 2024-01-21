@@ -196,9 +196,9 @@ class DatedEntry(utils.Core):
         # ---
         try:
             super().__init__(Time(time))
-        except IsNotTimeError:
+        except IsNotTimeError as err:
             errors.ErrorMsgBase.print(ErrorMsg.WRONG_TIME, time)
-            raise ValueError
+            raise ValueError from err
 
         # ---
         # MOOD

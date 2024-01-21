@@ -347,4 +347,4 @@ class TestOutputFileStructure(TestCase):
                 elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
             except OSError as e:
-                print('Failed to delete %s while cleaning up after a test. Reason: %s' % (file_path, e))
+                print(f"Failed to delete {file_path} while cleaning up after a test. Reason: {e}")

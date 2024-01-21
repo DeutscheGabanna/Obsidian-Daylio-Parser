@@ -140,10 +140,10 @@ class DatedEntriesGroup(utils.Core):
         try:
             super().__init__(Date(date))
         # Date is no good?
-        except InvalidDateError:
+        except InvalidDateError as err:
             msg = ErrorMsg.print(ErrorMsg.WRONG_VALUE, date, "YYYY-MM-DD")
             self.__logger.warning(msg)
-            raise InvalidDateError(msg)
+            raise InvalidDateError(msg) from err
 
         # All good - initialise
         self.__known_entries_for_this_date: dict[str, DatedEntry] = {}
@@ -166,8 +166,8 @@ class DatedEntriesGroup(utils.Core):
         for key in ["time", "mood"]:
             try:
                 line[key]
-            except KeyError:
-                raise IncompleteDataRow(key)
+            except KeyError as err:
+                raise IncompleteDataRow(key) from err
             # is it empty then, maybe?
             if not line[key]:
                 raise IncompleteDataRow(key)
@@ -187,8 +187,8 @@ class DatedEntriesGroup(utils.Core):
                 note=line["note"],
                 override_mood_set=self.__known_moods
             )
-        except ValueError:
-            raise ValueError
+        except ValueError as err:
+            raise ValueError from err
 
         self.append_to_known(this_entry)
         return this_entry
@@ -202,10 +202,10 @@ class DatedEntriesGroup(utils.Core):
         """
         try:
             ref = self.__known_entries_for_this_date[time]
-        except KeyError:
+        except KeyError as err:
             msg = ErrorMsg.print(ErrorMsg.OBJECT_NOT_FOUND, time)
             self.__logger.warning(msg)
-            raise DatedEntryMissingError(msg)
+            raise DatedEntryMissingError(msg) from err
         self.__logger.debug(ErrorMsg.print(ErrorMsg.OBJECT_FOUND, time))
         return ref
 

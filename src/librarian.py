@@ -138,16 +138,16 @@ class Librarian:
         # P.S Why am I starting first with moods? Because process_file first checks if it has moods installed.
         try:
             self.__mood_set = self.__create_mood_set(path_to_moods)
-        except CannotAccessFileError:
-            raise CannotAccessCustomMoodsError
+        except CannotAccessFileError as err:
+            raise CannotAccessCustomMoodsError from err
 
         # 2. Access the CSV file and get all the rows with content
         #    then pass the data to specialised data objects that can handle them in a structured way
         # TODO: Deal with files that are valid but at the end of parsing have zero lines successfully parsed
         try:
             self.__process_file(path_to_file)
-        except (CannotAccessFileError, InvalidDataInFileError):
-            raise CannotAccessJournalError
+        except (CannotAccessFileError, InvalidDataInFileError) as err:
+            raise CannotAccessJournalError from err
 
         # Ok, if no exceptions were raised so far, the file is good, let's go through the rest of the attributes
         self.__destination = path_to_output
@@ -167,18 +167,18 @@ class Librarian:
             try:
                 with open(exp_path, encoding="UTF-8") as file:
                     custom_mood_set_from_file = json.load(file)
-            except FileNotFoundError:
+            except FileNotFoundError as err:
                 msg = ErrorMsg.print(ErrorMsg.FILE_MISSING, exp_path)
                 self.__logger.warning(msg)
-                raise CannotAccessFileError(msg)
-            except PermissionError:
+                raise CannotAccessFileError(msg) from err
+            except PermissionError as err:
                 msg = ErrorMsg.print(ErrorMsg.PERMISSION_ERROR, exp_path)
                 self.__logger.warning(msg)
-                raise CannotAccessFileError(msg)
-            except json.JSONDecodeError:
+                raise CannotAccessFileError(msg) from err
+            except json.JSONDecodeError as err:
                 msg = ErrorMsg.print(ErrorMsg.DECODE_ERROR, exp_path)
                 self.__logger.warning(msg)
-                raise CannotAccessFileError(msg)
+                raise CannotAccessFileError(msg) from err
         else:
             custom_mood_set_from_file = None
 
@@ -205,19 +205,19 @@ class Librarian:
         try:
             file = open(filepath, newline='', encoding='UTF-8')
         # File has not been found
-        except FileNotFoundError:
+        except FileNotFoundError as err:
             msg = ErrorMsg.print(ErrorMsg.FILE_MISSING, filepath)
             self.__logger.critical(msg)
-            raise CannotAccessFileError(msg)
+            raise CannotAccessFileError(msg) from err
         # Insufficient permissions to access the file
-        except PermissionError:
+        except PermissionError as err:
             msg = ErrorMsg.print(ErrorMsg.PERMISSION_ERROR, filepath)
             self.__logger.critical(msg)
-            raise CannotAccessFileError(msg)
+            raise CannotAccessFileError(msg) from err
         # Other error that makes it impossible to access the file
-        except OSError:
+        except OSError as err:
             self.__logger.critical(OSError)
-            raise CannotAccessFileError
+            raise CannotAccessFileError from err
 
         # If the code reaches here, the program can access the file.
         # Now let's determine if the file's contents are actually usable
@@ -228,10 +228,10 @@ class Librarian:
             try:
                 # strict parameter throws csv.Error if parsing fails
                 raw_lines = csv.DictReader(file, delimiter=',', quotechar='"', strict=True)
-            except csv.Error:
+            except csv.Error as err:
                 msg = ErrorMsg.print(ErrorMsg.DECODE_ERROR, filepath)
                 self.__logger.critical(msg)
-                raise InvalidDataInFileError(msg)
+                raise InvalidDataInFileError(msg) from err
 
             # Does it have all the fields? Push any missing field into an array for later reference
             # Even if only one column from the list below is missing in the CSV, it's a problem while parsing later
@@ -254,10 +254,10 @@ class Librarian:
                 missing_strings = [
                     expected_field for expected_field in expected_fields if expected_field not in raw_lines.fieldnames
                 ]
-            except (csv.Error, UnicodeDecodeError):
+            except (csv.Error, UnicodeDecodeError) as err:
                 msg = ErrorMsg.print(ErrorMsg.DECODE_ERROR, filepath)
                 self.__logger.critical(msg)
-                raise InvalidDataInFileError(msg)
+                raise InvalidDataInFileError(msg) from err
 
             if not missing_strings:
                 self.__logger.debug(ErrorMsg.print(ErrorMsg.CSV_ALL_FIELDS_PRESENT))
@@ -335,8 +335,8 @@ class Librarian:
         """
         try:
             date_lookup = dated_entries_group.Date(target_date)
-        except dated_entries_group.InvalidDateError:
-            raise ValueError
+        except dated_entries_group.InvalidDateError as err:
+            raise ValueError from err
 
         if str(date_lookup) in self.__known_dates:
             return self.__known_dates[str(date_lookup)]

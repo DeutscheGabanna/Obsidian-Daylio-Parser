@@ -103,10 +103,10 @@ class Moodverse:
             try:
                 # Leap of faith - there must be a "rad" group, otherwise there's no point in continuing
                 mood_group_to_transfer = moods_to_process[expected_mood_group]
-            except KeyError:
+            except KeyError as err:
                 msg = ErrorMsg.print(ErrorMsg.MOOD_GROUP_NOT_FOUND, expected_mood_group)
                 self.__logger.warning(msg)
-                raise MoodNotFoundError(msg)
+                raise MoodNotFoundError(msg) from err
             # Go through each mood in this mood group - e.g. rad - and transfer them in the form of Mood objects
             for mood in mood_group_to_transfer:
                 self.__mood_set[expected_mood_group].create_mood(mood)
