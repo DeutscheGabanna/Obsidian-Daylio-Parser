@@ -228,9 +228,13 @@ class DatedEntriesGroup(utils.Core):
         # sorted() is used to have a deterministic order, set() was random, so I couldn't properly test the output
         valid_tags = sorted(set(val for val in options.tags if val))
         if valid_tags:
-            chars_written += stream.write("---" + os.linesep)
-            chars_written += stream.write("tags: " + ",".join(valid_tags) + os.linesep)
-            chars_written += stream.write("---" + os.linesep*2)
+            # why '\n' instead of os.linesep?
+            # > Do not use os.linesep as a line terminator when writing files opened in text mode (the default);
+            # > use a single '\n' instead, on all platforms.
+            # https://docs.python.org/3.10/library/os.html#os.linesep
+            chars_written += stream.write("---" + "\n")
+            chars_written += stream.write("tags: " + ",".join(valid_tags) + "\n")
+            chars_written += stream.write("---" + "\n"*2)
 
         # THE ACTUAL ENTRY CONTENTS
         # Each DatedEntry object now appends its contents into the stream
@@ -238,7 +242,7 @@ class DatedEntriesGroup(utils.Core):
             # write returns the number of characters successfully written
             # https://docs.python.org/3/library/io.html#io.TextIOBase.write
             if entry.output(stream) > 0:
-                chars_written += stream.write(os.linesep*2)
+                chars_written += stream.write("\n"*2)
 
         return chars_written
 

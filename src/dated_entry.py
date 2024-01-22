@@ -272,11 +272,11 @@ class DatedEntry(utils.Core):
         # ACTIVITIES
         # e.g. "bicycle skating pool swimming"
         if len(self.__activities) > 0:
-            chars_written += stream.write(os.linesep + ' '.join(self.__activities))
+            chars_written += stream.write("\n" + ' '.join(self.__activities))
         # NOTE
         # e.g. "Went swimming this evening."
         if self.__note is not None:
-            chars_written += stream.write(os.linesep + self.__note)
+            chars_written += stream.write("\n" + self.__note)
 
         return chars_written
 
