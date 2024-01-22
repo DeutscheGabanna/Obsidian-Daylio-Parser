@@ -321,16 +321,16 @@ class TestOutputFileStructure(TestCase):
         lib = Librarian("_tests/sheet-1-valid-data.csv", path_to_output="_tests/output-results")
         lib.output_all()
 
-        with open("_tests/output-results/2022/10/2022-10-25.md", encoding="UTF-8", newline='') as parsed_result:
-            with open("_tests/expected_results/2022-10-25.md", encoding="UTF-8", newline='') as expected_result:
+        with open("_tests/output-results/2022/10/2022-10-25.md", encoding="UTF-8") as parsed_result:
+            with open("_tests/expected_results/2022-10-25.md", encoding="UTF-8") as expected_result:
                 self.assertListEqual(parsed_result.readlines(), expected_result.readlines())
 
-        with open("_tests/output-results/2022/10/2022-10-26.md", encoding="UTF-8", newline='') as parsed_result:
-            with open("_tests/expected_results/2022-10-26.md", encoding="UTF-8", newline='') as expected_result:
+        with open("_tests/output-results/2022/10/2022-10-26.md", encoding="UTF-8") as parsed_result:
+            with open("_tests/expected_results/2022-10-26.md", encoding="UTF-8") as expected_result:
                 self.assertListEqual(parsed_result.readlines(), expected_result.readlines())
 
-        with open("_tests/output-results/2022/10/2022-10-27.md", encoding="UTF-8", newline='') as parsed_result:
-            with open("_tests/expected_results/2022-10-27.md", encoding="UTF-8", newline='') as expected_result:
+        with open("_tests/output-results/2022/10/2022-10-27.md", encoding="UTF-8") as parsed_result:
+            with open("_tests/expected_results/2022-10-27.md", encoding="UTF-8") as expected_result:
                 self.assertListEqual(parsed_result.readlines(), expected_result.readlines())
 
         with open("_tests/output-results/2022/10/2022-10-30.md", encoding="UTF-8") as parsed_result:
