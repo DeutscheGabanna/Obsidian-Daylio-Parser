@@ -4,19 +4,65 @@ from src.dated_entry import \
     Time, \
     slice_quotes, \
     DatedEntry, \
-    IsNotTimeError
+    IsNotTimeError, \
+    is_time_format_valid, \
+    is_time_range_valid
 
 
 # TODO: more test coverage needed
 
 class TestDatedEntryUtils(TestCase):
+    def test_is_time_format_valid(self):
+        self.assertTrue(is_time_format_valid("1:49 AM"))
+        self.assertTrue(is_time_format_valid("02:15"))
+        self.assertTrue(is_time_format_valid("12:00"))
+        self.assertTrue(is_time_format_valid("1:49 PM"))
+        self.assertFalse(is_time_format_valid("1::49"))
+        self.assertFalse(is_time_format_valid("12:60 AM"))
+        # noinspection SpellCheckingInspection
+        self.assertFalse(is_time_format_valid("okk:oksdf s"))
+        self.assertFalse(is_time_format_valid("25:00 AM"))
+        self.assertFalse(is_time_format_valid("26:10"))
+        self.assertFalse(is_time_format_valid("12:60 PM"))
+        self.assertFalse(is_time_format_valid("12:00 XX"))
+        self.assertFalse(is_time_format_valid("abc:def AM"))
+        self.assertFalse(is_time_format_valid("abc:def XM"))
+        self.assertFalse(is_time_format_valid("24:00 PM"))
+        self.assertFalse(is_time_format_valid("00:61 AM"))
+        self.assertFalse(is_time_format_valid("---"))
+        self.assertFalse(is_time_format_valid("23y7vg"))
+        self.assertFalse(is_time_format_valid("::::"))
+        self.assertFalse(is_time_format_valid("????"))
+        self.assertFalse(is_time_format_valid("00000:000000000000"))
+        self.assertFalse(is_time_format_valid("99:12"))
+        self.assertFalse(is_time_format_valid("11:12 UU"))
+        self.assertFalse(is_time_format_valid("9::12"))
+
+        # as expected, this will return True, because we're not checking ranges yet
+        self.assertTrue(is_time_format_valid("14:59 AM"))
+
+    def test_is_time_range_valid(self):
+        self.assertTrue(is_time_range_valid("11:00 AM"))
+        self.assertTrue(is_time_range_valid("3:00 AM"))
+        self.assertTrue(is_time_range_valid("7:59 AM"))
+        self.assertTrue(is_time_range_valid("17:50"))
+        self.assertTrue(is_time_range_valid("21:37"))
+        self.assertTrue(is_time_range_valid("00:00"))
+        self.assertTrue(is_time_range_valid("14:25"))
+
+        self.assertFalse(is_time_range_valid("31:00"))
+        self.assertFalse(is_time_range_valid("11:79"))
+        self.assertFalse(is_time_range_valid("20:99 PM"))
+        self.assertFalse(is_time_range_valid("-5:12"))
+        self.assertFalse(is_time_range_valid("-5:-12"))
+        self.assertFalse(is_time_range_valid("-5:-12"))
+        self.assertFalse(is_time_range_valid("13:00 AM"))
+        self.assertFalse(is_time_range_valid("15:00 PM"))
+
     def test_slice_quotes(self):
         self.assertEqual("test", slice_quotes("\"test\""))
         self.assertEqual("", slice_quotes("\"\""))
         self.assertEqual("bicycle", slice_quotes("\" bicycle   \""))
-
-    def test_is_time_format_valid(self):
-
 
 
 class TestTime(TestCase):
@@ -44,6 +90,17 @@ class TestTime(TestCase):
         self.assertRaises(IsNotTimeError, Time, "abc:def AM")
         self.assertRaises(IsNotTimeError, Time, "24:00 PM")
         self.assertRaises(IsNotTimeError, Time, "00:61 AM")
+
+    def test_str(self):
+        self.assertEqual("1:49 AM", str(Time("1:49 AM")))
+        self.assertEqual("02:15 AM", str(Time("02:15 AM")))
+        self.assertEqual("12:00 PM", str(Time("12:00 PM")))
+        self.assertEqual("6:30 PM", str(Time("6:30 PM")))
+        self.assertEqual("9:45 PM", str(Time("9:45 PM")))
+        self.assertEqual("00:00 AM", str(Time("00:00 AM")))
+        self.assertEqual("12:00 AM", str(Time("12:00 AM")))
+        self.assertEqual("13:30", str(Time("13:30")))
+        self.assertEqual("9:45", str(Time("9:45")))
 
 
 class TestDatedEntry(TestCase):

@@ -68,11 +68,10 @@ dated_entry_settings.add_argument(
 
 
 class IsNotTimeError(utils.CustomException):
-    def __init__(self, tried_time: str, logger: logging.Logger = None):
-        msg = f"Expected HH:MM (+ optionally AM/PM suffix) but got {tried_time} instead."
-        if logger is not None:
-            logger.warning(msg)
-        super().__init__(msg)
+    msg = "Expected HH:MM (+ optionally AM/PM suffix) but got {} instead."
+
+    def __init__(self, tried_time: str):
+        super().__init__(type(self).msg.format(tried_time))
 
 
 def is_time_format_valid(string: str) -> Match[str] | None:
@@ -148,7 +147,8 @@ class Time:
 
         # NOT OK
         else:
-            raise IsNotTimeError(string, self.__logger)
+            self.__logger.warning(IsNotTimeError.msg.format(string))
+            raise IsNotTimeError(string)
 
     def __str__(self) -> str:
         """
