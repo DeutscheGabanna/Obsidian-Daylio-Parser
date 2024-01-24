@@ -16,24 +16,24 @@ class TestMoodverse(TestCase):
         self.assertTrue(isinstance(my_default_moodverse["bad"], MoodGroup))
         self.assertTrue(isinstance(my_default_moodverse["awful"], MoodGroup))
 
-        self.assertEqual(my_default_moodverse["rad"], ["rad"])
-        self.assertEqual(my_default_moodverse["good"], ["good"])
-        self.assertEqual(my_default_moodverse["neutral"], ["neutral"])
-        self.assertEqual(my_default_moodverse["bad"], ["bad"])
-        self.assertEqual(my_default_moodverse["awful"], ["awful"])
+        self.assertEqual(["rad"], my_default_moodverse["rad"])
+        self.assertEqual(["good"], my_default_moodverse["good"])
+        self.assertEqual(["neutral"], my_default_moodverse["neutral"])
+        self.assertEqual(["bad"], my_default_moodverse["bad"])
+        self.assertEqual(["awful"], my_default_moodverse["awful"])
 
         # this is just so I can test whether my __eq__ function overload correctly skips this
         self.assertNotEqual(my_default_moodverse["awful"], MoodGroup("awful"))
 
         # These comparisons should be falsy because the array has more moods than the default mood set initialised
-        self.assertNotEqual(my_default_moodverse["rad"], ["rad", "amazing"])
-        self.assertNotEqual(my_default_moodverse["awful"], ["awful", "miserable"])
+        self.assertNotEqual(["rad", "amazing"], my_default_moodverse["rad"])
+        self.assertNotEqual(["awful", "miserable"], my_default_moodverse["awful"])
 
         # This comparison should be falsy because it does not contain the default mood set initialised
         # └── known moods of 'neutral' group
         #     └── neutral <-- from standard
         # And we're basically saying, "In neutral group there should only be a 'meh' mood"
-        self.assertNotEqual(my_default_moodverse["neutral"], ["meh"])
+        self.assertNotEqual(["meh"], my_default_moodverse["neutral"])
 
     def test_loading_valid_moods_into_moodverse(self):
         # These moods are self-sufficient, because even if standard mood set didn't exist, they satisfy all requirements
@@ -56,11 +56,11 @@ class TestMoodverse(TestCase):
         self.assertTrue(isinstance(my_moodverse["bad"], MoodGroup))
         self.assertTrue(isinstance(my_moodverse["awful"], MoodGroup))
 
-        self.assertEqual(my_moodverse["rad"], ["rad", "amazing"])
-        self.assertEqual(my_moodverse["good"], ["good", "nice"])
-        self.assertEqual(my_moodverse["neutral"], ["neutral", "ok", "fine"])
-        self.assertEqual(my_moodverse["bad"], ["bad"])
-        self.assertEqual(my_moodverse["awful"], ["awful", "miserable"])
+        self.assertEqual(["rad", "amazing"], my_moodverse["rad"])
+        self.assertEqual(["good", "nice"], my_moodverse["good"])
+        self.assertEqual(["neutral", "ok", "fine"], my_moodverse["neutral"])
+        self.assertEqual(["bad"], my_moodverse["bad"])
+        self.assertEqual(["awful", "miserable"], my_moodverse["awful"])
 
     def test_loading_semi_valid_moods_into_moodverse(self):
         # This mood set isn't self-sufficient, but still valid, because it has all the required "groups".
@@ -105,18 +105,18 @@ class TestMoodverse(TestCase):
         self.assertTrue(isinstance(my_moodverse["awful"], MoodGroup))
 
         # responses should be identical to the ones in previous test, because standard mood filled the blanks
-        self.assertEqual(my_moodverse["rad"], ["rad", "amazing"])
-        self.assertEqual(my_moodverse["good"], ["good", "nice"])
-        self.assertEqual(my_moodverse["neutral"], ["neutral", "ok", "fine"])
-        self.assertEqual(my_moodverse["bad"], ["bad"])
-        self.assertEqual(my_moodverse["awful"], ["awful", "miserable"])
+        self.assertEqual(["rad", "amazing"], my_moodverse["rad"])
+        self.assertEqual(["good", "nice"], my_moodverse["good"])
+        self.assertEqual(["neutral", "ok", "fine"], my_moodverse["neutral"])
+        self.assertEqual(["bad"], my_moodverse["bad"])
+        self.assertEqual(["awful", "miserable"], my_moodverse["awful"])
 
         # let's shuffle the order of values around to check if both lists are still equal
-        self.assertEqual(my_moodverse["rad"], ["amazing", "rad"])
-        self.assertEqual(my_moodverse["good"], ["nice", "good"])
-        self.assertEqual(my_moodverse["neutral"], ["ok", "neutral", "fine"])
-        self.assertEqual(my_moodverse["bad"], ["bad"])
-        self.assertEqual(my_moodverse["awful"], ["miserable", "awful"])
+        self.assertEqual(["amazing", "rad"], my_moodverse["rad"])
+        self.assertEqual(["nice", "good"], my_moodverse["good"])
+        self.assertEqual(["ok", "neutral", "fine"], my_moodverse["neutral"])
+        self.assertEqual(["bad"], my_moodverse["bad"])
+        self.assertEqual(["miserable", "awful"], my_moodverse["awful"])
 
     def test_get_mood(self):
         # These moods are self-sufficient, because even if standard mood set didn't exist, they satisfy all requirements
@@ -210,8 +210,8 @@ class TestMoodGroup(TestCase):
         # Check if they exist
 
         # checks __eq__ overload - obj(group_name) == str(group_name)
-        self.assertEqual(my_fancy_group["fancy"], "fancy")
-        self.assertEqual(my_fancy_group["out of this world"], "out of this world")
+        self.assertEqual("fancy", my_fancy_group["fancy"])
+        self.assertEqual("out of this world", my_fancy_group["out of this world"])
 
         # also checks __getitem__ - obj(group_name)[group_name]: List[mood: str]
-        self.assertSetEqual(set(my_fancy_group.known_moods), {"out of this world", "fancy"})
+        self.assertSetEqual({"out of this world", "fancy"}, set(my_fancy_group.known_moods))

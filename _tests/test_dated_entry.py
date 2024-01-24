@@ -12,9 +12,9 @@ from src.dated_entry import \
 class TestDatedEntryUtils(TestCase):
     def test_slice_quotes(self):
         # TODO: Flip values in assertions, because unittest's 'first' param is expected, 'second' is actual.
-        self.assertEqual(slice_quotes("\"test\""), "test")
-        self.assertEqual(slice_quotes("\"\""), "")
-        self.assertEqual(slice_quotes("\" bicycle   \""), "bicycle")
+        self.assertEqual("test", slice_quotes("\"test\""))
+        self.assertEqual("", slice_quotes("\"\""))
+        self.assertEqual("bicycle", slice_quotes("\" bicycle   \""))
 
 
 class TestTime(TestCase):
@@ -53,11 +53,11 @@ class TestDatedEntry(TestCase):
         )
 
         # Then
-        self.assertTrue(bare_minimum_dated_entry.mood, "vaguely ok")
-        self.assertTrue(bare_minimum_dated_entry.uid, "1:49 AM")
+        self.assertTrue("vaguely ok", bare_minimum_dated_entry.mood)
+        self.assertTrue("1:49 AM", bare_minimum_dated_entry.uid)
         self.assertIsNone(bare_minimum_dated_entry.title)
         self.assertIsNone(bare_minimum_dated_entry.note)
-        self.assertListEqual(bare_minimum_dated_entry.activities, [])
+        self.assertListEqual([], bare_minimum_dated_entry.activities)
 
     def test_insufficient_dated_entries(self):
         self.assertRaises(ValueError, DatedEntry, time="2:00", mood="")

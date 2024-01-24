@@ -74,9 +74,9 @@ class TestDate(TestCase):
         """
         Try to instantiate an object of :class:`DatedEntriesGroup` with either valid or invalid dates
         """
-        self.assertEqual(str(DatedEntriesGroup("2023-10-15")), "2023-10-15")
-        self.assertEqual(str(DatedEntriesGroup("2019-5-9")), "2019-5-9")
-        self.assertEqual(str(DatedEntriesGroup("2023-11-25")), "2023-11-25")
+        self.assertEqual("2023-10-15", str(DatedEntriesGroup("2023-10-15")))
+        self.assertEqual("2019-5-9", str(DatedEntriesGroup("2019-5-9")))
+        self.assertEqual("2023-11-25", str(DatedEntriesGroup("2023-11-25")))
 
         self.assertRaises(InvalidDateError, DatedEntriesGroup, "00-")
         self.assertRaises(InvalidDateError, DatedEntriesGroup, "2199-32-32")
@@ -113,8 +113,8 @@ class TestDate(TestCase):
         Tries to either access existing entries through :func:`access_dated_entry` or missing ones.
         Expected behaviour is for the :class:`DatedEntryGroup` to return the entry object if exists or raise exception.
         """
-        self.assertEqual(str(self.sample_date.access_dated_entry("10:00 AM")), "10:00 AM")
-        self.assertEqual(str(self.sample_date.access_dated_entry("9:30 PM")), "9:30 PM")
+        self.assertEqual("10:00 AM", str(self.sample_date.access_dated_entry("10:00 AM")))
+        self.assertEqual("9:30 PM", str(self.sample_date.access_dated_entry("9:30 PM")))
 
         # Test cases for 12-hour format
         self.assertRaises(DatedEntryMissingError, self.sample_date.access_dated_entry, "2: AM")  # <- no minutes
@@ -146,8 +146,8 @@ class TestDate(TestCase):
         - former will raise ValueError if time is invalid
         - latter will raise KeyError if time is invalid
         """
-        self.assertEqual(str(self.sample_date.known_entries_from_this_day["9:30 PM"]), "9:30 PM")
-        self.assertEqual(str(self.sample_date.known_entries_from_this_day["10:00 AM"]), "10:00 AM")
+        self.assertEqual("9:30 PM", str(self.sample_date.known_entries_from_this_day["9:30 PM"]))
+        self.assertEqual("10:00 AM", str(self.sample_date.known_entries_from_this_day["10:00 AM"]))
 
         self.assertRaises(KeyError, lambda: self.sample_date.known_entries_from_this_day["23:00"])
         self.assertRaises(KeyError, lambda: self.sample_date.known_entries_from_this_day["11:50 AM"])

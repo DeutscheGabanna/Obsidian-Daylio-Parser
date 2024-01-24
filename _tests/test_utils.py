@@ -8,12 +8,12 @@ class TestUtils(TestCase):
     def test_slugify(self):
         # no need to check if slug is a valid tag
         # noinspection SpellCheckingInspection
-        self.assertEqual(utils.slugify("ConvertThis to-------a SLUG", False), "convertthis-to-a-slug")
+        self.assertEqual("convertthis-to-a-slug", utils.slugify("ConvertThis to-------a SLUG", False))
         # noinspection SpellCheckingInspection
-        self.assertEqual(utils.slugify("Zażółć gęślą jaźń    ", False), "zażółć-gęślą-jaźń")
-        self.assertEqual(utils.slugify("  Multiple   spaces  between    words", False), "multiple-spaces-between-words")
+        self.assertEqual("zażółć-gęślą-jaźń", utils.slugify("Zażółć gęślą jaźń    ", False))
+        self.assertEqual("multiple-spaces-between-words", utils.slugify("  Multiple   spaces  between    words", False))
         # noinspection SpellCheckingInspection
-        self.assertEqual(utils.slugify("Хлеба нашего повшеднего", False), "хлеба-нашего-повшеднего")
+        self.assertEqual("хлеба-нашего-повшеднего", utils.slugify("Хлеба нашего повшеднего", False))
 
         # check if the slug is a valid tag
         with self.assertLogs(logging.getLogger("src.utils"), logging.WARNING):
