@@ -16,6 +16,9 @@ class TestDatedEntryUtils(TestCase):
         self.assertEqual("", slice_quotes("\"\""))
         self.assertEqual("bicycle", slice_quotes("\" bicycle   \""))
 
+    def test_is_time_format_valid(self):
+
+
 
 class TestTime(TestCase):
     def test_try_creating_valid_times(self):
