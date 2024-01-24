@@ -53,8 +53,8 @@ class TestDatedEntry(TestCase):
         )
 
         # Then
-        self.assertTrue("vaguely ok", bare_minimum_dated_entry.mood)
-        self.assertTrue("1:49 AM", bare_minimum_dated_entry.uid)
+        self.assertEqual("vaguely ok", bare_minimum_dated_entry.mood)
+        self.assertEqual("1:49 AM", bare_minimum_dated_entry.uid)
         self.assertIsNone(bare_minimum_dated_entry.title)
         self.assertIsNone(bare_minimum_dated_entry.note)
         self.assertListEqual([], bare_minimum_dated_entry.activities)
