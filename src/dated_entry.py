@@ -8,7 +8,6 @@ all notes -> notes written on a particular date -> _A PARTICULAR NOTE_
 from __future__ import annotations
 
 import logging
-import os  # used only for linesep
 import re
 import io
 from typing import Match
