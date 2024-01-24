@@ -103,18 +103,6 @@ def is_time_range_valid(string: str) -> bool:
     return all((is_hour_ok, is_minutes_ok))
 
 
-def slice_quotes(string: str) -> str:
-    """
-    Gets rid of initial and terminating quotation marks inserted by Daylio
-    :param string: string to be sliced
-    :returns: string without quotation marks in the beginning and end of the initial string, even if it means empty str.
-    """
-    if string is not None and len(string) > 2:
-        return string.strip("\"").strip()
-    # only 2 characters? Then it is an empty cell.
-    return ""
-
-
 class ErrorMsg(errors.ErrorMsgBase):
     INVALID_MOOD = "Mood {} is missing from a list of known moods. Not critical, but colouring won't work on the entry."
     WRONG_TIME = "Received {}, expected valid time. Cannot create this entry without a valid time."
@@ -217,11 +205,8 @@ class DatedEntry(utils.Core):
         # ---
         # Process activities
         # ---
-        # TODO: I could make a decouple_and_sanitise() func to strip() and slice the string into a valid array
         self.__activities = []
-        # empty string "" is unfortunately still a valid element of array which makes it truthy
-        # I use list comprehension to discard such falsy values from the temporary array
-        array = [activity for activity in slice_quotes(activities).split(options.csv_delimiter) if activity]
+        array = utils.strip_and_get_truthy(activities, options.csv_delimiter)
         if len(array) > 0:
             for activity in array:
                 self.__activities.append(utils.slugify(
@@ -235,7 +220,7 @@ class DatedEntry(utils.Core):
         # ---
         self.__title = None
         if title:
-            self.__title = slice_quotes(title)
+            self.__title = utils.slice_quotes(title)
         else:
             errors.ErrorMsgBase.print(ErrorMsg.WRONG_TITLE)
         # ---
@@ -243,7 +228,7 @@ class DatedEntry(utils.Core):
         # ---
         self.__note = None
         if note:
-            self.__note = slice_quotes(note)
+            self.__note = utils.slice_quotes(note)
         else:
             errors.ErrorMsgBase.print(ErrorMsg.WRONG_NOTE)
 

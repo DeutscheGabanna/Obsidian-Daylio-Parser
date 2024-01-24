@@ -78,6 +78,14 @@ class TestTime(TestCase):
         self.assertTrue(Time("13:30"))
         self.assertTrue(Time("9:45"))
 
+    def test_try_whitespaces(self):
+        self.assertTrue(Time("    1:49 AM  "))
+        self.assertTrue(Time("02:15 AM    "))
+        self.assertTrue(Time("      12:00 PM"))
+        self.assertEqual("01:49 AM", Time("    1:49 AM  "))
+        self.assertEqual("02:15 AM", Time("02:15 AM    "))
+        self.assertEqual("12:00 PM", Time("      12:00 PM"))
+
     def test_try_creating_invalid_times(self):
         # Invalid time formats
         # noinspection SpellCheckingInspection
@@ -113,7 +121,7 @@ class TestDatedEntry(TestCase):
 
         # Then
         self.assertEqual("vaguely ok", bare_minimum_dated_entry.mood)
-        self.assertEqual("1:49 AM", bare_minimum_dated_entry.uid)
+        self.assertEqual("1:49 AM", str(bare_minimum_dated_entry.uid))
         self.assertIsNone(bare_minimum_dated_entry.title)
         self.assertIsNone(bare_minimum_dated_entry.note)
         self.assertListEqual([], bare_minimum_dated_entry.activities)

@@ -4,6 +4,7 @@ Contains universally useful functions
 import logging
 import os
 import re
+from typing import Any, List
 
 from src import errors
 
@@ -71,3 +72,25 @@ def expand_path(path):
             os.path.expandvars(path)
         )
     )
+
+
+def slice_quotes(string: str) -> str:
+    """
+    Gets rid of initial and terminating quotation marks inserted by Daylio
+    :param string: string to be sliced
+    :returns: string without quotation marks in the beginning and end of the initial string, even if it means empty str.
+    """
+    if string is not None and len(string) > 2:
+        return string.strip("\"").strip()
+    # only 2 characters? Then it is an empty cell.
+    return ""
+
+
+def strip_and_get_truthy(delimited_string: str, delimiter: str) -> List[str]:
+    """
+    Pipe delimited strings may result in arrays that contain zero-length strings.
+    While such strings in itself are falsy, any array that has them is automatically truthy, unfortunately.
+    Therefore, I use list comprehension to discard such falsy values from an array and return the sanitised array.
+    :returns: array without falsy values, even if it results in empty (falsy) array
+    """
+    return [el for el in slice_quotes(delimited_string).split(delimiter) if el]

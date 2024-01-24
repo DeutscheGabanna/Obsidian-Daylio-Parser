@@ -30,3 +30,7 @@ class TestUtils(TestCase):
         self.assertFalse(utils.expand_path("$HOME/whatever").startswith("$HOME"))
         # noinspection SpellCheckingInspection
         self.assertFalse(utils.expand_path('~/yes').startswith('~'))
+
+    def test_strip_and_get_truthy(self):
+        self.assertListEqual(["one", "two"], utils.strip_and_get_truthy("\"one||two|||||\"", "|"))
+        self.assertListEqual([], utils.strip_and_get_truthy("\"\"", "|"))
