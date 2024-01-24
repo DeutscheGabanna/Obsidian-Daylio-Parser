@@ -34,3 +34,8 @@ class TestUtils(TestCase):
     def test_strip_and_get_truthy(self):
         self.assertListEqual(["one", "two"], utils.strip_and_get_truthy("\"one||two|||||\"", "|"))
         self.assertListEqual([], utils.strip_and_get_truthy("\"\"", "|"))
+
+    def test_slice_quotes(self):
+        self.assertEqual("test", utils.slice_quotes("\"test\""))
+        self.assertIsNone(utils.slice_quotes("\"\""))
+        self.assertEqual("bicycle", utils.slice_quotes("\" bicycle   \""))

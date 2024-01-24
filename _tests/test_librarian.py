@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from src import librarian
 from src.librarian import Librarian
+from src.config import options
 
 
 class TestLibrarian(TestCase):
@@ -133,9 +134,10 @@ class TestLibrarian(TestCase):
         However, it can only expand it (and be truthy) if the dict with moods has all required groups.
         Therefore, since ``incomplete-moods`` lacks the ``good`` group, the assertion will evaluate to False.
         """
+        options.tag_activities = True
         lib_to_test = Librarian(
             "_tests/files/journal_CSVs/sheet-1-valid-data.csv",
             "_tests/files/output-results/",
-            "_tests/mood_JSONs/incomplete-moods.json"
+            "_tests/files/mood_JSONs/incomplete-moods.json"
         )
         self.assertFalse(lib_to_test.current_mood_set.has_custom_moods)

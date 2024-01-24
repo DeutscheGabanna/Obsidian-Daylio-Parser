@@ -1,15 +1,13 @@
 from unittest import TestCase
 
+from src.config import options
 from src.dated_entry import \
     Time, \
-    slice_quotes, \
     DatedEntry, \
     IsNotTimeError, \
     is_time_format_valid, \
     is_time_range_valid
 
-
-# TODO: more test coverage needed
 
 class TestDatedEntryUtils(TestCase):
     def test_is_time_format_valid(self):
@@ -59,11 +57,6 @@ class TestDatedEntryUtils(TestCase):
         self.assertFalse(is_time_range_valid("13:00 AM"))
         self.assertFalse(is_time_range_valid("15:00 PM"))
 
-    def test_slice_quotes(self):
-        self.assertEqual("test", slice_quotes("\"test\""))
-        self.assertEqual("", slice_quotes("\"\""))
-        self.assertEqual("bicycle", slice_quotes("\" bicycle   \""))
-
 
 class TestTime(TestCase):
     def test_try_creating_valid_times(self):
@@ -82,9 +75,10 @@ class TestTime(TestCase):
         self.assertTrue(Time("    1:49 AM  "))
         self.assertTrue(Time("02:15 AM    "))
         self.assertTrue(Time("      12:00 PM"))
-        self.assertEqual("01:49 AM", Time("    1:49 AM  "))
-        self.assertEqual("02:15 AM", Time("02:15 AM    "))
-        self.assertEqual("12:00 PM", Time("      12:00 PM"))
+        # Leading 0 or not is consistent which what was passed, not with what the function thinks is best
+        self.assertEqual("1:49 AM", str(Time("    1:49 AM  ")))
+        self.assertEqual("02:15 AM", str(Time("02:15 AM    ")))
+        self.assertEqual("12:00 PM", str(Time("      12:00 PM")))
 
     def test_try_creating_invalid_times(self):
         # Invalid time formats
@@ -126,5 +120,70 @@ class TestDatedEntry(TestCase):
         self.assertIsNone(bare_minimum_dated_entry.note)
         self.assertListEqual([], bare_minimum_dated_entry.activities)
 
+    def test_other_variants_of_dated_entries(self):
+        # When
+        entry = DatedEntry(
+            time="1:49 AM",
+            mood="vaguely ok",
+            title="Normal situation"
+        )
+
+        # Then
+        self.assertEqual("vaguely ok", entry.mood)
+        self.assertEqual("1:49 AM", str(entry.uid))
+        self.assertEqual("Normal situation", entry.title)
+        self.assertIsNone(entry.note)
+        self.assertListEqual([], entry.activities)
+
+        # When
+        entry = DatedEntry(
+            time="1:49 AM",
+            mood="vaguely ok",
+            title="Normal situation",
+            note="A completely normal situation just occurred."
+        )
+
+        # Then
+        self.assertEqual("vaguely ok", entry.mood)
+        self.assertEqual("1:49 AM", str(entry.uid))
+        self.assertEqual("Normal situation", entry.title)
+        self.assertEqual("A completely normal situation just occurred.", entry.note)
+        self.assertListEqual([], entry.activities)
+
+        # When
+        options.tag_activities = True
+        entry = DatedEntry(
+            time="1:49 AM",
+            mood="vaguely ok",
+            title="Normal situation",
+            note="A completely normal situation just occurred.",
+            activities="bicycle|chess|gaming"
+        )
+
+        # Then
+        self.assertEqual("vaguely ok", entry.mood)
+        self.assertEqual("1:49 AM", str(entry.uid))
+        self.assertEqual("Normal situation", entry.title)
+        self.assertEqual("A completely normal situation just occurred.", entry.note)
+        self.assertListEqual(["#bicycle", "#chess", "#gaming"], entry.activities)
+
+        # When
+        options.tag_activities = False
+        entry = DatedEntry(
+            time="1:49 AM",
+            mood="vaguely ok",
+            title="Normal situation",
+            note="A completely normal situation just occurred.",
+            activities="bicycle|chess|gaming"
+        )
+
+        # Then
+        self.assertEqual("vaguely ok", entry.mood)
+        self.assertEqual("1:49 AM", str(entry.uid))
+        self.assertEqual("Normal situation", entry.title)
+        self.assertEqual("A completely normal situation just occurred.", entry.note)
+        self.assertListEqual(["bicycle", "chess", "gaming"], entry.activities)
+
     def test_insufficient_dated_entries(self):
         self.assertRaises(ValueError, DatedEntry, time="2:00", mood="")
+        self.assertRaises(ValueError, DatedEntry, time=":00", mood="vaguely ok")

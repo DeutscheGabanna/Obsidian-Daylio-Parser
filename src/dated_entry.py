@@ -128,7 +128,7 @@ class Time:
         self.__logger = logging.getLogger(self.__class__.__name__)
 
         # OK
-        if is_time_format_valid(string) and is_time_range_valid(string):
+        if is_time_format_valid(string.strip()) and is_time_range_valid(string.strip()):
             time_array = string.strip().split(':')
             self.__hour = time_array[0]
             self.__minutes = time_array[1]
@@ -193,7 +193,7 @@ class DatedEntry(utils.Core):
         # ---
         # MOOD
         # ---
-        if len(mood) == 0:
+        if not mood:
             raise ValueError
         # Check if the mood is valid - i.e. it does exist in the currently used Moodverse
         if not override_mood_set.get_mood(mood):
@@ -206,30 +206,27 @@ class DatedEntry(utils.Core):
         # Process activities
         # ---
         self.__activities = []
-        array = utils.strip_and_get_truthy(activities, options.csv_delimiter)
-        if len(array) > 0:
-            for activity in array:
-                self.__activities.append(utils.slugify(
-                    activity,
-                    options.tag_activities
-                ))
-        else:
-            errors.ErrorMsgBase.print(ErrorMsg.WRONG_ACTIVITIES)
+        if activities:
+            working_array = utils.strip_and_get_truthy(activities, options.csv_delimiter)
+            if len(working_array) > 0:
+                for activity in working_array:
+                    self.__activities.append(utils.slugify(
+                        activity,
+                        options.tag_activities
+                    ))
+            else:
+                errors.ErrorMsgBase.print(ErrorMsg.WRONG_ACTIVITIES)
         # ---
         # Process title
         # ---
-        self.__title = None
-        if title:
-            self.__title = utils.slice_quotes(title)
-        else:
+        self.__title = utils.slice_quotes(title) if title else None
+        if not title:
             errors.ErrorMsgBase.print(ErrorMsg.WRONG_TITLE)
         # ---
         # Process note
         # ---
-        self.__note = None
-        if note:
-            self.__note = utils.slice_quotes(note)
-        else:
+        self.__note = utils.slice_quotes(note) if note else None
+        if not note:
             errors.ErrorMsgBase.print(ErrorMsg.WRONG_NOTE)
 
     def output(self, stream: io.IOBase | typing.IO) -> int:
