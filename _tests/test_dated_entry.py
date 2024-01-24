@@ -11,7 +11,6 @@ from src.dated_entry import \
 
 class TestDatedEntryUtils(TestCase):
     def test_slice_quotes(self):
-        # TODO: Flip values in assertions, because unittest's 'first' param is expected, 'second' is actual.
         self.assertEqual("test", slice_quotes("\"test\""))
         self.assertEqual("", slice_quotes("\"\""))
         self.assertEqual("bicycle", slice_quotes("\" bicycle   \""))
