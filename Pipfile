@@ -8,6 +8,3 @@ name = "pypi"
 [dev-packages]
 coverage = "*"
 pylint = "*"
-
-[requires]
-python_version = "3.12"
