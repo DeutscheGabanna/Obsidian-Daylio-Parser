@@ -10,7 +10,6 @@ from __future__ import annotations
 import io
 import logging
 import re
-import os  # used for linesep only
 
 import typing
 
@@ -93,7 +92,7 @@ class Date:
             return all((other.year == self.year,
                         other.month == self.month,
                         other.day == self.day))
-        super().__eq__(other)
+        return super().__eq__(other)
 
     @property
     def year(self):

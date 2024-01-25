@@ -8,7 +8,6 @@ all notes -> notes written on a particular date -> _A PARTICULAR NOTE_
 from __future__ import annotations
 
 import logging
-import os  # used only for linesep
 import re
 import io
 from typing import Match
@@ -189,7 +188,7 @@ class DatedEntry(utils.Core):
         :param override_mood_set: Set if you want to use custom :class:`Moodverse` for mood handling
         """
         # TODO: have to test the whole instantiation function again after refactoring
-        self.__logger = logging.getLogger(self.__class__.__name__)
+        # self.__logger = logging.getLogger(self.__class__.__name__)
 
         # Processing required properties
         # ---

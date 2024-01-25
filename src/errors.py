@@ -65,7 +65,7 @@ class ErrorMsgBase:
 
         if len(args) != expected_args:
             logging.getLogger(__name__).warning(
-                f"Expected {expected_args} arguments for \"{message}\", but got {len(args)} instead."
+                "Expected %s arguments for \"%s\", but got %s instead.", expected_args, message, len(args)
             )
             return None
         return message.format(*args)

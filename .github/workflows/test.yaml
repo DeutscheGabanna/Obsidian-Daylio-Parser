@@ -10,10 +10,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     env: 
       PYTHONUTF8: 1
+    permissions:
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - name: Discover tests
-        run: python -m unittest discover -s ./_tests
+      - run: pipenv install --dev
+      - run: coverage run -m unittest discover -s ./_tests
+      - uses: py-cov-action/python-coverage-comment-action@v3
+        with:
+          GITHUB_TOKEN: ${{ github.token }}
