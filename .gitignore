@@ -1,2 +1,6 @@
 __pycache__/
-_tests/computed_results
+_tests/debug.log
+/_tests/output-results/
+.idea/
+.vscode/
+.coverage
