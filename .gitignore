@@ -1,6 +1,6 @@
 __pycache__/
-_tests/debug.log
-/_tests/output-results/
-.idea/
-.vscode/
-.coverage
+_tests/files/output-results
+/.idea/workspace.xml
+/.idea/usage.statistics.xml
+/.idea/shelf
+/.vscode
