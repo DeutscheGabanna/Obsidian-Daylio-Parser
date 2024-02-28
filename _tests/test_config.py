@@ -20,12 +20,12 @@ class TestSettingsManager(TestCase):
         # User input not in the dictionary of allowed options - should fail
         with self.assertRaises(SystemExit) as cm:
             options_to_check.parse_console(["--force", "yo-mama"])
-        self.assertEqual(cm.exception.code, 2, msg="Invalid arguments were passed to argparse so it should exit with 2")
+        self.assertEqual(2, cm.exception.code, msg="Invalid arguments were passed to argparse so it should exit with 2")
 
         # User input provided both options - should fail
         with self.assertRaises(SystemExit) as cm:
             options_to_check.parse_console(["--force", "refuse", "accept"])
-        self.assertEqual(cm.exception.code, 2, msg="Cannot both force-refuse and force-accept - should exit with 2")
+        self.assertEqual(2, cm.exception.code, msg="Cannot both force-refuse and force-accept - should exit with 2")
 
         # User input correct - should pass
         options_to_check.parse_console(["--force", "refuse"])
@@ -47,20 +47,20 @@ class TestSettingsManager(TestCase):
         # User input not in the dictionary of allowed options - should fail
         with self.assertRaises(SystemExit) as cm:
             options_to_check.parse_console(["--force=yo-mama"])
-        self.assertEqual(cm.exception.code, 2, msg="Invalid arguments were passed to argparse so it should exit with 2")
+        self.assertEqual(2, cm.exception.code, msg="Invalid arguments were passed to argparse so it should exit with 2")
 
         # User input provided both options - should fail
         with self.assertRaises(SystemExit) as cm:
             options_to_check.parse_console(["--force=refuse --force=accept"])
-        self.assertEqual(cm.exception.code, 2, msg="Cannot both force-refuse and force-accept - should exit with 2")
+        self.assertEqual(2, cm.exception.code, msg="Cannot both force-refuse and force-accept - should exit with 2")
 
         # User input correct - should pass
         options_to_check.parse_console(["--force=refuse"])
-        self.assertEqual(options_to_check.force, "refuse")
+        self.assertEqual("refuse", options_to_check.force)
 
         # User input correct - should pass
         options_to_check.parse_console(["--force=accept"])
-        self.assertEqual(options_to_check.force, "accept")
+        self.assertEqual("accept", options_to_check.force)
 
     def test_check_if_required_arguments_passed(self):
         # Setup
@@ -78,11 +78,11 @@ class TestSettingsManager(TestCase):
         with self.assertRaises(SystemExit) as cm:
             options_to_check.parse_console(["--optional_arg", "haha"])
             print(options_to_check)
-        self.assertEqual(cm.exception.code, 2, msg="No filepath provided - should exit with 2")
+        self.assertEqual(2, cm.exception.code, msg="No filepath provided - should exit with 2")
 
         # User input correct - should pass
         options_to_check.parse_console(["wakanda forever"])
-        self.assertEqual(options_to_check.filepath, "wakanda forever")
+        self.assertEqual("wakanda forever", options_to_check.filepath)
 
     def test_expected_failure_empty_argument_array(self):
         # Setup
@@ -95,7 +95,7 @@ class TestSettingsManager(TestCase):
         # User provided no arguments whatsoever - should fail
         with self.assertRaises(SystemExit) as cm:
             options_to_check.parse_console([])
-        self.assertEqual(cm.exception.code, 2, msg="No arguments provided to argparse so it should exit with 2")
+        self.assertEqual(2, cm.exception.code, msg="No arguments provided to argparse so it should exit with 2")
 
     # TODO: test Namespace=self where SettingsManager overwrites its default attributes with argparse
     def test_if_settings_manager_overwrites_its_properties_from_console(self):
@@ -124,8 +124,8 @@ class TestSettingsManager(TestCase):
 
         # User input correct - should pass
         options_to_check.parse_console(["this is NOT the default value", "hello", "world"])
-        self.assertEqual(options_to_check.filepath, "this is NOT the default value")
-        self.assertNotEqual(options_to_check.filepath, "this is the default value")
+        self.assertEqual("this is NOT the default value", options_to_check.filepath)
+        self.assertNotEqual("this is the default value", options_to_check.filepath)
         # because neither "foo" nor "bar" is part of the SettingsManager class, I need to access it like a key in dict
-        self.assertEqual(vars(options_to_check)["foo"], "hello")
-        self.assertEqual(vars(options_to_check)["bar"], "world")
+        self.assertEqual("hello", vars(options_to_check)["foo"])
+        self.assertEqual("world", vars(options_to_check)["bar"])

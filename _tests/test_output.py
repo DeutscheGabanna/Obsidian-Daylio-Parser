@@ -44,7 +44,7 @@ class TestDatedEntryOutput(TestCase):
                 # ---
                 # getvalue() returns the entire stream content regardless of current stream position, read() does not.
                 # https://stackoverflow.com/a/53485819
-                self.assertEqual(my_fake_file_stream.getvalue(), compare_stream.getvalue())
+                self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
 
     def test_entry_with_title_no_note(self):
         """
@@ -71,7 +71,7 @@ class TestDatedEntryOutput(TestCase):
 
                 # THEN
                 # ---
-                self.assertEqual(my_fake_file_stream.getvalue(), compare_stream.getvalue())
+                self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
 
     def test_entry_with_title_and_note(self):
         """
@@ -102,7 +102,7 @@ class TestDatedEntryOutput(TestCase):
 
                 # THEN
                 # ---
-                self.assertEqual(my_fake_file_stream.getvalue(), compare_stream.getvalue())
+                self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
 
     def test_entry_with_hashtagged_activities(self):
         """
@@ -129,7 +129,7 @@ class TestDatedEntryOutput(TestCase):
 
                 # THEN
                 # ---
-                self.assertEqual(my_fake_file_stream.getvalue(), compare_stream.getvalue())
+                self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
 
         # WHEN
         # ---
@@ -148,7 +148,7 @@ class TestDatedEntryOutput(TestCase):
 
                 # THEN
                 # ---
-                self.assertEqual(my_fake_file_stream.getvalue(), compare_stream.getvalue())
+                self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
 
 
 class TestDatedEntriesGroup(TestCase):
@@ -179,7 +179,7 @@ class TestDatedEntriesGroup(TestCase):
 
                 # THEN
                 # ---
-                self.assertEqual(my_fake_file_stream.getvalue(), compare_stream.getvalue())
+                self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
 
     def test_outputting_day_with_two_entries(self):
         """
@@ -219,7 +219,7 @@ class TestDatedEntriesGroup(TestCase):
 
                 # THEN
                 # ---
-                self.assertEqual(my_fake_file_stream.getvalue(), compare_stream.getvalue())
+                self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
 
     def test_outputting_day_with_two_entries_and_invalid_filetags(self):
         """
@@ -259,7 +259,7 @@ class TestDatedEntriesGroup(TestCase):
 
                 # THEN
                 # ---
-                self.assertEqual(my_fake_file_stream.getvalue(), compare_stream.getvalue())
+                self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
 
     def test_outputting_day_with_two_entries_and_partially_valid_filetags(self):
         """
@@ -303,7 +303,7 @@ class TestDatedEntriesGroup(TestCase):
 
                 # THEN
                 # ---
-                self.assertEqual(my_fake_file_stream.getvalue(), compare_stream.getvalue())
+                self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
 
 
 class TestOutputFileStructure(TestCase):
@@ -318,27 +318,27 @@ class TestOutputFileStructure(TestCase):
         """
         options.tags = ["daily"]
 
-        lib = Librarian("_tests/sheet-1-valid-data.csv", path_to_output="_tests/output-results")
+        lib = Librarian("_tests/files/journal_CSVs/sheet-1-valid-data.csv", path_to_output="_tests/files/output-results")
         lib.output_all()
 
-        with open("_tests/output-results/2022/10/2022-10-25.md", encoding="UTF-8") as parsed_result:
-            with open("_tests/expected_results/2022-10-25.md", encoding="UTF-8") as expected_result:
-                self.assertListEqual(parsed_result.readlines(), expected_result.readlines())
+        with open("_tests/files/output-results/2022/10/2022-10-25.md", encoding="UTF-8") as parsed_result:
+            with open("_tests/files/expected_results/2022-10-25.md", encoding="UTF-8") as expected_result:
+                self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
-        with open("_tests/output-results/2022/10/2022-10-26.md", encoding="UTF-8") as parsed_result:
-            with open("_tests/expected_results/2022-10-26.md", encoding="UTF-8") as expected_result:
-                self.assertListEqual(parsed_result.readlines(), expected_result.readlines())
+        with open("_tests/files/output-results/2022/10/2022-10-26.md", encoding="UTF-8") as parsed_result:
+            with open("_tests/files/expected_results/2022-10-26.md", encoding="UTF-8") as expected_result:
+                self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
-        with open("_tests/output-results/2022/10/2022-10-27.md", encoding="UTF-8") as parsed_result:
-            with open("_tests/expected_results/2022-10-27.md", encoding="UTF-8") as expected_result:
-                self.assertListEqual(parsed_result.readlines(), expected_result.readlines())
+        with open("_tests/files/output-results/2022/10/2022-10-27.md", encoding="UTF-8") as parsed_result:
+            with open("_tests/files/expected_results/2022-10-27.md", encoding="UTF-8") as expected_result:
+                self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
-        with open("_tests/output-results/2022/10/2022-10-30.md", encoding="UTF-8") as parsed_result:
-            with open("_tests/expected_results/2022-10-30.md", encoding="UTF-8") as expected_result:
-                self.assertListEqual(parsed_result.readlines(), expected_result.readlines())
+        with open("_tests/files/output-results/2022/10/2022-10-30.md", encoding="UTF-8") as parsed_result:
+            with open("_tests/files/expected_results/2022-10-30.md", encoding="UTF-8") as expected_result:
+                self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
     def tearDown(self) -> None:
-        folder = '_tests/output-results'
+        folder = '_tests/files/output-results'
         for filename in os.listdir(folder):
             file_path = os.path.join(folder, filename)
             try:

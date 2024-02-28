@@ -340,10 +340,10 @@ class Librarian:
 
         if str(date_lookup) in self.__known_dates:
             return self.__known_dates[str(date_lookup)]
-
-        new_obj = DatedEntriesGroup(str(date_lookup), self.__mood_set)
-        self.__known_dates[str(date_lookup)] = new_obj
-        return new_obj
+        else:
+            new_obj = DatedEntriesGroup(str(date_lookup), self.__mood_set)
+            self.__known_dates[str(date_lookup)] = new_obj
+            return new_obj
 
     def output_all(self):
         """

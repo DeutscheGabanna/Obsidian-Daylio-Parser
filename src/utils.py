@@ -4,6 +4,7 @@ Contains universally useful functions
 import logging
 import os
 import re
+from typing import Any, List
 
 from src import errors
 
@@ -40,7 +41,7 @@ class StreamError(CustomException):
     pass
 
 
-def slugify(text: str, taggify: bool):
+def slugify(text: str, taggify: bool) -> str:
     # noinspection SpellCheckingInspection
     """
     Simple slugification function to transform text. Works on non-latin characters too.
@@ -59,7 +60,7 @@ def slugify(text: str, taggify: bool):
     return '#' + text if taggify else text
 
 
-def expand_path(path):
+def expand_path(path: str) -> str:
     """
     Expand all %variables%, ~/home-directories and relative parts in the path. Return the expanded path.
     It does not use os.path.abspath() because it treats current script directory as root.
@@ -71,3 +72,29 @@ def expand_path(path):
             os.path.expandvars(path)
         )
     )
+
+
+def slice_quotes(string: str) -> str | None:
+    """
+    Gets rid of initial and terminating quotation marks inserted by Daylio
+    :param string: string to be sliced
+    :returns: string without quotation marks in the beginning and end of the initial string, or nothing if "" provided.
+    """
+    # only 2 characters? Then it is an empty cell, because Daylio wraps its values inside "" like so: "","","",""...
+    return string.strip("\"").strip() if string and len(string) > 2 else None
+
+
+def strip_and_get_truthy(delimited_string: str, delimiter: str) -> List[str]:
+    """
+    Pipe delimited strings may result in arrays that contain zero-length strings.
+    While such strings in itself are falsy, any array that has them is automatically truthy, unfortunately.
+    Therefore, I use list comprehension to discard such falsy values from an array and return the sanitised array.
+    :returns: array without falsy values, even if it results in empty (falsy) array
+    """
+    # I need to separate returning into the guard statement and actual return because slice_quotes can produce null vals
+    if delimited_string is None:
+        return []
+
+    sliced_del_string = slice_quotes(delimited_string)
+
+    return [el for el in sliced_del_string.split(delimiter) if el] if sliced_del_string else []

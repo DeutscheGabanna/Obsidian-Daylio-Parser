@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from typing import List, Optional
+
 from src import errors
 from src import utils
 
@@ -26,7 +27,6 @@ class Moodverse:
     Moodverse is the single source of truth regarding moods. It always knows the bare-minimum set of moods.
     Its knowledge can be expanded with custom mood sets.
     """
-
     def __init__(self, moods_to_process: dict[str, List[str]] = None):
         """
         If you want to expand the standard mood set with your custom one, make sure to pass a valid mood set file.
@@ -98,7 +98,7 @@ class Moodverse:
         # The side effect is that keys in the passed dictionary which do not appear in standard mood set are skipped
 
         # e.g. I'm expecting a "rad" group to be in the dict
-        for expected_mood_group in self.__mood_set:
+        for expected_mood_group in self.__mood_set.keys():
             expected_mood_group: str
             try:
                 # Leap of faith - there must be a "rad" group, otherwise there's no point in continuing
@@ -136,7 +136,6 @@ class AbstractMood:
     """
     Provides shared methods for :class:`MoodGroup` and :class:`Mood`.
     """
-
     def __init__(self, value):
         if not value or isinstance(value, str) is False:
             raise ValueError
@@ -166,7 +165,6 @@ class MoodGroup(AbstractMood):
 
     Daylio uses 'rad', 'great', 'neutral', 'bad' & 'awful'.
     """
-
     def __init__(self, name_of_the_mood_group: str):
         """
         Create a :class:`MoodGroup` object with the specified name.
@@ -177,7 +175,7 @@ class MoodGroup(AbstractMood):
 
         super().__init__(name_of_the_mood_group)
 
-    def create_mood(self, name: str = None):
+    def create_mood(self, name: str = None) -> 'Mood':
         """
         Create the specified mood and append its reference to the known moods in this group.
         :param name: Name of the mood. If none provided, use the mood group name as its name (e.g. rad group -> rad).
@@ -190,9 +188,12 @@ class MoodGroup(AbstractMood):
         final_name = self.name if name is None else name
         try:
             ref = Mood(final_name)
-            self.__known_moods[final_name] = ref
         except (EmptyValue, ValueError):
             self.__logger.warning(ErrorMsg.print(ErrorMsg.SKIPPED_INVALID_MOOD, final_name))
+        # all went ok
+        else:
+            self.__known_moods[final_name] = ref
+            return ref
 
     # TODO: possibly could do funky stuff with multiple inheritance - this method could come from Moodverse
     @property
@@ -226,7 +227,7 @@ class MoodGroup(AbstractMood):
         if isinstance(other, list) and all(isinstance(item, str) for item in other):
             # I'm not sure why, but set() instead of pure array makes sure that the order is irrelevant
             # therefore ["nice", "good"] == ["good", "nice"] is Truthy, as expected
-            return {str(obj) for obj in self.known_moods} == set(other)
+            return set([str(obj) for obj in self.known_moods]) == set(other)
         # Call the superclass' __eq__ for any other comparison
         return super().__eq__(other)
 
@@ -240,3 +241,5 @@ class Mood(AbstractMood):
     - rad is a mood. It belongs to rad group.
     - awesome is a mood. It also belongs to the rad group.
     - hungry is a mood. It belongs either to neutral, bad or awful mood groups, depending on user preferences I guess"""
+    def __init__(self, value: str):
+        super().__init__(value)

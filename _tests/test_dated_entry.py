@@ -1,20 +1,61 @@
 from unittest import TestCase
 
+from src.config import options
 from src.dated_entry import \
     Time, \
-    slice_quotes, \
     DatedEntry, \
-    IsNotTimeError
+    IsNotTimeError, \
+    is_time_format_valid, \
+    is_time_range_valid
 
-
-# TODO: more test coverage needed
 
 class TestDatedEntryUtils(TestCase):
-    def test_slice_quotes(self):
-        # TODO: Flip values in assertions, because unittest's 'first' param is expected, 'second' is actual.
-        self.assertEqual(slice_quotes("\"test\""), "test")
-        self.assertEqual(slice_quotes("\"\""), "")
-        self.assertEqual(slice_quotes("\" bicycle   \""), "bicycle")
+    def test_is_time_format_valid(self):
+        self.assertTrue(is_time_format_valid("1:49 AM"))
+        self.assertTrue(is_time_format_valid("02:15"))
+        self.assertTrue(is_time_format_valid("12:00"))
+        self.assertTrue(is_time_format_valid("1:49 PM"))
+        self.assertFalse(is_time_format_valid("1::49"))
+        self.assertFalse(is_time_format_valid("12:60 AM"))
+        # noinspection SpellCheckingInspection
+        self.assertFalse(is_time_format_valid("okk:oksdf s"))
+        self.assertFalse(is_time_format_valid("25:00 AM"))
+        self.assertFalse(is_time_format_valid("26:10"))
+        self.assertFalse(is_time_format_valid("12:60 PM"))
+        self.assertFalse(is_time_format_valid("12:00 XX"))
+        self.assertFalse(is_time_format_valid("abc:def AM"))
+        self.assertFalse(is_time_format_valid("abc:def XM"))
+        self.assertFalse(is_time_format_valid("24:00 PM"))
+        self.assertFalse(is_time_format_valid("00:61 AM"))
+        self.assertFalse(is_time_format_valid("---"))
+        self.assertFalse(is_time_format_valid("23y7vg"))
+        self.assertFalse(is_time_format_valid("::::"))
+        self.assertFalse(is_time_format_valid("????"))
+        self.assertFalse(is_time_format_valid("00000:000000000000"))
+        self.assertFalse(is_time_format_valid("99:12"))
+        self.assertFalse(is_time_format_valid("11:12 UU"))
+        self.assertFalse(is_time_format_valid("9::12"))
+
+        # as expected, this will return True, because we're not checking ranges yet
+        self.assertTrue(is_time_format_valid("14:59 AM"))
+
+    def test_is_time_range_valid(self):
+        self.assertTrue(is_time_range_valid("11:00 AM"))
+        self.assertTrue(is_time_range_valid("3:00 AM"))
+        self.assertTrue(is_time_range_valid("7:59 AM"))
+        self.assertTrue(is_time_range_valid("17:50"))
+        self.assertTrue(is_time_range_valid("21:37"))
+        self.assertTrue(is_time_range_valid("00:00"))
+        self.assertTrue(is_time_range_valid("14:25"))
+
+        self.assertFalse(is_time_range_valid("31:00"))
+        self.assertFalse(is_time_range_valid("11:79"))
+        self.assertFalse(is_time_range_valid("20:99 PM"))
+        self.assertFalse(is_time_range_valid("-5:12"))
+        self.assertFalse(is_time_range_valid("-5:-12"))
+        self.assertFalse(is_time_range_valid("-5:-12"))
+        self.assertFalse(is_time_range_valid("13:00 AM"))
+        self.assertFalse(is_time_range_valid("15:00 PM"))
 
 
 class TestTime(TestCase):
@@ -30,6 +71,15 @@ class TestTime(TestCase):
         self.assertTrue(Time("13:30"))
         self.assertTrue(Time("9:45"))
 
+    def test_try_whitespaces(self):
+        self.assertTrue(Time("    1:49 AM  "))
+        self.assertTrue(Time("02:15 AM    "))
+        self.assertTrue(Time("      12:00 PM"))
+        # Leading 0 or not is consistent which what was passed, not with what the function thinks is best
+        self.assertEqual("1:49 AM", str(Time("    1:49 AM  ")))
+        self.assertEqual("02:15 AM", str(Time("02:15 AM    ")))
+        self.assertEqual("12:00 PM", str(Time("      12:00 PM")))
+
     def test_try_creating_invalid_times(self):
         # Invalid time formats
         # noinspection SpellCheckingInspection
@@ -43,6 +93,17 @@ class TestTime(TestCase):
         self.assertRaises(IsNotTimeError, Time, "24:00 PM")
         self.assertRaises(IsNotTimeError, Time, "00:61 AM")
 
+    def test_str(self):
+        self.assertEqual("1:49 AM", str(Time("1:49 AM")))
+        self.assertEqual("02:15 AM", str(Time("02:15 AM")))
+        self.assertEqual("12:00 PM", str(Time("12:00 PM")))
+        self.assertEqual("6:30 PM", str(Time("6:30 PM")))
+        self.assertEqual("9:45 PM", str(Time("9:45 PM")))
+        self.assertEqual("00:00 AM", str(Time("00:00 AM")))
+        self.assertEqual("12:00 AM", str(Time("12:00 AM")))
+        self.assertEqual("13:30", str(Time("13:30")))
+        self.assertEqual("9:45", str(Time("9:45")))
+
 
 class TestDatedEntry(TestCase):
     def test_bare_minimum_dated_entries(self):
@@ -53,11 +114,76 @@ class TestDatedEntry(TestCase):
         )
 
         # Then
-        self.assertTrue(bare_minimum_dated_entry.mood, "vaguely ok")
-        self.assertTrue(bare_minimum_dated_entry.uid, "1:49 AM")
+        self.assertEqual("vaguely ok", bare_minimum_dated_entry.mood)
+        self.assertEqual("1:49 AM", str(bare_minimum_dated_entry.uid))
         self.assertIsNone(bare_minimum_dated_entry.title)
         self.assertIsNone(bare_minimum_dated_entry.note)
-        self.assertListEqual(bare_minimum_dated_entry.activities, [])
+        self.assertListEqual([], bare_minimum_dated_entry.activities)
+
+    def test_other_variants_of_dated_entries(self):
+        # When
+        entry = DatedEntry(
+            time="1:49 AM",
+            mood="vaguely ok",
+            title="Normal situation"
+        )
+
+        # Then
+        self.assertEqual("vaguely ok", entry.mood)
+        self.assertEqual("1:49 AM", str(entry.uid))
+        self.assertEqual("Normal situation", entry.title)
+        self.assertIsNone(entry.note)
+        self.assertListEqual([], entry.activities)
+
+        # When
+        entry = DatedEntry(
+            time="1:49 AM",
+            mood="vaguely ok",
+            title="Normal situation",
+            note="A completely normal situation just occurred."
+        )
+
+        # Then
+        self.assertEqual("vaguely ok", entry.mood)
+        self.assertEqual("1:49 AM", str(entry.uid))
+        self.assertEqual("Normal situation", entry.title)
+        self.assertEqual("A completely normal situation just occurred.", entry.note)
+        self.assertListEqual([], entry.activities)
+
+        # When
+        options.tag_activities = True
+        entry = DatedEntry(
+            time="1:49 AM",
+            mood="vaguely ok",
+            title="Normal situation",
+            note="A completely normal situation just occurred.",
+            activities="bicycle|chess|gaming"
+        )
+
+        # Then
+        self.assertEqual("vaguely ok", entry.mood)
+        self.assertEqual("1:49 AM", str(entry.uid))
+        self.assertEqual("Normal situation", entry.title)
+        self.assertEqual("A completely normal situation just occurred.", entry.note)
+        self.assertListEqual(["#bicycle", "#chess", "#gaming"], entry.activities)
+
+        # When
+        options.tag_activities = False
+        entry = DatedEntry(
+            time="1:49 AM",
+            mood="vaguely ok",
+            title="Normal situation",
+            note="A completely normal situation just occurred.",
+            activities="bicycle|chess|gaming"
+        )
+
+        # Then
+        self.assertEqual("vaguely ok", entry.mood)
+        self.assertEqual("1:49 AM", str(entry.uid))
+        self.assertEqual("Normal situation", entry.title)
+        self.assertEqual("A completely normal situation just occurred.", entry.note)
+        self.assertListEqual(["bicycle", "chess", "gaming"], entry.activities)
 
     def test_insufficient_dated_entries(self):
         self.assertRaises(ValueError, DatedEntry, time="2:00", mood="")
+        self.assertRaises(ValueError, DatedEntry, time=":00", mood="vaguely ok")

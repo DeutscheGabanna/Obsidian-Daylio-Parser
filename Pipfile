@@ -6,5 +6,6 @@ name = "pypi"
 [packages]
 
 [dev-packages]
-coverage = "*"
-pylint = "*"
+
+[requires]
+python_version = "3.12"

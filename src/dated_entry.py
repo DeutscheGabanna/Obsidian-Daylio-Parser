@@ -68,7 +68,10 @@ dated_entry_settings.add_argument(
 
 
 class IsNotTimeError(utils.CustomException):
-    """Expected a string in a valid time format - HH:MM with optional AM/PM suffix."""
+    msg = "Expected HH:MM (+ optionally AM/PM suffix) but got {} instead."
+
+    def __init__(self, tried_time: str):
+        super().__init__(type(self).msg.format(tried_time))
 
 
 def is_time_format_valid(string: str) -> Match[str] | None:
@@ -100,18 +103,6 @@ def is_time_range_valid(string: str) -> bool:
     return all((is_hour_ok, is_minutes_ok))
 
 
-def slice_quotes(string: str) -> str:
-    """
-    Gets rid of initial and terminating quotation marks inserted by Daylio
-    :param string: string to be sliced
-    :returns: string without quotation marks in the beginning and end of the initial string, even if it means empty str.
-    """
-    if string is not None and len(string) > 2:
-        return string.strip("\"").strip()
-    # only 2 characters? Then it is an empty cell.
-    return ""
-
-
 class ErrorMsg(errors.ErrorMsgBase):
     INVALID_MOOD = "Mood {} is missing from a list of known moods. Not critical, but colouring won't work on the entry."
     WRONG_TIME = "Received {}, expected valid time. Cannot create this entry without a valid time."
@@ -137,16 +128,15 @@ class Time:
         self.__logger = logging.getLogger(self.__class__.__name__)
 
         # OK
-        if is_time_format_valid(string) and is_time_range_valid(string):
+        if is_time_format_valid(string.strip()) and is_time_range_valid(string.strip()):
             time_array = string.strip().split(':')
             self.__hour = time_array[0]
             self.__minutes = time_array[1]
 
         # NOT OK
         else:
-            msg_on_error = ErrorMsg.print(ErrorMsg.WRONG_VALUE, string, "HH:MM (AM/PM/)")
-            self.__logger.warning(msg_on_error)
-            raise IsNotTimeError(msg_on_error)
+            self.__logger.warning(IsNotTimeError.msg.format(string))
+            raise IsNotTimeError(string)
 
     def __str__(self) -> str:
         """
@@ -188,7 +178,7 @@ class DatedEntry(utils.Core):
         :param override_mood_set: Set if you want to use custom :class:`Moodverse` for mood handling
         """
         # TODO: have to test the whole instantiation function again after refactoring
-        # self.__logger = logging.getLogger(self.__class__.__name__)
+        self.__logger = logging.getLogger(self.__class__.__name__)
 
         # Processing required properties
         # ---
@@ -203,7 +193,7 @@ class DatedEntry(utils.Core):
         # ---
         # MOOD
         # ---
-        if len(mood) == 0:
+        if not mood:
             raise ValueError
         # Check if the mood is valid - i.e. it does exist in the currently used Moodverse
         if not override_mood_set.get_mood(mood):
@@ -215,34 +205,28 @@ class DatedEntry(utils.Core):
         # ---
         # Process activities
         # ---
-        # TODO: I could make a decouple_and_sanitise() func to strip() and slice the string into a valid array
         self.__activities = []
-        # empty string "" is unfortunately still a valid element of array which makes it truthy
-        # I use list comprehension to discard such falsy values from the temporary array
-        array = [activity for activity in slice_quotes(activities).split(options.csv_delimiter) if activity]
-        if len(array) > 0:
-            for activity in array:
-                self.__activities.append(utils.slugify(
-                    activity,
-                    options.tag_activities
-                ))
-        else:
-            errors.ErrorMsgBase.print(ErrorMsg.WRONG_ACTIVITIES)
+        if activities:
+            working_array = utils.strip_and_get_truthy(activities, options.csv_delimiter)
+            if len(working_array) > 0:
+                for activity in working_array:
+                    self.__activities.append(utils.slugify(
+                        activity,
+                        options.tag_activities
+                    ))
+            else:
+                errors.ErrorMsgBase.print(ErrorMsg.WRONG_ACTIVITIES)
         # ---
         # Process title
         # ---
-        self.__title = None
-        if title:
-            self.__title = slice_quotes(title)
-        else:
+        self.__title = utils.slice_quotes(title) if title else None
+        if not title:
             errors.ErrorMsgBase.print(ErrorMsg.WRONG_TITLE)
         # ---
         # Process note
         # ---
-        self.__note = None
-        if note:
-            self.__note = slice_quotes(note)
-        else:
+        self.__note = utils.slice_quotes(note) if note else None
+        if not note:
             errors.ErrorMsgBase.print(ErrorMsg.WRONG_NOTE)
 
     def output(self, stream: io.IOBase | typing.IO) -> int:
