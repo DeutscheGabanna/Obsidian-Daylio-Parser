@@ -1,0 +1,9 @@
+[project]
+name = "daylio-obsidian-parser"
+version = "0.0.1"
+requires-python = ">= 3.12"
+authors = [
+  {name = "Paweł Ilnicki", email = "59067099+DeutscheGabanna@users.noreply.github.com"}
+]
+description = "Converts Daylio app .csv file into markdown files for use in Obsidian."
+readme = {file = "README.md", content-type = "text/markdown"}
