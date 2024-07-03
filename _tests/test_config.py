@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from src import config
+from daylio_to_md import config
 
 
 class TestSettingsManager(TestCase):

@@ -13,12 +13,11 @@ import re
 
 import typing
 
-from src import dated_entry
-from src import errors
-from src import utils
-from src.dated_entry import DatedEntry
-from src.entry.mood import Moodverse
-from src.config import options
+from daylio_to_md import dated_entry
+from daylio_to_md import utils, errors
+from daylio_to_md.dated_entry import DatedEntry
+from daylio_to_md.entry.mood import Moodverse
+from daylio_to_md.config import options
 
 
 class DatedEntryMissingError(utils.CustomException):

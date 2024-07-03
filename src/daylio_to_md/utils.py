@@ -4,9 +4,9 @@ Contains universally useful functions
 import logging
 import os
 import re
-from typing import Any, List
+from typing import List
 
-from src import errors
+from daylio_to_md import errors
 
 
 class ErrorMsg(errors.ErrorMsgBase):

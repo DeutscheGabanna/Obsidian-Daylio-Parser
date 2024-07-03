@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from src import errors
+from daylio_to_md import errors
 
 
 class TestErrorMsgBase(TestCase):

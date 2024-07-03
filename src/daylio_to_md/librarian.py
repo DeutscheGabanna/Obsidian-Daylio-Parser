@@ -19,12 +19,10 @@ import os
 import logging
 from typing import IO
 
-from src import dated_entries_group
-from src import errors
-from src import utils
-from src.config import options
-from src.dated_entries_group import DatedEntriesGroup
-from src.entry.mood import Moodverse
+from daylio_to_md import utils, errors, dated_entries_group
+from daylio_to_md.config import options
+from daylio_to_md.dated_entries_group import DatedEntriesGroup
+from daylio_to_md.entry.mood import Moodverse
 
 # Adding Librarian-specific options in global_settings
 librarian_settings = options.arg_console.add_argument_group(

@@ -1,7 +1,7 @@
 import logging
 from unittest import TestCase
 
-from src import utils
+from daylio_to_md import utils
 
 
 class TestUtils(TestCase):
@@ -16,13 +16,13 @@ class TestUtils(TestCase):
         self.assertEqual("хлеба-нашего-повшеднего", utils.slugify("Хлеба нашего повшеднего", False))
 
         # check if the slug is a valid tag
-        with self.assertLogs(logging.getLogger("src.utils"), logging.WARNING):
+        with self.assertLogs(logging.getLogger("daylio_to_md.utils"), logging.WARNING):
             utils.slugify("1. Digit cannot appear at the beginning of a tag", True)
 
-        with self.assertNoLogs(logging.getLogger("src.utils"), logging.WARNING):
+        with self.assertNoLogs(logging.getLogger("daylio_to_md.utils"), logging.WARNING):
             utils.slugify("Digits within the string 1234 - are ok", True)
 
-        with self.assertNoLogs(logging.getLogger("src.utils"), logging.WARNING):
+        with self.assertNoLogs(logging.getLogger("daylio_to_md.utils"), logging.WARNING):
             utils.slugify("Digits at the end of the string are also ok 456", True)
 
     def test_expand_path(self):

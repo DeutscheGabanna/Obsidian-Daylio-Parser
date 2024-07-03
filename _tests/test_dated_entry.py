@@ -1,13 +1,12 @@
 from unittest import TestCase
 
-from src.config import options
-from src.dated_entry import \
+from daylio_to_md.dated_entry import \
     Time, \
     DatedEntry, \
     IsNotTimeError, \
     is_time_format_valid, \
     is_time_range_valid
-
+from daylio_to_md.config import options
 
 class TestDatedEntryUtils(TestCase):
     def test_is_time_format_valid(self):

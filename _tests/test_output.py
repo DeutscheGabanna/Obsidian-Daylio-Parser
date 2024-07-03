@@ -3,10 +3,10 @@ import shutil
 import io
 from unittest import TestCase
 
-from src.dated_entry import DatedEntry
-from src.dated_entries_group import DatedEntriesGroup
-from src.librarian import Librarian
-from src.config import options
+from daylio_to_md.dated_entry import DatedEntry
+from daylio_to_md.dated_entries_group import DatedEntriesGroup
+from daylio_to_md.librarian import Librarian
+from daylio_to_md.config import options
 
 
 class TestDatedEntryOutput(TestCase):

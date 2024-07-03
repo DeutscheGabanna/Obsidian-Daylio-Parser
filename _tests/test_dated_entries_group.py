@@ -1,10 +1,10 @@
 import unittest
 from unittest import TestCase
 
-from src.dated_entries_group import \
-    DatedEntriesGroup,\
+from daylio_to_md.dated_entries_group import \
+    DatedEntriesGroup, \
     InvalidDateError, \
-    DatedEntryMissingError,\
+    DatedEntryMissingError, \
     TriedCreatingDuplicateDatedEntryError, \
     IncompleteDataRow
 

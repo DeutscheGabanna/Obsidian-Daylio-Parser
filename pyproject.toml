@@ -1,9 +1,28 @@
+# TODO: make dynamic: version, description, readme, licence
 [project]
 name = "daylio-obsidian-parser"
-version = "0.0.1"
+version = "0.1"
 requires-python = ">= 3.12"
 authors = [
-  {name = "Paweł Ilnicki", email = "59067099+DeutscheGabanna@users.noreply.github.com"}
+	{name = "Paweł Ilnicki", email = "59067099+DeutscheGabanna@users.noreply.github.com"}
 ]
 description = "Converts Daylio app .csv file into markdown files for use in Obsidian."
 readme = {file = "README.md", content-type = "text/markdown"}
+license = {file = "LICENSE", content-type = "text/markdown"}
+classifiers = [
+	"Topic :: Text Processing :: Markup :: Markdown",
+	"Intended Audience :: Developers",
+	"Intended Audience :: End Users/Desktop",
+	"Topic :: Utilities",
+	"Development Status :: 3 - Alpha",
+	"Operating System :: OS Independent",
+	"Programming Language :: Python :: 3"
+]
+keywords = [ "csv", "markdown", ".md", ".csv", "daylio", "obsidian", "file converter" ]
+
+[project.scripts]
+daylio_to_md = "daylio_to_md.__main__:main"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"

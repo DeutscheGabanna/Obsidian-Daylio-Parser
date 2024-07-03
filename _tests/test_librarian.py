@@ -1,8 +1,8 @@
 from unittest import TestCase
 
-from src import librarian
-from src.librarian import Librarian
-from src.config import options
+from daylio_to_md import librarian
+from daylio_to_md.librarian import Librarian
+from daylio_to_md.config import options
 
 
 class TestLibrarian(TestCase):

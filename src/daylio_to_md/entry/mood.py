@@ -3,8 +3,7 @@ from __future__ import annotations
 import logging
 from typing import List, Optional
 
-from src import errors
-from src import utils
+from daylio_to_md import utils, errors
 
 
 class ErrorMsg(errors.ErrorMsgBase):

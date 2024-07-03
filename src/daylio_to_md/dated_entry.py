@@ -14,10 +14,9 @@ from typing import Match
 
 import typing
 
-from src import errors
-from src import utils
-from src.config import options
-from src.entry.mood import Moodverse
+from daylio_to_md import utils, errors
+from daylio_to_md.config import options
+from daylio_to_md.entry.mood import Moodverse
 
 # Adding DatedEntry-specific options in global_settings
 dated_entry_settings = options.arg_console.add_argument_group(

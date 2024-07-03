@@ -1,7 +1,7 @@
 import logging
 from unittest import TestCase
 
-from src.entry.mood import \
+from daylio_to_md.entry.mood import \
     Moodverse, \
     MoodGroup
 
