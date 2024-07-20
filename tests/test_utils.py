@@ -1,10 +1,8 @@
 import logging
-import sys
 from unittest import TestCase
 
 from daylio_to_md import utils
 
-print(sys.path)
 
 class TestUtils(TestCase):
     def test_slugify(self):
@@ -41,3 +39,25 @@ class TestUtils(TestCase):
         self.assertEqual("test", utils.slice_quotes("\"test\""))
         self.assertIsNone(utils.slice_quotes("\"\""))
         self.assertEqual("bicycle", utils.slice_quotes("\" bicycle   \""))
+
+
+class TestIOContextManager(TestCase):
+    def testJsonContextManager(self):
+        expected_dict = {'rad': ['rad'], 'good': ['good'], 'neutral': ['okay'], 'bad': ['bad'], 'awful': ['awful']}
+        with utils.JsonLoader().load('tests/files/mood_JSONs/smallest_moodset_possible.json') as example_file:
+            self.assertDictEqual(expected_dict, example_file)
+
+    def testCsvContextManager(self):
+        with utils.CsvLoader().load('tests/files/journal_CSVs/sheet-1-valid-data.csv') as example_file:
+            expected_dict = {
+                'full_date': '2022-10-30',
+                'date': 'October 30',
+                'weekday': 'Sunday',
+                'time': '10:04 AM',
+                'mood': 'vaguely ok',
+                'activities': '2ćities  skylines | dó#lóó fa$$s_ą%',
+                'note_title': 'Dolomet',
+                'note': 'Lorem ipsum sit dolomet amęt.'
+            }
+            # next() loads the first contentful line after csv column names
+            self.assertDictEqual(expected_dict, next(example_file))

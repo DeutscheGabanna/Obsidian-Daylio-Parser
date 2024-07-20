@@ -1,10 +1,14 @@
 """
 Contains universally useful functions
 """
+import abc
+import csv
+import json
 import logging
 import os
 import re
-from typing import List
+from contextlib import contextmanager
+from typing import List, TextIO, Optional
 
 from daylio_to_md import errors
 
@@ -35,6 +39,10 @@ class CustomException(Exception):
     def __init__(self, message=None):
         super().__init__(message)
         self.message = message
+
+
+class CouldNotLoadFileError(Exception):
+    pass
 
 
 class StreamError(CustomException):
@@ -74,7 +82,7 @@ def expand_path(path: str) -> str:
     )
 
 
-def slice_quotes(string: str) -> str | None:
+def slice_quotes(string: str) -> Optional[str]:
     """
     Gets rid of initial and terminating quotation marks inserted by Daylio
     :param string: string to be sliced
@@ -98,3 +106,44 @@ def strip_and_get_truthy(delimited_string: str, delimiter: str) -> List[str]:
     sliced_del_string = slice_quotes(delimited_string)
 
     return [el for el in sliced_del_string.split(delimiter) if el] if sliced_del_string else []
+
+
+class FileLoader:
+    # all subclasses of FileLoader need to implement this method one way or the other
+    # basically an interface requirement
+    @abc.abstractmethod
+    def _load_file(self, file: TextIO):
+        pass
+
+    @contextmanager
+    def load(self, path: str) -> None:
+        """
+        Loads the file into context manager and catches exceptions thrown while doing so.
+        It catches errors specific to the implementation first, then tries to catch more general IO errors.
+        :return: It is not specified what kind of object will be returned when opened. Left up to implementation.
+        """
+        try:
+            with open(expand_path(path), encoding='UTF-8') as file:
+                yield self._load_file(file)
+        # TypeError is thrown when a None argument is passed
+        except (FileNotFoundError, PermissionError, OSError, UnicodeDecodeError, TypeError) as err:
+            raise CouldNotLoadFileError from err
+
+
+class JsonLoader(FileLoader):
+    def _load_file(self, file: TextIO):
+        try:
+            return json.load(file)
+        # JSON specific errors
+        except json.JSONDecodeError as err:
+            raise CouldNotLoadFileError from err
+
+
+class CsvLoader(FileLoader):
+    def _load_file(self, file: TextIO):
+        try:
+            # strict parameter throws csv.Error if parsing fails
+            return csv.DictReader(file, delimiter=',', quotechar='"', strict=True)
+        # CSV specific errors
+        except csv.Error as err:
+            raise CouldNotLoadFileError from err

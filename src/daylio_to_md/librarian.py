@@ -13,8 +13,6 @@ Here's a quick breakdown of what is the specialisation of this file in the journ
 """
 from __future__ import annotations
 
-import csv
-import json
 import logging
 import os
 from typing import IO
@@ -23,6 +21,7 @@ from daylio_to_md import utils, errors, dated_entries_group
 from daylio_to_md.config import options
 from daylio_to_md.dated_entries_group import DatedEntriesGroup
 from daylio_to_md.entry.mood import Moodverse
+from daylio_to_md.utils import CsvLoader, JsonLoader, CouldNotLoadFileError
 
 # Adding Librarian-specific options in global_settings
 librarian_settings = options.arg_console.add_argument_group(
@@ -141,48 +140,31 @@ class Librarian:
         # TODO: Deal with files that are valid but at the end of parsing have zero lines successfully parsed
         try:
             self.__process_file(path_to_file)
-        except (CannotAccessFileError, InvalidDataInFileError) as err:
+        except (CouldNotLoadFileError, InvalidDataInFileError) as err:
             raise CannotAccessJournalError from err
 
         # Ok, if no exceptions were raised so far, the file is good, let's go through the rest of the attributes
         self.__destination = path_to_output
 
     # TODO: this method might actually make more sense as a constructor for Moodverse (give optional arg for custom)
-    def __create_mood_set(self, json_file: str = None) -> 'Moodverse':
+    def __create_mood_set(self, filepath: str = None) -> 'Moodverse':
         """
         Overwrite the standard mood-set with a custom one. Mood-sets are used in colour-coding each dated entry.
 
-        :param json_file: path to the .JSON file with a non-standard mood set.
+        :param filepath: path to the .JSON file with a non-standard mood set.
          Should have five keys: ``rad``, ``good``, ``neutral``, ``bad`` and ``awful``.
          Each of those keys should hold an array of any number of strings indicating various moods.
          **Example**: ``[{"good": ["good"]},...]``
         :returns: reference to the :class:`Moodverse` object
         """
-        if json_file:
-            exp_path = utils.expand_path(json_file)
-            try:
-                with open(exp_path, encoding="UTF-8") as file:
-                    custom_mood_set_from_file = json.load(file)
-            except FileNotFoundError as err:
-                msg = ErrorMsg.print(ErrorMsg.FILE_MISSING, exp_path)
-                self.__logger.warning(msg)
-                return Moodverse()
-            except PermissionError as err:
-                msg = ErrorMsg.print(ErrorMsg.PERMISSION_ERROR, exp_path)
-                self.__logger.warning(msg)
-                return Moodverse()
-            except json.JSONDecodeError as err:
-                msg = ErrorMsg.print(ErrorMsg.DECODE_ERROR, exp_path)
-                self.__logger.warning(msg)
-                return Moodverse()
-        else:
-            custom_mood_set_from_file = None
-
-        # the command works with or without the argument
-        # - Case 1: no argument = default mood-set
-        # - Case 2: argument passed, but invalid = default mood-set
-        # - Case 3: argument passed, it is valid = default mood-set expanded by the custom mood-set
-        return Moodverse(custom_mood_set_from_file)
+        try:
+            with JsonLoader().load(filepath) as file:
+                # if there's a non-empty path
+                if filepath:
+                    return Moodverse(file)
+        except utils.CouldNotLoadFileError:
+            # oh no! anyway... just load up a default moodverse then
+            return Moodverse()
 
     # TODO: should return a tuple of { lines_processed_correctly, all_lines_processed }
     def __process_file(self, filepath: str) -> bool:
@@ -196,105 +178,67 @@ class Librarian:
         if not self.__mood_set.get_custom_moods:
             self.__logger.info(ErrorMsg.print(ErrorMsg.STANDARD_MOODS_USED))
 
-        # Let's determine if the file can be opened
+        # Open file
         # ---
+        # Let the custom context manager deal with the specific exceptions
+        # If any ValueError Exception is re-raised up to this method, just exit immediately - no point going further
         try:
-            file = open(filepath, encoding='UTF-8')
-        # File has not been found
-        except FileNotFoundError as err:
-            msg = ErrorMsg.print(ErrorMsg.FILE_MISSING, filepath)
-            self.__logger.critical(msg)
-            raise CannotAccessFileError(msg) from err
-        # Insufficient permissions to access the file
-        except PermissionError as err:
-            msg = ErrorMsg.print(ErrorMsg.PERMISSION_ERROR, filepath)
-            self.__logger.critical(msg)
-            raise CannotAccessFileError(msg) from err
-        # Other error that makes it impossible to access the file
-        except OSError as err:
-            self.__logger.critical(OSError)
-            raise CannotAccessFileError from err
+            with CsvLoader().load(filepath) as file:
+                # If the code reaches here, the program can access the file.
+                # Now let's determine if the file's contents are actually usable
+                # ---
 
-        # If the code reaches here, the program can access the file.
-        # Now let's determine if the file's contents are actually usable
-        # ---
-
-        with file:
-            # Is it a valid CSV?
-            try:
-                # strict parameter throws csv.Error if parsing fails
-                raw_lines = csv.DictReader(file, delimiter=',', quotechar='"', strict=True)
-            except csv.Error as err:
-                msg = ErrorMsg.print(ErrorMsg.DECODE_ERROR, filepath)
-                self.__logger.critical(msg)
-                raise InvalidDataInFileError(msg) from err
-
-            # Does it have all the fields? Push any missing field into an array for later reference
-            # Even if only one column from the list below is missing in the CSV, it's a problem while parsing later
-            expected_fields = [
-                "full_date",
-                "date",
-                "weekday",
-                "time",
-                "mood",
-                "activities",
-                "note",
-                "note_title",
-                "note"
-            ]
-
-            # Let's have a look at what columns we have in the parsed CSV
-            # It seems that even files with random bytes occasionally pass through previous checks with no errors
-            # Therefore this 'try' block is also necessary, we do not know if the entire file is now fault-free
-            try:
-                missing_strings = [
-                    expected_field for expected_field in expected_fields if expected_field not in raw_lines.fieldnames
+                # Does it have all the fields? Push any missing field into an array for later reference
+                # Even if only one column from the list below is missing in the CSV, it's a problem while parsing later
+                expected_fields = [
+                    "full_date",
+                    "date",
+                    "weekday",
+                    "time",
+                    "mood",
+                    "activities",
+                    "note",
+                    "note_title",
+                    "note"
                 ]
-            except (csv.Error, UnicodeDecodeError) as err:
-                msg = ErrorMsg.print(ErrorMsg.DECODE_ERROR, filepath)
-                self.__logger.critical(msg)
-                raise InvalidDataInFileError(msg) from err
 
-            if not missing_strings:
-                self.__logger.debug(ErrorMsg.print(ErrorMsg.CSV_ALL_FIELDS_PRESENT))
-            else:
-                msg = ErrorMsg.print(
-                    ErrorMsg.CSV_FIELDS_MISSING,
-                    ', '.join(missing_strings)  # which ones are missing - e.g. "date, mood, note"
-                )
-                self.__logger.critical(msg)
-                raise InvalidDataInFileError(msg)
-
-            # # Does it have any rows besides the header?
-            # # If the file is empty or only has column headers, exit immediately
-            # try:
-            #     next(raw_lines)
-            # except StopIteration:
-            #     msg = ErrorMsg.print(ErrorMsg.FILE_EMPTY, filepath)
-            #     self.__logger.critical(msg)
-            #     raise InvalidDataInFileError(msg)
-
-            # If the code has reached this point and has not exited, it means both file and contents have to be ok
-            # Processing
-            # ---
-            lines_parsed = 0
-            lines_parsed_successfully = 0
-            for line in raw_lines:
-                line: dict[str]
-                try:
-                    lines_parsed += self.__process_line(line)
-                except MissingValuesInRowError:
-                    pass
+                # Let's have a look at what columns we have in the parsed CSV
+                missing_strings = [
+                    expected_field for expected_field in expected_fields if
+                    expected_field not in file.fieldnames
+                ]
+                if not missing_strings:
+                    self.__logger.debug(ErrorMsg.print(ErrorMsg.CSV_ALL_FIELDS_PRESENT))
                 else:
-                    lines_parsed_successfully += 1
+                    msg = ErrorMsg.print(
+                        ErrorMsg.CSV_FIELDS_MISSING,
+                        ', '.join(missing_strings)  # which ones are missing - e.g. "date, mood, note"
+                    )
+                    self.__logger.critical(msg)
+                    raise InvalidDataInFileError(msg)
 
-            # Report back how many lines were parsed successfully out of all tried
-            self.__logger.info(ErrorMsg.print(
-                ErrorMsg.COUNT_ROWS, str(lines_parsed), filepath, str(lines_parsed_successfully))
-            )
+                # Processing
+                # ---
+                lines_parsed = 0
+                lines_parsed_successfully = 0
+                for line in file:
+                    line: dict[str]
+                    try:
+                        lines_parsed += self.__process_line(line)
+                    except MissingValuesInRowError:
+                        pass
+                    else:
+                        lines_parsed_successfully += 1
 
-            # If at least one line has been parsed, the following return resolves to True
-            return bool(lines_parsed)
+                # Report back how many lines were parsed successfully out of all tried
+                self.__logger.info(ErrorMsg.print(
+                    ErrorMsg.COUNT_ROWS, str(lines_parsed), filepath, str(lines_parsed_successfully))
+                )
+        except ValueError as err:
+            raise CannotAccessJournalError from err
+
+        # If at least one line has been parsed, the following return resolves to True
+        return bool(lines_parsed)
 
     # TODO: I guess it is more pythonic to raise exceptions than return False if I cannot complete the task
     # TODO: this has to be tested
@@ -360,8 +304,7 @@ class Librarian:
     # 1. my_librarian["2022-10-10"]
     # 2. my_librarian.access_date("2022-10-10")
     def __getitem__(self, item: str) -> DatedEntriesGroup:
-        ref = self.access_date(item)
-        return ref
+        return self.access_date(item)
 
     @property
     def current_mood_set(self):
