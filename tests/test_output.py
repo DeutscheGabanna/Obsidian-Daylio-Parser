@@ -318,27 +318,27 @@ class TestOutputFileStructure(TestCase):
         """
         options.tags = ["daily"]
 
-        lib = Librarian("_tests/files/journal_CSVs/sheet-1-valid-data.csv", path_to_output="_tests/files/output-results")
+        lib = Librarian("tests/files/journal_CSVs/sheet-1-valid-data.csv", path_to_output="tests/files/output-results")
         lib.output_all()
 
-        with open("_tests/files/output-results/2022/10/2022-10-25.md", encoding="UTF-8") as parsed_result:
-            with open("_tests/files/expected_results/2022-10-25.md", encoding="UTF-8") as expected_result:
+        with open("tests/files/output-results/2022/10/2022-10-25.md", encoding="UTF-8") as parsed_result:
+            with open("tests/files/expected_results/2022-10-25.md", encoding="UTF-8") as expected_result:
                 self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
-        with open("_tests/files/output-results/2022/10/2022-10-26.md", encoding="UTF-8") as parsed_result:
-            with open("_tests/files/expected_results/2022-10-26.md", encoding="UTF-8") as expected_result:
+        with open("tests/files/output-results/2022/10/2022-10-26.md", encoding="UTF-8") as parsed_result:
+            with open("tests/files/expected_results/2022-10-26.md", encoding="UTF-8") as expected_result:
                 self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
-        with open("_tests/files/output-results/2022/10/2022-10-27.md", encoding="UTF-8") as parsed_result:
-            with open("_tests/files/expected_results/2022-10-27.md", encoding="UTF-8") as expected_result:
+        with open("tests/files/output-results/2022/10/2022-10-27.md", encoding="UTF-8") as parsed_result:
+            with open("tests/files/expected_results/2022-10-27.md", encoding="UTF-8") as expected_result:
                 self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
-        with open("_tests/files/output-results/2022/10/2022-10-30.md", encoding="UTF-8") as parsed_result:
-            with open("_tests/files/expected_results/2022-10-30.md", encoding="UTF-8") as expected_result:
+        with open("tests/files/output-results/2022/10/2022-10-30.md", encoding="UTF-8") as parsed_result:
+            with open("tests/files/expected_results/2022-10-30.md", encoding="UTF-8") as expected_result:
                 self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
     def tearDown(self) -> None:
-        folder = '_tests/files/output-results'
+        folder = 'tests/files/output-results'
         for filename in os.listdir(folder):
             file_path = os.path.join(folder, filename)
             try:

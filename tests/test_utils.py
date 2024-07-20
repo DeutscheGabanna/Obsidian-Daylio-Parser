@@ -1,8 +1,10 @@
 import logging
+import sys
 from unittest import TestCase
 
 from daylio_to_md import utils
 
+print(sys.path)
 
 class TestUtils(TestCase):
     def test_slugify(self):
