@@ -35,7 +35,7 @@ class ColorHandler(logging.StreamHandler):
 # Create a console handler for the root logger
 # noinspection SpellCheckingInspection
 console_log_handler = ColorHandler(sys.stdout)
-console_log_handler.setLevel(logging.DEBUG)
+console_log_handler.setLevel(logging.WARNING)
 
 # noinspection SpellCheckingInspection
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)")

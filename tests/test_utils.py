@@ -1,10 +1,12 @@
 import logging
 from unittest import TestCase
 
+import tests.suppress as suppress
 from daylio_to_md import utils
 
 
 class TestUtils(TestCase):
+    @suppress.out
     def test_slugify(self):
         # no need to check if slug is a valid tag
         # noinspection SpellCheckingInspection
@@ -31,16 +33,19 @@ class TestUtils(TestCase):
         # https://docs.python.org/3/library/unittest.html#unittest.TestCase.assertNoLogs
         self.assertListEqual(["WARNING:daylio_to_md.utils:Dummy warning"], logs.output)
 
+    @suppress.out
     def test_expand_path(self):
         # noinspection SpellCheckingInspection
         self.assertFalse(utils.expand_path("$HOME/whatever").startswith("$HOME"))
         # noinspection SpellCheckingInspection
         self.assertFalse(utils.expand_path('~/yes').startswith('~'))
 
+    @suppress.out
     def test_strip_and_get_truthy(self):
         self.assertListEqual(["one", "two"], utils.strip_and_get_truthy("\"one||two|||||\"", "|"))
         self.assertListEqual([], utils.strip_and_get_truthy("\"\"", "|"))
 
+    @suppress.out
     def test_slice_quotes(self):
         self.assertEqual("test", utils.slice_quotes("\"test\""))
         self.assertIsNone(utils.slice_quotes("\"\""))
@@ -48,11 +53,13 @@ class TestUtils(TestCase):
 
 
 class TestIOContextManager(TestCase):
+    @suppress.out
     def testJsonContextManager(self):
         expected_dict = {'rad': ['rad'], 'good': ['good'], 'neutral': ['okay'], 'bad': ['bad'], 'awful': ['awful']}
         with utils.JsonLoader().load('tests/files/mood_JSONs/smallest_moodset_possible.json') as example_file:
             self.assertDictEqual(expected_dict, example_file)
 
+    @suppress.out
     def testCsvContextManager(self):
         with utils.CsvLoader().load('tests/files/journal_CSVs/sheet-1-valid-data.csv') as example_file:
             expected_dict = {

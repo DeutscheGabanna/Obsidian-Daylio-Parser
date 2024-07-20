@@ -1,12 +1,13 @@
+import io
 import os
 import shutil
-import io
 from unittest import TestCase
 
-from daylio_to_md.dated_entry import DatedEntry
-from daylio_to_md.dated_entries_group import DatedEntriesGroup
-from daylio_to_md.librarian import Librarian
+import tests.suppress as suppress
 from daylio_to_md.config import options
+from daylio_to_md.dated_entries_group import DatedEntriesGroup
+from daylio_to_md.dated_entry import DatedEntry
+from daylio_to_md.librarian import Librarian
 
 
 class TestDatedEntryOutput(TestCase):
@@ -18,6 +19,7 @@ class TestDatedEntryOutput(TestCase):
     Obviously any change to formatting in the class definition will force changes in this test case.
     """
 
+    @suppress.out
     def test_bare_minimum_entry_content(self):
         """
         Output an entry which hold information only on:
@@ -46,6 +48,7 @@ class TestDatedEntryOutput(TestCase):
                 # https://stackoverflow.com/a/53485819
                 self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
 
+    @suppress.out
     def test_entry_with_title_no_note(self):
         """
         Output an entry which hold information on:
@@ -73,6 +76,7 @@ class TestDatedEntryOutput(TestCase):
                 # ---
                 self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
 
+    @suppress.out
     def test_entry_with_title_and_note(self):
         """
         Output an entry which hold information on:
@@ -104,6 +108,7 @@ class TestDatedEntryOutput(TestCase):
                 # ---
                 self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
 
+    @suppress.out
     def test_entry_with_hashtagged_activities(self):
         """
         Output an entry which hold information on:
@@ -152,6 +157,7 @@ class TestDatedEntryOutput(TestCase):
 
 
 class TestDatedEntriesGroup(TestCase):
+    @suppress.out
     def test_outputting_day_with_one_entry(self):
         """
         Creates a file-like stream for a day with one valid entry and checks if the file contents are as expected.
@@ -181,6 +187,7 @@ class TestDatedEntriesGroup(TestCase):
                 # ---
                 self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
 
+    @suppress.out
     def test_outputting_day_with_two_entries(self):
         """
         Creates a file-like stream for a day with two valid entries and checks if the file contents are as expected.
@@ -221,6 +228,7 @@ class TestDatedEntriesGroup(TestCase):
                 # ---
                 self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
 
+    @suppress.out
     def test_outputting_day_with_two_entries_and_invalid_filetags(self):
         """
         Creates a file-like stream for a day with two valid entries and checks if the file contents are as expected.
@@ -261,6 +269,7 @@ class TestDatedEntriesGroup(TestCase):
                 # ---
                 self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
 
+    @suppress.out
     def test_outputting_day_with_two_entries_and_partially_valid_filetags(self):
         """
         Creates a file-like stream for a day with two valid entries and checks if the file contents are as expected.
@@ -312,6 +321,7 @@ class TestOutputFileStructure(TestCase):
     This checks if the :class:`Librarian` class creates the necessary directories and outputs to files.
     """
 
+    @suppress.out
     def test_directory_loop(self):
         """
         Loops through known dates and asks each :class:`DatedEntriesGroup` to output its contents to a specified file.

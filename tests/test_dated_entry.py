@@ -1,13 +1,15 @@
 from unittest import TestCase
 
+import tests.suppress as suppress
+from daylio_to_md.config import options
 from daylio_to_md.dated_entry import \
     Time, \
     DatedEntry, \
     IsNotTimeError
-from daylio_to_md.config import options
 
 
 class TestDatedEntryUtils(TestCase):
+    @suppress.out
     def test_is_time_format_valid(self):
         self.assertTrue(Time.is_format_valid("1:49 AM"))
         self.assertTrue(Time.is_format_valid("02:15"))
@@ -37,6 +39,7 @@ class TestDatedEntryUtils(TestCase):
         # as expected, this will return True, because we're not checking ranges yet
         self.assertTrue(Time.is_format_valid("14:59 AM"))
 
+    @suppress.out
     def test_is_time_range_valid(self):
         self.assertTrue(Time.is_range_valid("11:00 AM"))
         self.assertTrue(Time.is_range_valid("3:00 AM"))
@@ -57,6 +60,7 @@ class TestDatedEntryUtils(TestCase):
 
 
 class TestTime(TestCase):
+    @suppress.out
     def test_try_creating_valid_times(self):
         # Valid time formats
         self.assertTrue(Time("1:49 AM"))
@@ -69,6 +73,7 @@ class TestTime(TestCase):
         self.assertTrue(Time("13:30"))
         self.assertTrue(Time("9:45"))
 
+    @suppress.out
     def test_try_whitespaces(self):
         self.assertTrue(Time("    1:49 AM  "))
         self.assertTrue(Time("02:15 AM    "))
@@ -78,6 +83,7 @@ class TestTime(TestCase):
         self.assertEqual("02:15 AM", str(Time("02:15 AM    ")))
         self.assertEqual("12:00 PM", str(Time("      12:00 PM")))
 
+    @suppress.out
     def test_try_creating_invalid_times(self):
         # Invalid time formats
         # noinspection SpellCheckingInspection
@@ -91,6 +97,7 @@ class TestTime(TestCase):
         self.assertRaises(IsNotTimeError, Time, "24:00 PM")
         self.assertRaises(IsNotTimeError, Time, "00:61 AM")
 
+    @suppress.out
     def test_str(self):
         self.assertEqual("1:49 AM", str(Time("1:49 AM")))
         self.assertEqual("02:15 AM", str(Time("02:15 AM")))
@@ -104,6 +111,7 @@ class TestTime(TestCase):
 
 
 class TestDatedEntry(TestCase):
+    @suppress.out
     def test_bare_minimum_dated_entries(self):
         # When
         bare_minimum_dated_entry = DatedEntry(
@@ -118,6 +126,7 @@ class TestDatedEntry(TestCase):
         self.assertIsNone(bare_minimum_dated_entry.note)
         self.assertListEqual([], bare_minimum_dated_entry.activities)
 
+    @suppress.out
     def test_other_variants_of_dated_entries(self):
         # When
         entry = DatedEntry(
@@ -182,6 +191,7 @@ class TestDatedEntry(TestCase):
         self.assertEqual("A completely normal situation just occurred.", entry.note)
         self.assertListEqual(["bicycle", "chess", "gaming"], entry.activities)
 
+    @suppress.out
     def test_insufficient_dated_entries(self):
         self.assertRaises(ValueError, DatedEntry, time="2:00", mood="")
         self.assertRaises(ValueError, DatedEntry, time=":00", mood="vaguely ok")

@@ -1,9 +1,11 @@
 from unittest import TestCase
 
+import tests.suppress as suppress
 from daylio_to_md import config
 
 
 class TestSettingsManager(TestCase):
+    @suppress.out
     def test_spoofed_keyword_option_without_equality_sign(self):
         """
         In this case, SettingsManager can receive either "--force accept", "--force refuse" or None as prog arguments.
@@ -31,6 +33,7 @@ class TestSettingsManager(TestCase):
         options_to_check.parse_console(["--force", "refuse"])
         options_to_check.parse_console(["--force", "accept"])
 
+    @suppress.out
     def test_spoofed_keyword_option_with_equality_sign(self):
         """
         In this case, SettingsManager can receive either "--force=accept", "--force=refuse" or None as prog arguments.
@@ -62,6 +65,7 @@ class TestSettingsManager(TestCase):
         options_to_check.parse_console(["--force=accept"])
         self.assertEqual("accept", options_to_check.force)
 
+    @suppress.out
     def test_check_if_required_arguments_passed(self):
         # Setup
         options_to_check = config.SettingsManager()
@@ -84,6 +88,7 @@ class TestSettingsManager(TestCase):
         options_to_check.parse_console(["wakanda forever"])
         self.assertEqual("wakanda forever", options_to_check.filepath)
 
+    @suppress.out
     def test_expected_failure_empty_argument_array(self):
         # Setup
         options_to_check = config.SettingsManager()
@@ -98,6 +103,7 @@ class TestSettingsManager(TestCase):
         self.assertEqual(2, cm.exception.code, msg="No arguments provided to argparse so it should exit with 2")
 
     # TODO: test Namespace=self where SettingsManager overwrites its default attributes with argparse
+    @suppress.out
     def test_if_settings_manager_overwrites_its_properties_from_console(self):
         """
         SettingsManager has default attributes as options already at instantiation.

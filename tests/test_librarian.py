@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+import tests.suppress as suppress
 from daylio_to_md import librarian
 from daylio_to_md.config import options
 from daylio_to_md.entry.mood import Moodverse
@@ -13,9 +14,11 @@ class TestLibrarian(TestCase):
     We use internal class methods to check proper handling of data throughout the process.
     """
 
+    @suppress.out
     def test_init_valid_csv(self):
         self.assertTrue(Librarian("tests/files/journal_CSVs/sheet-1-valid-data.csv"))
 
+    @suppress.out
     def test_init_invalid_csv(self):
         """
         Pass faulty files and see if it fails as expected.
@@ -39,6 +42,7 @@ class TestLibrarian(TestCase):
         # TODO: make this file locked during runner workflow with chmod 600
         self.assertRaises(librarian.CannotAccessFileError, Librarian, "tests/locked-dir/locked_file.csv")
 
+    @suppress.out
     def test_valid_access_dates(self):
         """
         All the following dates exist in the ``tests/files/journal_CSVs/sheet-1-valid-data.csv``.
@@ -62,6 +66,7 @@ class TestLibrarian(TestCase):
         self.assertTrue(lib["2022-10-27"])
         self.assertTrue(lib["2022-10-30"])
 
+    @suppress.out
     def test_wrong_access_dates(self):
         """
         **None** of the following dates exist in the ``tests/files/journal_CSVs/sheet-1-valid-data.csv``.
@@ -96,6 +101,7 @@ class TestLibrarian(TestCase):
 
     # CUSTOM AND STANDARD MOOD SETS
     # -----------------------------
+    @suppress.out
     def test_custom_moods_when_passed_correctly(self):
         """Pass a valid JSON file and see if it knows it has access to custom moods now."""
         self.assertTrue(Librarian(
@@ -103,11 +109,13 @@ class TestLibrarian(TestCase):
             path_to_moods="moods.json"
         ).current_mood_set.get_custom_moods)
 
+    @suppress.out
     def test_custom_moods_when_not_passed(self):
         """Pass no moods and see if it know it only has standard moods available."""
         lib = Librarian(path_to_file="tests/files/journal_CSVs/sheet-1-valid-data.csv")
         self.assertEqual(0, len(lib.current_mood_set.get_custom_moods), msg=lib.current_mood_set)
 
+    @suppress.out
     def test_custom_moods_with_invalid_jsons(self):
         """Pass faulty moods and see if it has no custom moods loaded."""
         lib = Librarian(
@@ -117,6 +125,7 @@ class TestLibrarian(TestCase):
         )
         self.assertEqual(0, len(lib.current_mood_set.get_custom_moods))
 
+    @suppress.out
     def test_custom_moods_when_json_invalid(self):
         lib = Librarian(
             path_to_file="tests/files/journal_CSVs/sheet-1-valid-data.csv",
@@ -153,6 +162,7 @@ class TestLibrarian(TestCase):
                              ])
                              )
 
+    @suppress.out
     def test_custom_moods_that_are_incomplete(self):
         """
         Moodverse can deal with incomplete moods because the file merely expands its default knowledge.

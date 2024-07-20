@@ -1,5 +1,6 @@
 from unittest import TestCase, skip
 
+import tests.suppress as suppress
 from daylio_to_md.dated_entries_group import \
     DatedEntriesGroup, \
     InvalidDateError, \
@@ -32,6 +33,7 @@ class TestDate(TestCase):
             }
         )
 
+    @suppress.out
     def test_creating_entries_from_row(self):
         """
         Test whether you can successfully create :class:`DatedEntry` objects from this builder class.
@@ -69,6 +71,7 @@ class TestDate(TestCase):
                 }
             )
 
+    @suppress.out
     def test_create_dated_entries_groups(self):
         """
         Try to instantiate an object of :class:`DatedEntriesGroup` with either valid or invalid dates
@@ -106,6 +109,7 @@ class TestDate(TestCase):
         self.assertRaises(InvalidDateError, DatedEntriesGroup, "2001")  # Missing month and day
         self.assertRaises(InvalidDateError, DatedEntriesGroup, "")  # Empty string
 
+    @suppress.out
     def test_access_dated_entry(self):
         """
         Uses the :class:`DatedEntryGroup` object from :func:`setUp` with sample entries.
@@ -137,6 +141,7 @@ class TestDate(TestCase):
         self.assertRaises(DatedEntryMissingError, self.sample_date.access_dated_entry, "12:")
         self.assertRaises(DatedEntryMissingError, self.sample_date.access_dated_entry, ":30")
 
+    @suppress.out
     def test_get_known_dated_entries(self):
         """
         Difference between access_dated_entry(time) and get_known_dated_entries[time]:
@@ -151,12 +156,14 @@ class TestDate(TestCase):
         self.assertRaises(KeyError, lambda: self.sample_date.known_entries_from_this_day["23:00"])
         self.assertRaises(KeyError, lambda: self.sample_date.known_entries_from_this_day["11:50 AM"])
 
+    @suppress.out
     def test_truthiness_of_dated_entries_group(self):
         """
         DatedEntriesGroup should be truthy if it has a valid UID and has any known entries.
         """
         self.assertGreater(len(self.sample_date.known_entries_from_this_day), 0)
 
+    @suppress.out
     def test_falseness_of_dated_entries_group(self):
         """
         DatedEntriesGroup should be falsy if it has a valid UID but no known entries.
