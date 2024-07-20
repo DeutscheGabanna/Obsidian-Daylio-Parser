@@ -11,8 +11,10 @@ class ColorHandler(logging.StreamHandler):
     RED = "31"
     WHITE = "0"
 
+    # noinspection PyPep8
     def emit(self, record):
         # We don't use white for any logging, to help distinguish from user print statements
+        # noinspection PyPep8
         level_color_map = {
             logging.DEBUG: self.GRAY8,
             logging.INFO: self.GRAY7,

@@ -7,11 +7,9 @@ all notes -> notes written on a particular date -> _A PARTICULAR NOTE_
 """
 from __future__ import annotations
 
+import io
 import logging
 import re
-import io
-from typing import Match
-
 import typing
 
 from daylio_to_md import utils, errors
@@ -120,7 +118,7 @@ class Time:
         """
         Is the time format of :param:`str` valid?
         :param string: time to check
-        :return: ``True`` if :param:`str` follows the ``HH:MM`` format, with optional AM/PM appended, ``False`` otherwise
+        :return: ``True`` if :param:`str` follows the ``HH:MM`` format, with optional AM/PM appended, else ``False``
         """
         return bool(re.compile(r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]($|\sAM|\sPM)').match(string))
 
