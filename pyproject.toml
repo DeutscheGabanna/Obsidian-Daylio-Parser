@@ -1,8 +1,8 @@
 # TODO: make dynamic: version, description, readme, licence
 [project]
 name = "daylio-obsidian-parser"
-version = "0.1"
-requires-python = ">= 3.12"
+version = "0.2"
+requires-python = ">= 3.8"
 authors = [
 	{name = "Paweł Ilnicki", email = "59067099+DeutscheGabanna@users.noreply.github.com"}
 ]
@@ -21,6 +21,8 @@ classifiers = [
 keywords = [ "csv", "markdown", ".md", ".csv", "daylio", "obsidian", "file converter" ]
 
 [project.scripts]
+# Make daylio_to_md command be recognised by shell as a program
+# No need to type: python -m <package> anymore
 daylio_to_md = "daylio_to_md.__main__:main"
 
 [build-system]

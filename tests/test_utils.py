@@ -19,11 +19,17 @@ class TestUtils(TestCase):
         with self.assertLogs(logging.getLogger("daylio_to_md.utils"), logging.WARNING):
             utils.slugify("1. Digit cannot appear at the beginning of a tag", True)
 
-        with self.assertNoLogs(logging.getLogger("daylio_to_md.utils"), logging.WARNING):
+        current_logger = logging.getLogger("daylio_to_md.utils")
+        with self.assertLogs(current_logger, logging.WARNING) as logs:
+            # We want to assert there are no warnings, but the 'assertLogs' method does not support that.
+            # Therefore, we are adding a dummy warning, and then we will assert it is the only warning.
+            current_logger.warning("Dummy warning")
             utils.slugify("Digits within the string 1234 - are ok", True)
-
-        with self.assertNoLogs(logging.getLogger("daylio_to_md.utils"), logging.WARNING):
             utils.slugify("Digits at the end of the string are also ok 456", True)
+        # assertLogs.output is a list of strings containing formatted logs, so len() == 0 is noLogs
+        # I refrain from using assertNoLogs because that bumps Python version requirement to 3.10
+        # https://docs.python.org/3/library/unittest.html#unittest.TestCase.assertNoLogs
+        self.assertListEqual(["WARNING:daylio_to_md.utils:Dummy warning"], logs.output)
 
     def test_expand_path(self):
         # noinspection SpellCheckingInspection
