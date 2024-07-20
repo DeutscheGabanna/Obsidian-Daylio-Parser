@@ -73,35 +73,6 @@ class IsNotTimeError(utils.CustomException):
         super().__init__(type(self).msg.format(tried_time))
 
 
-def is_time_format_valid(string: str) -> Match[str] | None:
-    """
-    Is the time format of :param:`str` valid?
-    :param string: time to check
-    :return: ``True`` if :param:`str` follows the ``HH:MM`` format, with optional AM/PM appended, ``False`` otherwise
-    """
-    return re.compile(r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]($|\sAM|\sPM)').match(string)
-
-
-def is_time_range_valid(string: str) -> bool:
-    """
-    Is the time range of :param:`str` valid?
-    :param string: time to check
-    :return: ``True`` if hour and minute ranges are both ok, ``False`` otherwise
-    """
-    time_array = string.strip().split(':')
-
-    # Check if it's in 12-hour format (AM/PM) or 24-hour format
-    if 'AM' in string or 'PM' in string:
-        is_hour_ok = 0 <= int(time_array[0]) <= 12
-    else:
-        is_hour_ok = 0 <= int(time_array[0]) < 24
-
-    # Minutes can be checked irrespective of AM/PM/_ notation
-    is_minutes_ok = 0 <= int(time_array[1][:2]) < 60
-
-    return all((is_hour_ok, is_minutes_ok))
-
-
 class ErrorMsg(errors.ErrorMsgBase):
     INVALID_MOOD = "Mood {} is missing from a list of known moods. Not critical, but colouring won't work on the entry."
     WRONG_TIME = "Received {}, expected valid time. Cannot create this entry without a valid time."
@@ -127,7 +98,7 @@ class Time:
         self.__logger = logging.getLogger(self.__class__.__name__)
 
         # OK
-        if is_time_format_valid(string.strip()) and is_time_range_valid(string.strip()):
+        if Time.is_format_valid(string.strip()) and Time.is_range_valid(string.strip()):
             time_array = string.strip().split(':')
             self.__hour = time_array[0]
             self.__minutes = time_array[1]
@@ -142,6 +113,37 @@ class Time:
         :return: Outputs its hour and minutes attributes as a string in valid time format - HH:MM.
         """
         return ':'.join([self.__hour, self.__minutes])
+
+    # thematically fits in Time nicely, but does not operate on cls or self
+    @staticmethod
+    def is_format_valid(string: str) -> bool:
+        """
+        Is the time format of :param:`str` valid?
+        :param string: time to check
+        :return: ``True`` if :param:`str` follows the ``HH:MM`` format, with optional AM/PM appended, ``False`` otherwise
+        """
+        return bool(re.compile(r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]($|\sAM|\sPM)').match(string))
+
+    # thematically fits in Time nicely, but does not operate on cls or self
+    @staticmethod
+    def is_range_valid(string: str) -> bool:
+        """
+        Is the time range of :param:`str` valid?
+        :param string: time to check
+        :return: ``True`` if hour and minute ranges are both ok, ``False`` otherwise
+        """
+        time_array = string.strip().split(':')
+
+        # Check if it's in 12-hour format (AM/PM) or 24-hour format
+        if 'AM' in string or 'PM' in string:
+            is_hour_ok = 0 <= int(time_array[0]) <= 12
+        else:
+            is_hour_ok = 0 <= int(time_array[0]) < 24
+
+        # Minutes can be checked irrespective of AM/PM/_ notation
+        is_minutes_ok = 0 <= int(time_array[1][:2]) < 60
+
+        return all((is_hour_ok, is_minutes_ok))
 
 
 class DatedEntry(utils.Core):
