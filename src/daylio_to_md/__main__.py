@@ -1,4 +1,3 @@
-import logging
 import sys
 
 from daylio_to_md.config import options
@@ -7,8 +6,6 @@ from daylio_to_md.librarian import Librarian
 
 def main():
     """Parse a Daylio CSV into an Obsidian-compatible .MD file"""
-    logger = logging.getLogger(__name__)
-
     # Compile global settings
     # ---
     # Read arguments from console and update the global_settings accordingly
