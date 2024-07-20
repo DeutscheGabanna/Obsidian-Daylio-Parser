@@ -1,8 +1,9 @@
 from unittest import TestCase
 
 from daylio_to_md import librarian
-from daylio_to_md.librarian import Librarian
 from daylio_to_md.config import options
+from daylio_to_md.entry.mood import Moodverse
+from daylio_to_md.librarian import Librarian
 
 
 class TestLibrarian(TestCase):
@@ -11,6 +12,7 @@ class TestLibrarian(TestCase):
     The Librarian is responsible for parsing files and outputting the final journal.
     We use internal class methods to check proper handling of data throughout the process.
     """
+
     def test_init_valid_csv(self):
         self.assertTrue(Librarian("tests/files/journal_CSVs/sheet-1-valid-data.csv"))
 
@@ -18,13 +20,17 @@ class TestLibrarian(TestCase):
         """
         Pass faulty files and see if it fails as expected.
         """
-        self.assertRaises(librarian.CannotAccessFileError, Librarian, "tests/files/journal_CSVs/sheet-2-corrupted-bytes.csv")
-        self.assertRaises(librarian.CannotAccessFileError, Librarian, "tests/files/journal_CSVs/sheet-3-wrong-format.txt")
-        self.assertRaises(librarian.CannotAccessFileError, Librarian, "tests/files/journal_CSVs/sheet-4-no-extension")
-        self.assertRaises(librarian.CannotAccessFileError, Librarian, "tests/files/journal_CSVs/sheet-5-missing-file.csv")
+        self.assertRaises(librarian.CannotAccessFileError, Librarian,
+                          "tests/files/journal_CSVs/sheet-2-corrupted-bytes.csv")
+        self.assertRaises(librarian.CannotAccessFileError, Librarian,
+                          "tests/files/journal_CSVs/sheet-3-wrong-format.txt")
+        self.assertRaises(librarian.CannotAccessFileError, Librarian,
+                          "tests/files/journal_CSVs/sheet-4-no-extension")
+        self.assertRaises(librarian.CannotAccessFileError, Librarian,
+                          "tests/files/journal_CSVs/sheet-5-missing-file.csv")
 
         # TODO: handle this case in Librarian
-        # self.assertRaises(librarian.CannotAccessFileError, Librarian, "tests/files/journal_CSVs/sheet-6-empty-file.csv")
+        # self.assertRaises(lib.CannotAccessFileError, Librarian, "tests/files/journal_CSVs/sheet-6-empty-file.csv")
 
         # TODO: maybe generate corrupted_sheet and wrong_format during runner setup in workflow mode?
         # dd if=/dev/urandom of="$corrupted_file" bs=1024 count=10
@@ -35,7 +41,8 @@ class TestLibrarian(TestCase):
 
     def test_valid_access_dates(self):
         """
-        All the following dates exist in the tests/files/journal_CSVs/sheet-1-valid-data.csv and should be accessible by ``lib``.
+        All the following dates exist in the ``tests/files/journal_CSVs/sheet-1-valid-data.csv``.
+        They should be accessible by ``lib``.
         """
         # When
         lib = Librarian(
@@ -57,7 +64,8 @@ class TestLibrarian(TestCase):
 
     def test_wrong_access_dates(self):
         """
-        **None** of the following dates exist in the tests/files/journal_CSVs/sheet-1-valid-data.csv and should **NOT** be accessible by ``lib``.
+        **None** of the following dates exist in the ``tests/files/journal_CSVs/sheet-1-valid-data.csv``.
+        Therefore they should **NOT** be accessible by ``lib``.
         """
         # When
         lib = Librarian(
@@ -93,40 +101,57 @@ class TestLibrarian(TestCase):
         self.assertTrue(Librarian(
             path_to_file="tests/files/journal_CSVs/sheet-1-valid-data.csv",
             path_to_moods="moods.json"
-        ).current_mood_set.has_custom_moods)
+        ).current_mood_set.get_custom_moods)
 
     def test_custom_moods_when_not_passed(self):
         """Pass no moods and see if it know it only has standard moods available."""
-        self.assertFalse(Librarian(
-            path_to_file="tests/files/journal_CSVs/sheet-1-valid-data.csv"
-        ).current_mood_set.has_custom_moods)
+        lib = Librarian(path_to_file="tests/files/journal_CSVs/sheet-1-valid-data.csv")
+        self.assertEqual(0, len(lib.current_mood_set.get_custom_moods), msg=lib.current_mood_set)
 
     def test_custom_moods_with_invalid_jsons(self):
-        """Pass faulty moods and see if it fails as expected."""
-        self.assertRaises(
-            librarian.CannotAccessCustomMoodsError,
-            Librarian,
-            "tests/files/journal_CSVs/sheet-1-valid-data.csv",
-            "tests/files/output-results/",
-            "tests/files/journal_CSVs/empty_sheet.csv"
+        """Pass faulty moods and see if it has no custom moods loaded."""
+        lib = Librarian(
+            path_to_file="tests/files/journal_CSVs/sheet-1-valid-data.csv",
+            path_to_output="tests/files/output-results/",
+            path_to_moods="tests/files/journal_CSVs/empty_sheet.csv"
         )
+        self.assertEqual(0, len(lib.current_mood_set.get_custom_moods))
 
     def test_custom_moods_when_json_invalid(self):
-        self.assertRaises(librarian.CannotAccessCustomMoodsError,
-                          Librarian,
-                          "tests/files/journal_CSVs/sheet-1-valid-data.csv",
-                          "tests/files/output-results/",
-                          "tests/files/empty_sheet.csv")
-        self.assertRaises(librarian.CannotAccessCustomMoodsError,
-                          Librarian,
-                          "tests/files/journal_CSVs/sheet-1-valid-data.csv",
-                          "tests/files/output-results/",
-                          "tests/files/missing-file.json")
-        self.assertRaises(librarian.CannotAccessCustomMoodsError,
-                          Librarian,
-                          "tests/files/journal_CSVs/sheet-1-valid-data.csv",
-                          "tests/files/output-results/",
-                          "tests/files/locked-dir/locked_file.csv")
+        lib = Librarian(
+            path_to_file="tests/files/journal_CSVs/sheet-1-valid-data.csv",
+            path_to_output="tests/files/output-results/",
+            path_to_moods="tests/files/journal_CSVs/empty_sheet.csv"
+        )
+        default = Moodverse()
+        self.assertDictEqual(lib.current_mood_set.get_moods, default.get_moods,
+                             msg="\n".join([
+                                 "current ID:\t" + str(id(lib.current_mood_set)),
+                                 "default object ID:\t" + str(id(default))
+                             ])
+                             )
+        lib = Librarian(
+            path_to_file="tests/files/journal_CSVs/sheet-1-valid-data.csv",
+            path_to_output="tests/files/output-results/",
+            path_to_moods="tests/files/journal_CSVs/empty_sheet.csv"
+        )
+        self.assertDictEqual(lib.current_mood_set.get_moods, default.get_moods,
+                             msg="\n".join([
+                                 "current ID:\t" + str(id(lib.current_mood_set)),
+                                 "default object ID:\t" + str(id(default))
+                             ])
+                             )
+        lib = Librarian(
+            path_to_file="tests/files/journal_CSVs/sheet-1-valid-data.csv",
+            path_to_output="tests/files/output-results/",
+            path_to_moods="tests/files/locked-dir/locked_file.csv"
+        )
+        self.assertDictEqual(lib.current_mood_set.get_moods, default.get_moods,
+                             msg="\n".join([
+                                 "current ID:\t" + str(id(lib.current_mood_set)),
+                                 "default object ID:\t" + str(id(default))
+                             ])
+                             )
 
     def test_custom_moods_that_are_incomplete(self):
         """
@@ -137,7 +162,9 @@ class TestLibrarian(TestCase):
         options.tag_activities = True
         lib_to_test = Librarian(
             "tests/files/journal_CSVs/sheet-1-valid-data.csv",
-            "tests/files/output-results/",
+            "tests/files/output-results/",  # this argument does not take part in testing but is required
             "tests/files/mood_JSONs/incomplete-moods.json"
         )
-        self.assertFalse(lib_to_test.current_mood_set.has_custom_moods)
+        # There are 11 moods, out of which one is a duplicate of a default mood, so 10 custom in total
+        self.assertEqual(10, len(lib_to_test.current_mood_set.get_custom_moods),
+                         msg=lib_to_test.current_mood_set.get_custom_moods.keys())

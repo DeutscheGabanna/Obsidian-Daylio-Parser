@@ -15,8 +15,8 @@ from __future__ import annotations
 
 import csv
 import json
-import os
 import logging
+import os
 from typing import IO
 
 from daylio_to_md import utils, errors, dated_entries_group
@@ -131,13 +131,10 @@ class Librarian:
 
         # Let's start processing the file
         # ---
-        # 1. Parse the path_to_moods JSON for a custom mood set, if possible, or otherwise use standard mood set
-        #
+        # 1. Parse the path_to_moods JSON for a custom mood set
+        # This method either returns custom moods or sets the defaults in case of problems
         # P.S Why am I starting first with moods? Because process_file first checks if it has moods installed.
-        try:
-            self.__mood_set = self.__create_mood_set(path_to_moods)
-        except CannotAccessFileError as err:
-            raise CannotAccessCustomMoodsError from err
+        self.__mood_set = self.__create_mood_set(path_to_moods)
 
         # 2. Access the CSV file and get all the rows with content
         #    then pass the data to specialised data objects that can handle them in a structured way
@@ -150,6 +147,7 @@ class Librarian:
         # Ok, if no exceptions were raised so far, the file is good, let's go through the rest of the attributes
         self.__destination = path_to_output
 
+    # TODO: this method might actually make more sense as a constructor for Moodverse (give optional arg for custom)
     def __create_mood_set(self, json_file: str = None) -> 'Moodverse':
         """
         Overwrite the standard mood-set with a custom one. Mood-sets are used in colour-coding each dated entry.
@@ -168,15 +166,15 @@ class Librarian:
             except FileNotFoundError as err:
                 msg = ErrorMsg.print(ErrorMsg.FILE_MISSING, exp_path)
                 self.__logger.warning(msg)
-                raise CannotAccessFileError(msg) from err
+                return Moodverse()
             except PermissionError as err:
                 msg = ErrorMsg.print(ErrorMsg.PERMISSION_ERROR, exp_path)
                 self.__logger.warning(msg)
-                raise CannotAccessFileError(msg) from err
+                return Moodverse()
             except json.JSONDecodeError as err:
                 msg = ErrorMsg.print(ErrorMsg.DECODE_ERROR, exp_path)
                 self.__logger.warning(msg)
-                raise CannotAccessFileError(msg) from err
+                return Moodverse()
         else:
             custom_mood_set_from_file = None
 
@@ -195,7 +193,7 @@ class Librarian:
         :raises InvalidDataInFileError: if any problems occur during parsing the CSV file.
         :returns: True if parsed > 0, False otherwise
         """
-        if not self.__mood_set.has_custom_moods:
+        if not self.__mood_set.get_custom_moods:
             self.__logger.info(ErrorMsg.print(ErrorMsg.STANDARD_MOODS_USED))
 
         # Let's determine if the file can be opened

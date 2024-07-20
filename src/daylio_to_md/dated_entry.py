@@ -197,7 +197,7 @@ class DatedEntry(utils.Core):
         if not mood:
             raise ValueError
         # Check if the mood is valid - i.e. it does exist in the currently used Moodverse
-        if not override_mood_set.get_mood(mood):
+        if mood not in override_mood_set.get_moods:
             errors.ErrorMsgBase.print(ErrorMsg.INVALID_MOOD, mood)
         # Warning is enough, it just disables colouring so not big of a deal
         self.__mood = mood
