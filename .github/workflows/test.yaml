@@ -26,15 +26,22 @@ jobs:
           python -m pip install --upgrade pipenv wheel
           pipenv install --dev
 
+      - name: Add directory to PYTHONPATH on Linux
+        if: runner.os == 'Linux'
+        run: |
+          echo "PYTHONPATH=$PYTHONPATH:$PWD/src" >> $GITHUB_ENV
+
+      - name: Add directory to PYTHONPATH on Windows
+        if: runner.os == 'Windows'
+        run: |
+          echo "PYTHONPATH=$env:PYTHONPATH;$PWD\src" >> $env:GITHUB_ENV
+        shell: pwsh
+
       - name: Gather test coverage data with unittest
         # -s is --start-directory and -t is --top-level-directory
         # I deliberately set both to root directory of the repository in case the test dir gets renamed later
         # pipenv runs coverage, which in turns runs unittest
         run: |
-          export PYTHONPATH=$PYTHONPATH:$(pwd)/src
-          pwd
-          ls
-          echo $PYTHONPATH
           pipenv run coverage run -m unittest discover -s . -t .
 
       - name: Check coverage requirement threshold
