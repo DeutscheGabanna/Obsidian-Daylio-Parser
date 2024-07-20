@@ -10,14 +10,13 @@ from __future__ import annotations
 import io
 import logging
 import re
-
 import typing
 
 from daylio_to_md import dated_entry
 from daylio_to_md import utils, errors
+from daylio_to_md.config import options
 from daylio_to_md.dated_entry import DatedEntry
 from daylio_to_md.entry.mood import Moodverse
-from daylio_to_md.config import options
 
 
 class DatedEntryMissingError(utils.CustomException):
@@ -84,6 +83,9 @@ class Date:
         :return: returns the valid date in the YYYY-MM-DD format. This is the superior format, end of discussion.
         """
         return '-'.join([self.__year, self.__month, self.__day])
+
+    def __repr__(self):
+        return "{}(year={}, month={}, day={})".format(self.__class__.__name__, self.__year, self.__month, self.__day)
 
     def __eq__(self, other: 'Date') -> bool:
         """Used only for comparing two :class:`Date` objects - itself and another one."""
