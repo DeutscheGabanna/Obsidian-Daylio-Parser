@@ -8,10 +8,6 @@ from daylio_to_md.entry.mood import Moodverse, MoodNotFoundError
 class TestMoodverse(TestCase):
     @suppress.out
     def test_default_moodverse_no_customisation(self):
-        self.assertDictEqual(
-            {"rad": "rad", "good": "good", "neutral": "neutral", "bad": "bad", "awful": "awful"},
-            Moodverse().get_moods
-        )
         self.assertFalse(Moodverse().get_custom_moods)
         self.assertEqual("rad", Moodverse()["rad"])
         self.assertEqual("bad", Moodverse()["bad"])
@@ -111,3 +107,9 @@ class TestMoodverse(TestCase):
             "awful": [""]  # <--
         }
         self.assertEqual(1, len(Moodverse(bad_moods_loaded_from_json).get_custom_moods))
+
+    def test_loading_same_moods_as_already_existing(self):
+        self.assertDictEqual(
+            {"rad": "rad", "good": "good", "neutral": "neutral", "bad": "bad", "awful": "awful"},
+            Moodverse().get_moods
+        )

@@ -56,12 +56,12 @@ class TestIOContextManager(TestCase):
     @suppress.out
     def testJsonContextManager(self):
         expected_dict = {'rad': ['rad'], 'good': ['good'], 'neutral': ['okay'], 'bad': ['bad'], 'awful': ['awful']}
-        with utils.JsonLoader().load('tests/files/mood_JSONs/smallest_moodset_possible.json') as example_file:
+        with utils.JsonLoader().load('tests/files/moods/smallest.json') as example_file:
             self.assertDictEqual(expected_dict, example_file)
 
     @suppress.out
     def testCsvContextManager(self):
-        with utils.CsvLoader().load('tests/files/journal_CSVs/sheet-1-valid-data.csv') as example_file:
+        with utils.CsvLoader().load('tests/files/all-valid.csv') as example_file:
             expected_dict = {
                 'full_date': '2022-10-30',
                 'date': 'October 30',
