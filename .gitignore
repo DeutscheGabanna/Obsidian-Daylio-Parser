@@ -5,6 +5,10 @@ _tests/files/output-results
 #/.idea/usage.statistics.xml already included below
 #/.idea/shelf already included below
 /.vscode
+# For some reason PyCharm randomly decided to not use the uppercase Obsidian-Daylio-Parser.iml file anymore
+# One day it's like "Hey, let's switch to obsidian-daylio-parser.iml, that's a much cooler config filename!"
+# So I made a lowercase symlink and flipped PyCharm off
+/.idea/obsidian-daylio-parser.iml
 /.idea/inspectionProfiles/Project_Default.xml
 /.idea/Obsidian-Daylio-Parser.bak.iml
 
