@@ -5,12 +5,9 @@ LABEL org.label-schema.name="Obsidian Daylio Parser"
 LABEL org.label-schema.description="Convert .csv Daylio backup into markdown notes."
 LABEL org.label-schema.url="https://github.com/DeutscheGabanna/Obsidian-Daylio-Parser/"
 
-COPY src /app/src/
-COPY _tests /app/_tests/
-
 WORKDIR /app
+COPY tests .
+RUN pip install daylio-obsidian-parser
 
-RUN mkdir output
-
-ENTRYPOINT [ "python", "src/main.py" ]
-CMD [ "_tests/sheet-1-valid-data.csv", "output"]
+ENTRYPOINT ["daylio_to_md"]
+CMD ["--help"]
