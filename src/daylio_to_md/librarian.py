@@ -67,15 +67,22 @@ class MissingValuesInRowError(utils.CustomException):
 
 
 class CannotAccessFileError(utils.CustomException):
-    """The file could not be accessed."""
+    """The file {} could not be accessed."""
+    def __init__(self, path: str):
+        self.__path = path
+        self.__doc__ = self.__doc__.format(self.__path)
+
+    @property
+    def path(self):
+        return self.__path
 
 
 class CannotAccessJournalError(CannotAccessFileError):
-    """The journal CSV could not be accessed or parsed."""
+    """The journal CSV {} could not be accessed or parsed."""
 
 
 class CannotAccessCustomMoodsError(CannotAccessFileError):
-    """The custom moods JSON could not be accessed or parsed."""
+    """The custom moods JSON {} could not be accessed or parsed."""
 
 
 class InvalidDataInFileError(utils.CustomException):
@@ -141,7 +148,7 @@ class Librarian:
         try:
             self.__process_file(path_to_file)
         except (CouldNotLoadFileError, InvalidDataInFileError) as err:
-            raise CannotAccessJournalError from err
+            raise CannotAccessJournalError(path_to_file) from err
 
         # Ok, if no exceptions were raised so far, the file is good, let's go through the rest of the attributes
         self.__destination = path_to_output
@@ -235,7 +242,7 @@ class Librarian:
                     ErrorMsg.COUNT_ROWS, str(lines_parsed), filepath, str(lines_parsed_successfully))
                 )
         except ValueError as err:
-            raise CannotAccessJournalError from err
+            raise CannotAccessJournalError(filepath) from err
 
         # If at least one line has been parsed, the following return resolves to True
         return bool(lines_parsed)
