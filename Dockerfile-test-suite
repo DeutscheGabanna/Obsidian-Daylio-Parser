@@ -1,0 +1,13 @@
+FROM python:3.13.0b2-slim-bookworm
+
+LABEL org.label-schema.schema-version="1.0"
+LABEL org.label-schema.name="Obsidian Daylio Parser"
+LABEL org.label-schema.description="Convert .csv Daylio backup into markdown notes."
+LABEL org.label-schema.url="https://github.com/DeutscheGabanna/Obsidian-Daylio-Parser/"
+
+WORKDIR /app
+COPY tests/  .
+RUN pip install daylio-obsidian-parser
+
+ENTRYPOINT ["daylio_to_md"]
+CMD ["--help"]
