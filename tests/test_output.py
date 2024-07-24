@@ -5,8 +5,8 @@ from unittest import TestCase
 
 import tests.suppress as suppress
 from daylio_to_md.config import options
-from daylio_to_md.dated_entries_group import DatedEntriesGroup
-from daylio_to_md.dated_entry import DatedEntry
+from daylio_to_md.dated_entries_group import DatedEntriesGroup, BaseFileConfig
+from daylio_to_md.dated_entry import DatedEntry, BaseEntryConfig
 from daylio_to_md.librarian import Librarian
 
 
@@ -120,7 +120,6 @@ class TestDatedEntryOutput(TestCase):
         # WHEN
         # ---
         # Create our fake entry as well as a stream that acts like a file
-        options.tag_activities = True
         my_entry = DatedEntry(time="11:00", mood="great", activities="bicycle | chess")
 
         with io.StringIO() as my_fake_file_stream:
@@ -138,9 +137,10 @@ class TestDatedEntryOutput(TestCase):
 
         # WHEN
         # ---
+        # Set up the config
+        do_not_tag_my_activities = BaseEntryConfig(tag_activities=False)
         # Create our fake entry as well as a stream that acts like a file
-        options.tag_activities = False
-        my_entry = DatedEntry(time="11:00", mood="great", activities="bicycle | chess")
+        my_entry = DatedEntry(time="11:00", mood="great", activities="bicycle | chess", config=do_not_tag_my_activities)
 
         with io.StringIO() as my_fake_file_stream:
             my_entry.output(my_fake_file_stream)
@@ -150,6 +150,26 @@ class TestDatedEntryOutput(TestCase):
             with io.StringIO() as compare_stream:
                 compare_stream.write("## great | 11:00" + "\n")
                 compare_stream.write("bicycle chess")
+
+                # THEN
+                # ---
+                self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
+
+    def test_header_multiplier(self):
+        # WHEN
+        # ---
+        # Set up the config
+        header_lvl_5 = BaseEntryConfig(header_multiplier=5)
+        # Create our fake entry as well as a stream that acts like a file
+        my_entry = DatedEntry(time="11:00", mood="great", title="Feeling pumped@!", config=header_lvl_5)
+
+        with io.StringIO() as my_fake_file_stream:
+            my_entry.output(my_fake_file_stream)
+            # AND
+            # ---
+            # Then create another stream and fill it with the same content, but written directly, not through object
+            with io.StringIO() as compare_stream:
+                compare_stream.write("##### great | 11:00 | Feeling pumped@!")
 
                 # THEN
                 # ---
@@ -178,7 +198,7 @@ class TestDatedEntriesGroup(TestCase):
             # Then create another stream and fill it with the same content, but written directly, not through object
             with io.StringIO() as compare_stream:
                 compare_stream.write("---" + "\n")
-                compare_stream.write("tags: daily" + "\n")
+                compare_stream.write("tags: daylio" + "\n")
                 compare_stream.write("---" + "\n"*2)
 
                 compare_stream.write("## vaguely ok | 10:00 AM" + "\n"*2)
@@ -215,7 +235,7 @@ class TestDatedEntriesGroup(TestCase):
             # Then create another stream and fill it with the same content, but written directly, not through object
             with io.StringIO() as compare_stream:
                 compare_stream.write("---" + "\n")
-                compare_stream.write("tags: daily" + "\n")
+                compare_stream.write("tags: daylio" + "\n")
                 compare_stream.write("---" + "\n"*2)
 
                 compare_stream.write("## vaguely ok | 10:00 AM" + "\n")
@@ -237,8 +257,10 @@ class TestDatedEntriesGroup(TestCase):
         """
         # WHEN
         # ---
+        # Mess up user-configured file tags
+        my_config_with_empty_tags = BaseFileConfig(front_matter_tags=["", None])
         # Create a sample date
-        sample_date = DatedEntriesGroup("2011-10-10")
+        sample_date = DatedEntriesGroup("2011-10-10", config=my_config_with_empty_tags)
         sample_date.append_to_known(DatedEntry(
             time="10:00 AM",
             mood="vaguely ok",
@@ -250,8 +272,6 @@ class TestDatedEntriesGroup(TestCase):
             mood="awful",
             title="Everything is going downhill for me"
         ))
-        # Mess up user-configured file tags
-        options.tags = ["", None]
 
         with io.StringIO() as my_fake_file_stream:
             sample_date.output(my_fake_file_stream)
@@ -279,7 +299,9 @@ class TestDatedEntriesGroup(TestCase):
         # WHEN
         # ---
         # Create a sample date
-        sample_date = DatedEntriesGroup("2011-10-10")
+        # Mess up user-configured file tags
+        my_file_config = BaseFileConfig(front_matter_tags=["", "foo", "bar", None])
+        sample_date = DatedEntriesGroup("2011-10-10", config=my_file_config)
         sample_date.append_to_known(DatedEntry(
             time="10:00 AM",
             mood="vaguely ok",
@@ -291,8 +313,6 @@ class TestDatedEntriesGroup(TestCase):
             mood="awful",
             title="Everything is going downhill for me"
         ))
-        # Mess up user-configured file tags
-        options.tags = ["", "foo", "bar", None]
 
         with io.StringIO() as my_fake_file_stream:
             sample_date.output(my_fake_file_stream)
@@ -326,7 +346,6 @@ class TestOutputFileStructure(TestCase):
         """
         Loops through known dates and asks each :class:`DatedEntriesGroup` to output its contents to a specified file.
         """
-        options.tags = ["daily"]
 
         lib = Librarian("tests/files/all-valid.csv", path_to_output="tests/files/scenarios/ok/out")
         lib.output_all()

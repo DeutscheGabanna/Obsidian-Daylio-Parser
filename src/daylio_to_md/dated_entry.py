@@ -8,9 +8,10 @@ all notes -> notes written on a particular date -> _A PARTICULAR NOTE_
 from __future__ import annotations
 
 import io
-import logging
 import re
+import logging
 import typing
+from dataclasses import dataclass, field
 
 from daylio_to_md import utils, errors
 from daylio_to_md.config import options
@@ -144,6 +145,14 @@ class Time:
         return all((is_hour_ok, is_minutes_ok))
 
 
+@dataclass(frozen=True)
+class BaseEntryConfig:
+    csv_delimiter: str = '|'
+    header_multiplier: int = 2
+    tag_activities: bool = True
+    """Stores information on how to build and configurate a :class:`DatedEntry`."""
+
+
 class DatedEntry(utils.Core):
     """
     Journal entry.
@@ -167,6 +176,7 @@ class DatedEntry(utils.Core):
                  activities: str = None,
                  title: str = None,
                  note: str = None,
+                 config: BaseEntryConfig = BaseEntryConfig(),
                  override_mood_set: Moodverse = Moodverse()):
         """
         :param time: Time at which this note was created
@@ -178,6 +188,7 @@ class DatedEntry(utils.Core):
         """
         # TODO: have to test the whole instantiation function again after refactoring
         self.__logger = logging.getLogger(self.__class__.__name__)
+        self.config = config
 
         # Processing required properties
         # ---
@@ -206,12 +217,12 @@ class DatedEntry(utils.Core):
         # ---
         self.__activities = []
         if activities:
-            working_array = utils.strip_and_get_truthy(activities, options.csv_delimiter)
+            working_array = utils.strip_and_get_truthy(activities, config.csv_delimiter)
             if len(working_array) > 0:
                 for activity in working_array:
                     self.__activities.append(utils.slugify(
                         activity,
-                        options.tag_activities
+                        config.tag_activities
                     ))
             else:
                 errors.ErrorMsgBase.print(ErrorMsg.WRONG_ACTIVITIES)
@@ -232,9 +243,9 @@ class DatedEntry(utils.Core):
         """
         Write entry contents directly into the provided buffer stream.
         It is the responsibility of the caller to handle the stream afterward.
+        :param stream: Since it expects the base :class:`io.IOBase` class, it accepts both file and file-like streams.
         :raises utils.StreamError: if the passed stream does not support writing to it.
         :raises OSError: likely due to lack of space in memory or filesystem, depending on the stream
-        :param stream: Since it expects the base :class:`io.IOBase` class, it accepts both file and file-like streams.
         :returns: how many characters were successfully written into the stream.
         """
         if not stream.writable():
@@ -243,9 +254,9 @@ class DatedEntry(utils.Core):
         chars_written = 0
         # HEADER OF THE NOTE
         # e.g. "## great | 11:00 AM | Oh my, what a night!"
-        # options.header is an int that multiplies the # to create headers in markdown
+        # header_multiplier is an int that multiplies the # to create headers in markdown
         header_elements = [
-            options.header * "#" + ' ' + self.__mood,
+            self.config.header_multiplier * "#" + ' ' + self.__mood,
             self.time,
             self.__title
         ]

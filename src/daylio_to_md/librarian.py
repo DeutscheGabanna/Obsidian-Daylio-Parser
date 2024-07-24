@@ -19,7 +19,7 @@ from typing import IO
 
 from daylio_to_md import utils, errors, dated_entries_group
 from daylio_to_md.config import options
-from daylio_to_md.dated_entries_group import DatedEntriesGroup
+from daylio_to_md.dated_entries_group import DatedEntriesGroup, BaseFileConfig
 from daylio_to_md.entry.mood import Moodverse
 from daylio_to_md.utils import CsvLoader, JsonLoader, CouldNotLoadFileError
 
@@ -124,7 +124,8 @@ class Librarian:
     def __init__(self,
                  path_to_file: str,  # the only crucial parameter at this stage
                  path_to_output: str = None,
-                 path_to_moods: str = None):
+                 path_to_moods: str = None,
+                 config: BaseFileConfig = BaseFileConfig()):
         """
         :param path_to_file: The path to the CSV file for processing.
         :param path_to_output: The path for outputting processed data as markdown files.
@@ -134,6 +135,7 @@ class Librarian:
         """
         self.__logger = logging.getLogger(self.__class__.__name__)
         self.__known_dates: dict[str, DatedEntriesGroup] = {}
+        self.config = config
 
         # Let's start processing the file
         # ---
@@ -250,7 +252,7 @@ class Librarian:
     # TODO: I guess it is more pythonic to raise exceptions than return False if I cannot complete the task
     # TODO: this has to be tested
     # https://eli.thegreenplace.net/2008/08/21/robust-exception-handling/
-    def __process_line(self, line: dict[str]) -> bool:
+    def __process_line(self, line: dict[str, str]) -> bool:
         """
         Goes row-by-row and passes the content to objects specialised in handling it from a journaling perspective.
         :raises MissingValuesInRowError: if the row in CSV lacks enough commas to create 8 cells. It signals a problem.
@@ -288,7 +290,7 @@ class Librarian:
         if str(date_lookup) in self.__known_dates:
             return self.__known_dates[str(date_lookup)]
         else:
-            new_obj = DatedEntriesGroup(str(date_lookup), self.__mood_set)
+            new_obj = DatedEntriesGroup(str(date_lookup), self.__mood_set, config=self.config)
             self.__known_dates[str(date_lookup)] = new_obj
             return new_obj
 

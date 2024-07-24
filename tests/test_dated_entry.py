@@ -1,11 +1,11 @@
 from unittest import TestCase
 
 import tests.suppress as suppress
-from daylio_to_md.config import options
 from daylio_to_md.dated_entry import \
     Time, \
     DatedEntry, \
-    IsNotTimeError
+    IsNotTimeError, \
+    BaseEntryConfig
 
 
 class TestDatedEntryUtils(TestCase):
@@ -158,13 +158,14 @@ class TestDatedEntry(TestCase):
         self.assertListEqual([], entry.activities)
 
         # When
-        options.tag_activities = True
+        tag_my_activities = BaseEntryConfig(tag_activities=True)
         entry = DatedEntry(
             time="1:49 AM",
             mood="vaguely ok",
             title="Normal situation",
             note="A completely normal situation just occurred.",
-            activities="bicycle|chess|gaming"
+            activities="bicycle|chess|gaming",
+            config=tag_my_activities
         )
 
         # Then
@@ -175,13 +176,14 @@ class TestDatedEntry(TestCase):
         self.assertListEqual(["#bicycle", "#chess", "#gaming"], entry.activities)
 
         # When
-        options.tag_activities = False
+        do_not_tag_my_activities = BaseEntryConfig(tag_activities=False)
         entry = DatedEntry(
             time="1:49 AM",
             mood="vaguely ok",
             title="Normal situation",
             note="A completely normal situation just occurred.",
-            activities="bicycle|chess|gaming"
+            activities="bicycle|chess|gaming",
+            config=do_not_tag_my_activities
         )
 
         # Then

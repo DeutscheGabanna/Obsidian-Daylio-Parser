@@ -8,13 +8,13 @@ all notes -> _NOTES WRITTEN ON A PARTICULAR DATE_ -> a particular note
 from __future__ import annotations
 
 import io
-import logging
 import re
 import typing
+import logging
+from dataclasses import dataclass, field
 
 from daylio_to_md import dated_entry
 from daylio_to_md import utils, errors
-from daylio_to_md.config import options
 from daylio_to_md.dated_entry import DatedEntry
 from daylio_to_md.entry.mood import Moodverse
 
@@ -108,6 +108,12 @@ class Date:
         return self.__day
 
 
+@dataclass(frozen=True)
+class BaseFileConfig:
+    front_matter_tags: typing.List[str] = field(default_factory=lambda: ["daylio"])
+    entry_config: dated_entry.BaseEntryConfig = field(default_factory=dated_entry.BaseEntryConfig)
+
+
 class DatedEntriesGroup(utils.Core):
     """
     A particular date which groups entries written that day.
@@ -120,7 +126,10 @@ class DatedEntriesGroup(utils.Core):
     """
     _instances = {}
 
-    def __new__(cls, date: str, current_mood_set: Moodverse = Moodverse()):
+    def __new__(cls,
+                date: str,
+                current_mood_set: Moodverse = Moodverse(),
+                config: BaseFileConfig = BaseFileConfig()):
         # Check if an instance for the given date already exists
         if date in cls._instances:
             return cls._instances[date]
@@ -129,13 +138,17 @@ class DatedEntriesGroup(utils.Core):
         cls._instances[date] = instance
         return instance
 
-    def __init__(self, date, current_mood_set: Moodverse = Moodverse()):
+    def __init__(self,
+                 date: str,
+                 current_mood_set: Moodverse = Moodverse(),
+                 config: BaseFileConfig = BaseFileConfig()):
         """
         :raises InvalidDateError: if the date string is deemed invalid by :class:`Date`
         :param date: The date for all child entries within.
         :param current_mood_set: Use custom :class:`Moodverse` or default if not provided.
         """
         self.__logger = logging.getLogger(self.__class__.__name__)
+        self.config = config
 
         # Try parsing the date and assigning it as your identification (uid)
         try:
@@ -186,7 +199,8 @@ class DatedEntriesGroup(utils.Core):
                 activities=line["activities"],
                 title=line["note_title"],
                 note=line["note"],
-                override_mood_set=self.__known_moods
+                override_mood_set=self.__known_moods,
+                config=self.config.entry_config
             )
         except ValueError as err:
             raise ValueError from err
@@ -226,7 +240,7 @@ class DatedEntriesGroup(utils.Core):
         # THE BEGINNING OF THE FILE
         # when appending file tags at the beginning of the file, discard any duplicates or falsy strings
         # sorted() is used to have a deterministic order, set() was random, so I couldn't properly test the output
-        valid_tags = sorted(set(val for val in options.tags if val))
+        valid_tags = sorted(set(val for val in self.config.front_matter_tags if val))
         if valid_tags:
             # why '\n' instead of os.linesep?
             # > Do not use os.linesep as a line terminator when writing files opened in text mode (the default);
@@ -234,7 +248,7 @@ class DatedEntriesGroup(utils.Core):
             # https://docs.python.org/3.10/library/os.html#os.linesep
             chars_written += stream.write("---" + "\n")
             chars_written += stream.write("tags: " + ",".join(valid_tags) + "\n")
-            chars_written += stream.write("---" + "\n"*2)
+            chars_written += stream.write("---" + "\n" * 2)
 
         # THE ACTUAL ENTRY CONTENTS
         # Each DatedEntry object now appends its contents into the stream
@@ -242,7 +256,7 @@ class DatedEntriesGroup(utils.Core):
             # write returns the number of characters successfully written
             # https://docs.python.org/3/library/io.html#io.TextIOBase.write
             if entry.output(stream) > 0:
-                chars_written += stream.write("\n"*2)
+                chars_written += stream.write("\n" * 2)
 
         return chars_written
 
