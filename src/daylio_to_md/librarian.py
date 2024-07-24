@@ -304,7 +304,8 @@ class Librarian:
             # "2022/11/09/2022-11-09.md"
             filename = str(known_date.date) + ".md"
             filepath = "/".join([self.__destination, known_date.date.year, known_date.date.month, filename])
-            with create_and_open(filepath, 'a') as file:
+            # TODO: maybe add the mode option to settings in argparse? write/append
+            with create_and_open(filepath, 'w') as file:
                 known_date.output(file)
 
     # Use a dunder overload of getitem to access groups in either way
