@@ -35,14 +35,16 @@ class ColorHandler(logging.StreamHandler):
 # Create a console handler for the root logger
 # noinspection SpellCheckingInspection
 console_log_handler = ColorHandler(sys.stdout)
-console_log_handler.setLevel(logging.WARNING)
+# interesting discussion on why setLevel on both handler AND logger: https://stackoverflow.com/a/17668861/8527654
+console_log_handler.setLevel(logging.INFO)
 
 # noinspection SpellCheckingInspection
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)")
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 console_log_handler.setFormatter(formatter)
 
 # Add the handlers to the root logger
 logging.getLogger().addHandler(console_log_handler)
+logging.getLogger().setLevel(logging.INFO)
 
 
 class ErrorMsgBase:
