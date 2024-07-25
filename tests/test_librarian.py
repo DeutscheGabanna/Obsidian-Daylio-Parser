@@ -1,10 +1,9 @@
 from unittest import TestCase
 
 import tests.suppress as suppress
-from daylio_to_md import librarian
 from daylio_to_md.config import options
 from daylio_to_md.entry.mood import Moodverse
-from daylio_to_md.librarian import Librarian
+from daylio_to_md.librarian import Librarian, CannotAccessJournalError
 
 
 class TestLibrarian(TestCase):
@@ -23,12 +22,12 @@ class TestLibrarian(TestCase):
         """
         Pass faulty files and see if it fails as expected.
         """
-        self.assertRaises(librarian.CannotAccessFileError, Librarian,
+        self.assertRaises(CannotAccessJournalError, Librarian,
                           "tests/files/scenarios/fail/corrupted.csv")
-        self.assertRaises(librarian.CannotAccessFileError, Librarian,
+        self.assertRaises(CannotAccessJournalError, Librarian,
                           "tests/files/scenarios/fail/wrong-format.txt")
         # TODO: what to do with noextension file?
-        self.assertRaises(librarian.CannotAccessFileError, Librarian,
+        self.assertRaises(CannotAccessJournalError, Librarian,
                           "tests/files/fail/missing.csv")
 
         # TODO: handle this case in Librarian
@@ -53,12 +52,6 @@ class TestLibrarian(TestCase):
         )
 
         # Then
-        self.assertTrue(lib.access_date("2022-10-25"))
-        self.assertTrue(lib.access_date("2022-10-26"))
-        self.assertTrue(lib.access_date("2022-10-27"))
-        self.assertTrue(lib.access_date("2022-10-30"))
-
-        # Check if get-item method of accessing date groups also works
         self.assertTrue(lib["2022-10-25"])
         self.assertTrue(lib["2022-10-26"])
         self.assertTrue(lib["2022-10-27"])
@@ -76,26 +69,15 @@ class TestLibrarian(TestCase):
             path_to_moods="all-valid.json"
         )
 
-        # Then can access valid dates, even if they weren't in the file
-        self.assertTrue(lib.access_date("2022-10-21"))
-        self.assertTrue(lib.access_date("2022-10-20"))
-        self.assertTrue(lib.access_date("2022-10-2"))
-        self.assertTrue(lib.access_date("1999-10-22"))
-        # this dict method should also work
-        self.assertTrue(lib["2005-01-19"])
-
-        # But once I try to access the actual entries attached to those dates, they should be empty
-        self.assertFalse(lib.access_date("2022-10-21").known_entries_from_this_day)
-        self.assertFalse(lib.access_date("2022-10-20").known_entries_from_this_day)
-        self.assertFalse(lib.access_date("2022-10-2").known_entries_from_this_day)
-        self.assertFalse(lib.access_date("2022-10-22").known_entries_from_this_day)
-        self.assertFalse(lib.access_date("1999-1-1").known_entries_from_this_day)
+        self.assertRaises(KeyError, lambda: lib["2022-10-21"])
+        self.assertRaises(KeyError, lambda: lib["2022-10-20"])
+        self.assertRaises(KeyError, lambda: lib["2022-10-2"])
+        self.assertRaises(KeyError, lambda: lib["1999-10-22"])
 
         # check if Librarian correctly raises ValueError when trying to check invalid dates
-        self.assertRaises(ValueError, lib.access_date, "ABC")
-        self.assertRaises(ValueError, lib.access_date, "2022")
-        self.assertRaises(ValueError, lib.access_date, "12:00 AM")
-        self.assertRaises(ValueError, lib.access_date, "1795-12-05")  # year range suspicious
+        self.assertRaises(ValueError, lambda: lib["ABC"])
+        self.assertRaises(ValueError, lambda: lib["2022"])
+        self.assertRaises(ValueError, lambda: lib["12:00 AM"])
 
     # CUSTOM AND STANDARD MOOD SETS
     # -----------------------------

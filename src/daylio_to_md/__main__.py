@@ -2,7 +2,7 @@ import sys
 import logging
 
 from daylio_to_md.config import options
-from daylio_to_md.librarian import Librarian, CannotAccessFileError
+from daylio_to_md.librarian import Librarian, CannotAccessJournalError, EmptyJournalError
 
 
 def main():
@@ -20,7 +20,10 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except CannotAccessFileError as err:
+    except CannotAccessJournalError as err:
         # Invoking help() instead of writing it directly just helps to cut down on duplicate strings
         logging.getLogger(__name__).critical(err.__doc__)
         sys.exit(1)
+    except EmptyJournalError as err:
+        logging.getLogger(__name__).critical(err.__doc__)
+        sys.exit(2)

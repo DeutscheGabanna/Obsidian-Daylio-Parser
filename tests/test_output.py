@@ -5,8 +5,8 @@ from unittest import TestCase
 
 import tests.suppress as suppress
 from daylio_to_md.config import options
-from daylio_to_md.dated_entries_group import DatedEntriesGroup, BaseFileConfig
-from daylio_to_md.dated_entry import DatedEntry, BaseEntryConfig
+from daylio_to_md.group import EntriesFrom, BaseFileConfig
+from daylio_to_md.journal_entry import Entry, BaseEntryConfig
 from daylio_to_md.librarian import Librarian
 
 
@@ -31,7 +31,7 @@ class TestDatedEntryOutput(TestCase):
         # ---
         # Create our fake entry as well as a stream that acts like a file
         options.tag_activities = True
-        my_entry = DatedEntry(time="11:00", mood="great", activities="bicycle | chess")
+        my_entry = Entry(time="11:00", mood="great", activities="bicycle | chess")
 
         with io.StringIO() as my_fake_file_stream:
             my_entry.output(my_fake_file_stream)
@@ -61,7 +61,7 @@ class TestDatedEntryOutput(TestCase):
         # ---
         # Create our fake entry as well as a stream that acts like a file
         options.tag_activities = True
-        my_entry = DatedEntry(time="11:00", mood="great", activities="bicycle | chess", title="I'm super pumped!")
+        my_entry = Entry(time="11:00", mood="great", activities="bicycle | chess", title="I'm super pumped!")
 
         with io.StringIO() as my_fake_file_stream:
             my_entry.output(my_fake_file_stream)
@@ -91,8 +91,8 @@ class TestDatedEntryOutput(TestCase):
         # ---
         # Create our fake entry as well as a stream that acts like a file
         options.tag_activities = True
-        my_entry = DatedEntry(time="11:00", mood="great", activities="bicycle | chess", title="I'm super pumped!",
-                              note="I believe I can fly, I believe I can touch the sky.")
+        my_entry = Entry(time="11:00", mood="great", activities="bicycle | chess", title="I'm super pumped!",
+                         note="I believe I can fly, I believe I can touch the sky.")
 
         with io.StringIO() as my_fake_file_stream:
             my_entry.output(my_fake_file_stream)
@@ -120,7 +120,7 @@ class TestDatedEntryOutput(TestCase):
         # WHEN
         # ---
         # Create our fake entry as well as a stream that acts like a file
-        my_entry = DatedEntry(time="11:00", mood="great", activities="bicycle | chess")
+        my_entry = Entry(time="11:00", mood="great", activities="bicycle | chess")
 
         with io.StringIO() as my_fake_file_stream:
             my_entry.output(my_fake_file_stream)
@@ -140,7 +140,7 @@ class TestDatedEntryOutput(TestCase):
         # Set up the config
         do_not_tag_my_activities = BaseEntryConfig(tag_activities=False)
         # Create our fake entry as well as a stream that acts like a file
-        my_entry = DatedEntry(time="11:00", mood="great", activities="bicycle | chess", config=do_not_tag_my_activities)
+        my_entry = Entry(time="11:00", mood="great", activities="bicycle | chess", config=do_not_tag_my_activities)
 
         with io.StringIO() as my_fake_file_stream:
             my_entry.output(my_fake_file_stream)
@@ -155,13 +155,14 @@ class TestDatedEntryOutput(TestCase):
                 # ---
                 self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
 
+    @suppress.out
     def test_header_multiplier(self):
         # WHEN
         # ---
         # Set up the config
         header_lvl_5 = BaseEntryConfig(header_multiplier=5)
         # Create our fake entry as well as a stream that acts like a file
-        my_entry = DatedEntry(time="11:00", mood="great", title="Feeling pumped@!", config=header_lvl_5)
+        my_entry = Entry(time="11:00", mood="great", title="Feeling pumped@!", config=header_lvl_5)
 
         with io.StringIO() as my_fake_file_stream:
             my_entry.output(my_fake_file_stream)
@@ -185,11 +186,12 @@ class TestDatedEntriesGroup(TestCase):
         # WHEN
         # ---
         # Create a sample date
-        sample_date = DatedEntriesGroup("2011-10-10")
-        sample_date.append_to_known(DatedEntry(
+        sample_date = EntriesFrom("2011-10-10")
+        entry_one = Entry(
             time="10:00 AM",
             mood="vaguely ok"
-        ))
+        )
+        sample_date.add(entry_one)
 
         with io.StringIO() as my_fake_file_stream:
             sample_date.output(my_fake_file_stream)
@@ -199,9 +201,9 @@ class TestDatedEntriesGroup(TestCase):
             with io.StringIO() as compare_stream:
                 compare_stream.write("---" + "\n")
                 compare_stream.write("tags: daylio" + "\n")
-                compare_stream.write("---" + "\n"*2)
+                compare_stream.write("---" + "\n" * 2)
 
-                compare_stream.write("## vaguely ok | 10:00 AM" + "\n"*2)
+                compare_stream.write("## vaguely ok | 10:00" + "\n" * 2)
 
                 # THEN
                 # ---
@@ -215,18 +217,19 @@ class TestDatedEntriesGroup(TestCase):
         # WHEN
         # ---
         # Create a sample date
-        sample_date = DatedEntriesGroup("2011-10-10")
-        sample_date.append_to_known(DatedEntry(
+        sample_date = EntriesFrom("2011-10-10")
+        entry_one = Entry(
             time="10:00 AM",
             mood="vaguely ok",
             activities="bowling",
             note="Feeling kinda ok."
-        ))
-        sample_date.append_to_known(DatedEntry(
+        )
+        entry_two = Entry(
             time="9:30 PM",
             mood="awful",
             title="Everything is going downhill for me"
-        ))
+        )
+        sample_date.add(entry_one, entry_two)
 
         with io.StringIO() as my_fake_file_stream:
             sample_date.output(my_fake_file_stream)
@@ -236,13 +239,13 @@ class TestDatedEntriesGroup(TestCase):
             with io.StringIO() as compare_stream:
                 compare_stream.write("---" + "\n")
                 compare_stream.write("tags: daylio" + "\n")
-                compare_stream.write("---" + "\n"*2)
+                compare_stream.write("---" + "\n" * 2)
 
-                compare_stream.write("## vaguely ok | 10:00 AM" + "\n")
+                compare_stream.write("## vaguely ok | 10:00" + "\n")
                 compare_stream.write("#bowling" + "\n")
-                compare_stream.write("Feeling kinda ok." + "\n"*2)
+                compare_stream.write("Feeling kinda ok." + "\n" * 2)
 
-                compare_stream.write("## awful | 9:30 PM | Everything is going downhill for me" + "\n"*2)
+                compare_stream.write("## awful | 21:30 | Everything is going downhill for me" + "\n" * 2)
 
                 # THEN
                 # ---
@@ -260,18 +263,19 @@ class TestDatedEntriesGroup(TestCase):
         # Mess up user-configured file tags
         my_config_with_empty_tags = BaseFileConfig(front_matter_tags=["", None])
         # Create a sample date
-        sample_date = DatedEntriesGroup("2011-10-10", config=my_config_with_empty_tags)
-        sample_date.append_to_known(DatedEntry(
+        sample_date = EntriesFrom("2011-10-10", config=my_config_with_empty_tags)
+        entry_one = Entry(
             time="10:00 AM",
             mood="vaguely ok",
             activities="bowling",
             note="Feeling kinda meh."
-        ))
-        sample_date.append_to_known(DatedEntry(
+        )
+        entry_two = Entry(
             time="9:30 PM",
             mood="awful",
             title="Everything is going downhill for me"
-        ))
+        )
+        sample_date.add(entry_one, entry_two)
 
         with io.StringIO() as my_fake_file_stream:
             sample_date.output(my_fake_file_stream)
@@ -279,11 +283,11 @@ class TestDatedEntriesGroup(TestCase):
             # ---
             # Then create another stream and fill it with the same content, but written directly, not through object
             with io.StringIO() as compare_stream:
-                compare_stream.write("## vaguely ok | 10:00 AM" + "\n")
+                compare_stream.write("## vaguely ok | 10:00" + "\n")
                 compare_stream.write("#bowling" + "\n")
-                compare_stream.write("Feeling kinda meh." + "\n"*2)
+                compare_stream.write("Feeling kinda meh." + "\n" * 2)
 
-                compare_stream.write("## awful | 9:30 PM | Everything is going downhill for me" + "\n"*2)
+                compare_stream.write("## awful | 21:30 | Everything is going downhill for me" + "\n" * 2)
 
                 # THEN
                 # ---
@@ -301,18 +305,19 @@ class TestDatedEntriesGroup(TestCase):
         # Create a sample date
         # Mess up user-configured file tags
         my_file_config = BaseFileConfig(front_matter_tags=["", "foo", "bar", None])
-        sample_date = DatedEntriesGroup("2011-10-10", config=my_file_config)
-        sample_date.append_to_known(DatedEntry(
+        sample_date = EntriesFrom("2011-10-10", config=my_file_config)
+        entry_one = Entry(
             time="10:00 AM",
             mood="vaguely ok",
             activities="bowling",
             note="Feeling fine, I guess."
-        ))
-        sample_date.append_to_known(DatedEntry(
+        )
+        entry_two = Entry(
             time="9:30 PM",
             mood="awful",
             title="Everything is going downhill for me"
-        ))
+        )
+        sample_date.add(entry_one, entry_two)
 
         with io.StringIO() as my_fake_file_stream:
             sample_date.output(my_fake_file_stream)
@@ -322,13 +327,13 @@ class TestDatedEntriesGroup(TestCase):
             with io.StringIO() as compare_stream:
                 compare_stream.write("---" + "\n")
                 compare_stream.write("tags: bar,foo" + "\n")
-                compare_stream.write("---" + "\n"*2)
+                compare_stream.write("---" + "\n" * 2)
 
-                compare_stream.write("## vaguely ok | 10:00 AM" + "\n")
+                compare_stream.write("## vaguely ok | 10:00" + "\n")
                 compare_stream.write("#bowling" + "\n")
-                compare_stream.write("Feeling fine, I guess." + "\n"*2)
+                compare_stream.write("Feeling fine, I guess." + "\n" * 2)
 
-                compare_stream.write("## awful | 9:30 PM | Everything is going downhill for me" + "\n"*2)
+                compare_stream.write("## awful | 21:30 | Everything is going downhill for me" + "\n" * 2)
 
                 # THEN
                 # ---
@@ -351,20 +356,20 @@ class TestOutputFileStructure(TestCase):
         lib.output_all()
 
         with open("tests/files/scenarios/ok/expect/2022-10-25.md", encoding="UTF-8") as parsed_result, \
-             open("tests/files/scenarios/ok/expect/2022-10-25.md", encoding="UTF-8") as expected_result:
-                self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
+                open("tests/files/scenarios/ok/expect/2022-10-25.md", encoding="UTF-8") as expected_result:
+            self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
         with open("tests/files/scenarios/ok/expect//2022-10-26.md", encoding="UTF-8") as parsed_result, \
-             open("tests/files/scenarios/ok/expect/2022-10-26.md", encoding="UTF-8") as expected_result:
-                self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
+                open("tests/files/scenarios/ok/expect/2022-10-26.md", encoding="UTF-8") as expected_result:
+            self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
         with open("tests/files/scenarios/ok/expect/2022-10-27.md", encoding="UTF-8") as parsed_result, \
-             open("tests/files/scenarios/ok/expect/2022-10-27.md", encoding="UTF-8") as expected_result:
-                self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
+                open("tests/files/scenarios/ok/expect/2022-10-27.md", encoding="UTF-8") as expected_result:
+            self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
         with open("tests/files/scenarios/ok/expect/2022-10-30.md", encoding="UTF-8") as parsed_result, \
-             open("tests/files/scenarios/ok/expect/2022-10-30.md", encoding="UTF-8") as expected_result:
-                self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
+                open("tests/files/scenarios/ok/expect/2022-10-30.md", encoding="UTF-8") as expected_result:
+            self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
     def tearDown(self) -> None:
         folder = 'tests/files/scenarios/ok/out'

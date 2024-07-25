@@ -89,6 +89,7 @@ class TestMoodverse(TestCase):
         self.assertIn("awful", my_moodverse.get_moods)
         self.assertIn("good", my_moodverse.get_moods)
 
+    @suppress.out
     def test_loading_invalid_moodlists(self):
         bad_moods_loaded_from_json = {
             "rad": ["", None],
@@ -108,6 +109,7 @@ class TestMoodverse(TestCase):
         }
         self.assertEqual(1, len(Moodverse(bad_moods_loaded_from_json).get_custom_moods))
 
+    @suppress.out
     def test_loading_same_moods_as_already_existing(self):
         self.assertDictEqual(
             {"rad": "rad", "good": "good", "neutral": "neutral", "bad": "bad", "awful": "awful"},
