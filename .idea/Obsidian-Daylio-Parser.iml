@@ -5,9 +5,8 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/tests/files/output-results" />
-      <excludeFolder url="file://$MODULE_DIR$/tests/files/locked-dir" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.10 (obsidian-daylio-parser)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Pipenv (Obsidian-Daylio-Parser)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PackageRequirementsSettings">

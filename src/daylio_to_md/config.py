@@ -20,7 +20,10 @@ Sets up all necessary options and arguments.
         ├── suffix
         ├── colour
         └── header
+
 """
+# https://www.doc.ic.ac.uk/~nuric/posts/coding/how-to-handle-configuration-in-python/
+
 import argparse
 import logging
 from typing import List, Any

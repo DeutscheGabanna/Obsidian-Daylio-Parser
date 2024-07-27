@@ -17,9 +17,9 @@ class DisableLogging:
 
 def out(func):
     def wrapper(*a, **ka):
-        with open(os.devnull, 'w') as devnull,\
-                contextlib.redirect_stdout(devnull),\
-                contextlib.redirect_stderr(devnull),\
+        with open(os.devnull, 'w') as devnull, \
+                contextlib.redirect_stdout(devnull), \
+                contextlib.redirect_stderr(devnull), \
                 DisableLogging():
             return func(*a, **ka)
 
