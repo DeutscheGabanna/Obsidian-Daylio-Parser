@@ -1,9 +1,10 @@
 from unittest import TestCase
 
 import tests.suppress as suppress
-from daylio_to_md.config import options
 from daylio_to_md.entry.mood import Moodverse
+from daylio_to_md.journal_entry import EntryBuilder
 from daylio_to_md.librarian import Librarian, CannotAccessJournalError
+from daylio_to_md.group import EntriesFromBuilder
 
 
 class TestLibrarian(TestCase):
@@ -26,7 +27,7 @@ class TestLibrarian(TestCase):
                           "tests/files/scenarios/fail/corrupted.csv")
         self.assertRaises(CannotAccessJournalError, Librarian,
                           "tests/files/scenarios/fail/wrong-format.txt")
-        # TODO: what to do with noextension file?
+        # TODO: what to do with no extension file?
         self.assertRaises(CannotAccessJournalError, Librarian,
                           "tests/files/fail/missing.csv")
 
@@ -142,10 +143,11 @@ class TestLibrarian(TestCase):
         However, it can only expand it (and be truthy) if the dict with moods has all required groups.
         Therefore, since ``incomplete-moods`` lacks the ``good`` group, the assertion will evaluate to False.
         """
-        options.tag_activities = True
+        custom_config = EntriesFromBuilder(entries_builder=EntryBuilder(tag_activities=True))
         lib_to_test = Librarian(
             path_to_file="tests/files/scenarios/ok/all-valid.csv",
-            path_to_moods="tests/files/moods/incomplete.json"
+            path_to_moods="tests/files/moods/incomplete.json",
+            entries_from_builder=custom_config
         )
         # There are 11 moods, out of which one is a duplicate of a default mood, so 10 custom in total
         self.assertEqual(10, len(lib_to_test.current_mood_set.get_custom_moods),

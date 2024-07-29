@@ -22,7 +22,7 @@ ERRORS
 
 
 class ErrorMsg(errors.ErrorMsgBase):
-    INVALID_OBSIDIAN_TAGS = "You want your activities as tags, but {} is invalid."
+    INVALID_OBSIDIAN_TAGS = "You want your activities as frontmatter_tags, but {} is invalid."
 
 
 class ExpectedValueError(TypeError):

@@ -6,15 +6,16 @@ Here's a quick breakdown of what is the specialisation of this file in the journ
 all notes -> _NOTES WRITTEN ON A PARTICULAR DATE_ -> a particular note
 """
 from __future__ import annotations
+from dataclasses import dataclass, field
 
 import io
 import typing
 import logging
 import datetime
-from dataclasses import dataclass, field
 
 from daylio_to_md import journal_entry
 from daylio_to_md import utils, errors
+from daylio_to_md.config import DEFAULTS
 from daylio_to_md.journal_entry import Entry
 from daylio_to_md.entry.mood import Moodverse
 
@@ -52,52 +53,26 @@ MAIN
 
 
 @dataclass(frozen=True)
-class BaseFileConfig:
-    """Stores information on how to build and configurate a :class:`DatedEntry`."""
-    front_matter_tags: typing.List[str] = field(default_factory=lambda: ["daylio"])
-    entry_config: journal_entry.BaseEntryConfig = field(default_factory=journal_entry.BaseEntryConfig)
+class EntriesFromBuilder:
+    """
+    Configure one instance of this, and you won't have to provide the same configuration
+    over and over again when it instantiates new :class:`EntriesFrom` objects for you.
+    :param front_matter_tags: Tags in the YAML front-matter of each note
+    :param entries_builder: Builder configured to create new :class:`Entry` objects
+    """
+    front_matter_tags: tuple[str] = DEFAULTS.frontmatter_tags
+    entries_builder: journal_entry.EntryBuilder = field(default_factory=journal_entry.EntryBuilder)
 
+    def build(self,
+              date: typing.Union[datetime.date, str, typing.List[str], typing.List[int]],
+              mood_set: Moodverse = Moodverse()) -> EntriesFrom:
 
-@dataclass(frozen=True)
-class FileTemplate:
-    config: BaseFileConfig = field(default_factory=BaseFileConfig)
-
-    def output(self, iterable: typing.List[Entry], stream: io.IOBase | typing.IO) -> int:
-        """
-        Write entry contents of all :class:`DatedEntry` known directly into the provided buffer stream.
-        It is the responsibility of the caller to handle the stream afterward.
-        :param iterable:
-        :raises utils.StreamError: if the passed stream does not support writing to it.
-        :raises OSError: likely due to lack of space in memory or filesystem, depending on the stream
-        :param stream: Since it expects the base :class:`io.IOBase` class, it accepts both file and file-like streams.
-        :returns: how many characters were successfully written into the stream.
-        """
-        if not stream.writable():
-            raise utils.StreamError
-
-        chars_written = 0
-        # THE BEGINNING OF THE FILE
-        # when appending file tags at the beginning of the file, discard any duplicates or falsy strings
-        # sorted() is used to have a deterministic order, set() was random, so I couldn't properly test the output
-        valid_tags = sorted(set(val for val in self.config.front_matter_tags if val))
-        if valid_tags:
-            # why '\n' instead of os.linesep?
-            # > Do not use os.linesep as a line terminator when writing files opened in text mode (the default);
-            # > use a single '\n' instead, on all platforms.
-            # https://docs.python.org/3.10/library/os.html#os.linesep
-            chars_written += stream.write("---" + "\n")
-            chars_written += stream.write("tags: " + ",".join(valid_tags) + "\n")
-            chars_written += stream.write("---" + "\n" * 2)
-
-        # THE ACTUAL ENTRY CONTENTS
-        # Each DatedEntry object now appends its contents into the stream
-        for entry in iterable:
-            # write returns the number of characters successfully written
-            # https://docs.python.org/3/library/io.html#io.TextIOBase.write
-            if entry.output(stream) > 0:
-                chars_written += stream.write("\n" * 2)
-
-        return chars_written
+        return EntriesFrom(
+            utils.guess_date_type(date),
+            self.front_matter_tags,
+            self.entries_builder,
+            mood_set
+        )
 
 
 class EntriesFrom(utils.Core):
@@ -106,15 +81,16 @@ class EntriesFrom(utils.Core):
 
     :raises InvalidDateError: if the date cannot be type cast into :class:`datetime.date`
     :param date: The date for all child entries within. Always type-casted into :class:`datetime.date`
+    :param front_matter_tags: Tags in the YAML front-matter of each note
+    :param entries_builder: Builder configured to create new :class:`Entry` objects
     :param mood_set: Use custom :class:`Moodverse` or default if not provided.
-    :param config: Use custom :class:`BaseFileConfig` or default if not provided.
     """
     _instances: dict[datetime.date, EntriesFrom] = {}
 
     def __new__(cls,
-                date: typing.Union[datetime.date, str, typing.List[str]],
-                current_mood_set: Moodverse = Moodverse(),
-                config: BaseFileConfig = BaseFileConfig()):
+                date: typing.Union[datetime.date, str, typing.List[str], typing.List[int]],
+                *args,
+                **kwargs):
 
         type_casted_date = utils.guess_date_type(date)
 
@@ -130,14 +106,16 @@ class EntriesFrom(utils.Core):
 
     def __init__(self,
                  date: typing.Union[datetime.date, str, typing.List[str], typing.List[int]],
-                 mood_set: Moodverse = Moodverse(),
-                 config: BaseFileConfig = BaseFileConfig()):
-        super().__init__(utils.guess_date_type(date))
+                 front_matter_tags: tuple[str] = EntriesFromBuilder.front_matter_tags,
+                 entries_builder: journal_entry.EntryBuilder = journal_entry.EntryBuilder(),
+                 mood_set: Moodverse = Moodverse()):
 
         self.__logger = logging.getLogger(self.__class__.__name__)
-        self.config = config
+        super().__init__(utils.guess_date_type(date))
 
         # All good - initialise
+        self.__front_matter_tags = front_matter_tags
+        self.__entries_builder = entries_builder
         self.__known_entries: dict[datetime.time, Entry] = {}
         self.__known_moods: Moodverse = mood_set
 
@@ -166,16 +144,14 @@ class EntriesFrom(utils.Core):
 
         # Instantiate the entry
         time = utils.guess_time_type(line["time"])
-        this_entry = journal_entry.Entry(
+        self[time] = self.__entries_builder.build(
             time,
             line["mood"],
-            activities=line["activities"],
-            title=line["note_title"],
-            note=line["note"],
+            line["activities"],
+            line["note_title"],
+            line["note"],
             mood_set=self.__known_moods,
-            config=self.config.entry_config
         )
-        self[time] = this_entry
 
     def __getitem__(self, item: typing.Union[datetime.time, str, typing.List[int], typing.List[str]]) -> Entry:
         """
@@ -236,16 +212,16 @@ class EntriesFrom(utils.Core):
 
         chars_written = 0
         # THE BEGINNING OF THE FILE
-        # when appending file tags at the beginning of the file, discard any duplicates or falsy strings
+        # when appending file frontmatter_tags at the beginning of the file, discard any duplicates or falsy strings
         # sorted() is used to have a deterministic order, set() was random, so I couldn't properly test the output
-        valid_tags = sorted(set(val for val in self.config.front_matter_tags if val))
+        valid_tags = sorted(set(val for val in self.__front_matter_tags if val))
         if valid_tags:
             # why '\n' instead of os.linesep?
             # > Do not use os.linesep as a line terminator when writing files opened in text mode (the default);
             # > use a single '\n' instead, on all platforms.
             # https://docs.python.org/3.10/library/os.html#os.linesep
             chars_written += stream.write("---" + "\n")
-            chars_written += stream.write("tags: " + ",".join(valid_tags) + "\n")
+            chars_written += stream.write("frontmatter_tags: " + ",".join(valid_tags) + "\n")
             chars_written += stream.write("---" + "\n" * 2)
 
         # THE ACTUAL ENTRY CONTENTS
