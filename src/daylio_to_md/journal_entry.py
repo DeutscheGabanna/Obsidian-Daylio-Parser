@@ -16,59 +16,10 @@ import typing
 import datetime
 from dataclasses import dataclass
 
+from daylio_to_md.config import DEFAULTS
 from daylio_to_md import utils, errors
-from daylio_to_md.config import options
 from daylio_to_md.entry.mood import Moodverse
 
-"""---------------------------------------------------------------------------------------------------------------------
-ADD SETTINGS SPECIFIC TO JOURNAL ENTRIES TO ARGPARSE
----------------------------------------------------------------------------------------------------------------------"""
-# Adding DatedEntry-specific options in global_settings
-journal_entry_settings = options.arg_console.add_argument_group(
-    "Journal entry settings",
-    "Handles how journal entries should be formatted"
-)
-journal_entry_settings.add_argument(
-    "--tags",
-    help="Tags in the YAML of each note.",
-    nargs='*',  # this allows, for example, "--tags one two three" --> ["one", "two", "three"]
-    default="daily",
-    dest="TAGS"
-)
-journal_entry_settings.add_argument(
-    "--prefix",  # <here's your prefix>YYYY-MM-DD.md so remember about a separating char
-    default='',
-    help="Prepends a given string to each entry's header."
-)
-journal_entry_settings.add_argument(
-    "--suffix",  # YYYY-MM-DD<here's your suffix>.md so remember about a separating char
-    default='',
-    help="Appends a given string at the end of each entry's header."
-)
-journal_entry_settings.add_argument(
-    "--tag_activities", "-a",
-    action="store_true",  # default=True
-    help="Tries to convert activities into valid tags.",
-    dest="ACTIVITIES_AS_TAGS"
-)
-journal_entry_settings.add_argument(
-    "-colour", "--color",
-    action="store_true",  # default=True
-    help="Prepends a colour emoji to each entry depending on mood.",
-    dest="colour"
-)
-journal_entry_settings.add_argument(
-    "--header",
-    type=int,
-    default=2,
-    help="Headings level for each entry.",
-    dest="HEADER_LEVEL"
-)
-journal_entry_settings.add_argument(
-    "--csv-delimiter",
-    default="|",
-    help="Set delimiter for activities in Daylio .CSV, e.g: football | chess"
-)
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
@@ -93,11 +44,43 @@ MAIN
 
 
 @dataclass(frozen=True)
-class BaseEntryConfig:
-    """Stores information on how to build and configurate a :class:`DatedEntry`."""
-    csv_delimiter: str = '|'
-    header_multiplier: int = 2
-    tag_activities: bool = True
+class EntryBuilder:
+    """
+    Configure one instance of this, and you won't have to provide the same configuration
+    over and over again when it instantiates new :class:`Entry` objects for you.
+    :param csv_delimiter: Delimiter used to separate activities in Daylio .csv, e.g: football | chess
+    :param header_multiplier: Headings level for each entry
+    :param tag_activities: If set, tries to convert activities into valid frontmatter tags
+    :param prefix: Add a given string before the header
+    :param suffix: Add a given string after the header
+    """
+    csv_delimiter: str = DEFAULTS.csv_delimiter
+    header_multiplier: int = DEFAULTS.header_level
+    tag_activities: bool = DEFAULTS.tag_activities
+    prefix: str = DEFAULTS.prefix
+    suffix: str = DEFAULTS.suffix
+
+    def build(self,
+              time: typing.Union[datetime.time, str, typing.List[str], typing.List[int]],
+              mood: str,
+              activities: str = None,
+              title: str = None,
+              note: str = None,
+              mood_set: Moodverse = Moodverse()) -> Entry:
+
+        return Entry(
+            utils.guess_time_type(time),
+            mood,
+            activities,
+            title,
+            note,
+            self.csv_delimiter,
+            self.header_multiplier,
+            self.tag_activities,
+            self.prefix,
+            self.suffix,
+            mood_set
+        )
 
 
 class Entry(utils.Core):
@@ -108,27 +91,38 @@ class Entry(utils.Core):
     :param mood: Mood felt during writing this note.
                  It can be any :class:`str`, but during output the colouring won't work if the mood is not recognised.
                  (i.e `joyful` won't appear green if it isn't in the ``moods.json``)
-    :param activities: (opt.) Activities carried out around or at the time of writing the note
-    :param title: (opt.) Title of the note
-    :param note: (opt.) The contents of the journal note itself
-    :param config: (opt). Configures how an entry should be processed or outputted
+    :param activities: Activities carried out around or at the time of writing the note
+    :param title: Title of the note
+    :param note: The contents of the journal note itself
+    :param csv_delimiter: Delimiter used to separate activities in Daylio .csv, e.g: football | chess
+    :param header_multiplier: Headings level for each entry
+    :param tag_activities: If set, tries to convert activities into valid frontmatter tags
+    :param prefix: Add a given string before the header
+    :param suffix: Add a given string after the header
     :param mood_set: (opt.) Set if you want to use custom :class:`Moodverse` for mood handling
     :raise InvalidTimeError: if the passed time argument cannot be coerced into :class:`datetime.time`
     :raise NoMoorError: if mood is falsy
     """
 
     def __init__(self,
-                 time: typing.Union[datetime.time, str, typing.List[int], typing.List[int]],
+                 time: typing.Union[datetime.time, str, typing.List[str], typing.List[int]],
                  mood: str,
                  activities: str = None,
                  title: str = None,
                  note: str = None,
-                 config: BaseEntryConfig = BaseEntryConfig(),
+                 csv_delimiter: str = EntryBuilder.csv_delimiter,
+                 header_multiplier: int = EntryBuilder.header_multiplier,
+                 tag_activities: bool = EntryBuilder.tag_activities,
+                 prefix: str = EntryBuilder.prefix,
+                 suffix: str = EntryBuilder.suffix,
                  mood_set: Moodverse = Moodverse()):
 
-        # TODO: have to test the whole instantiation function again after refactoring
         self.__logger = logging.getLogger(self.__class__.__name__)
-        self.config = config
+        self.__csv_delimiter = csv_delimiter
+        self.__header_multiplier = header_multiplier
+        self.__tag_activities = tag_activities
+        self.__prefix = prefix
+        self.__suffix = suffix
 
         # Processing required properties
         # ---
@@ -153,13 +147,10 @@ class Entry(utils.Core):
         # Process activities
         self.__activities = []
         if activities:
-            working_array = utils.strip_and_get_truthy(activities, config.csv_delimiter)
+            working_array = utils.strip_and_get_truthy(activities, self.__csv_delimiter)
             if len(working_array) > 0:
                 for activity in working_array:
-                    self.__activities.append(utils.slugify(
-                        activity,
-                        config.tag_activities
-                    ))
+                    self.__activities.append(utils.slugify(activity, self.__tag_activities))
             else:
                 self.__logger.warning(ErrorMsg.WRONG_ACTIVITIES.format(activities))
         # Process title
@@ -184,7 +175,7 @@ class Entry(utils.Core):
         # e.g. "## great | 11:00 AM | Oh my, what a night!"
         # header_multiplier is an int that multiplies the # to create headers in markdown
         header_elements = [
-            self.config.header_multiplier * "#" + ' ' + self.__mood,
+            self.__header_multiplier * "#" + ' ' + self.__mood,
             self.time.strftime("%H:%M"),
             self.__title
         ]

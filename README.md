@@ -11,4 +11,4 @@ daylio_to_md --help
 ```
 
 If you are a developer and wish to contribute to the project, clone this repo and submit your commits in a pull request.
-```
+``` 

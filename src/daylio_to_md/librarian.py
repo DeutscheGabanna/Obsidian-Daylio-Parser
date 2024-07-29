@@ -19,39 +19,12 @@ import logging
 import datetime
 from typing import IO
 
-from daylio_to_md.config import options
 from daylio_to_md import utils, errors, group
 from daylio_to_md.entry.mood import Moodverse
-from daylio_to_md.group import EntriesFrom, BaseFileConfig
+from daylio_to_md.group import EntriesFrom, EntriesFromBuilder
+from daylio_to_md.journal_entry import EntryBuilder
 from daylio_to_md.utils import CsvLoader, JsonLoader, CouldNotLoadFileError, guess_date_type
 
-"""---------------------------------------------------------------------------------------------------------------------
-ADD MAIN SETTINGS TO ARGPARSE
----------------------------------------------------------------------------------------------------------------------"""
-
-# Adding Librarian-specific options in global_settings
-librarian_settings = options.arg_console.add_argument_group(
-    "Main options"
-)
-# 1. Filepath is absolutely crucial to even start processing
-librarian_settings.add_argument(
-    "filepath",
-    type=str,
-    help="Specify path to the .CSV file"
-)
-# 2. Destination is not needed if user is only processing, but no destination makes it impossible to output that data.
-librarian_settings.add_argument(
-    "destination",
-    type=str,
-    help="Path to folder to output finished files into."
-)
-# TODO: Force-argument does nothing yet.
-librarian_settings.add_argument(
-    "--force",
-    choices=["accept", "refuse"],
-    default=None,
-    help="Instead of asking for confirmation every time when overwriting files, accept or refuse all such requests."
-)
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
@@ -139,7 +112,8 @@ class Librarian:
                  path_to_file: str,
                  path_to_output: str = None,
                  path_to_moods: str = None,
-                 config: BaseFileConfig = BaseFileConfig()):
+                 entries_from_builder: EntriesFromBuilder = EntriesFromBuilder(),
+                 entry_builder: EntryBuilder = EntryBuilder()):
         """
         :param path_to_file: The path to the CSV file for processing.
         :param path_to_output: The path for outputting processed data as markdown files.
@@ -150,7 +124,8 @@ class Librarian:
         """
         self.__logger = logging.getLogger(self.__class__.__name__)
         self.__known_dates: dict[datetime.date, EntriesFrom] = {}
-        self.__config = config
+        self.__entries_from_builder = entries_from_builder
+        self.__entry_builder = entry_builder
 
         self.__start(path_to_file, path_to_output, path_to_moods)
 
@@ -281,7 +256,7 @@ class Librarian:
         # Let DatedEntriesGroup handle the rest and increment the counter (True == 1)
         try:
             date = guess_date_type(line["full_date"])
-            entries_from_this_date = EntriesFrom(date, config=self.__config)
+            entries_from_this_date = (self.__entries_from_builder.build(date, self.__mood_set))
             entries_from_this_date.create_entry(line)
             # Overwriting existing keys is not a problem since EntriesFrom.__new__() returns the same object ID when
             # it is initialised with the same date parameter. Also, since we are type-casting date into datetime.date

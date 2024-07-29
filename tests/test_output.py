@@ -4,13 +4,12 @@ import shutil
 from unittest import TestCase
 
 import tests.suppress as suppress
-from daylio_to_md.config import options
-from daylio_to_md.group import EntriesFrom, BaseFileConfig
-from daylio_to_md.journal_entry import Entry, BaseEntryConfig
+from daylio_to_md.group import EntriesFrom, EntriesFromBuilder
+from daylio_to_md.journal_entry import Entry, EntryBuilder
 from daylio_to_md.librarian import Librarian
 
 
-class TestDatedEntryOutput(TestCase):
+class TestEntriesFromOutput(TestCase):
     """
     Since the sample entry can output to any stream from :class:`io.IOBase`, you can treat the StringIO as fake file
     If the contents outputted to this fake file are the same as contents written directly to another fake stream,
@@ -30,7 +29,6 @@ class TestDatedEntryOutput(TestCase):
         # WHEN
         # ---
         # Create our fake entry as well as a stream that acts like a file
-        options.tag_activities = True
         my_entry = Entry(time="11:00", mood="great", activities="bicycle | chess")
 
         with io.StringIO() as my_fake_file_stream:
@@ -60,7 +58,6 @@ class TestDatedEntryOutput(TestCase):
         # WHEN
         # ---
         # Create our fake entry as well as a stream that acts like a file
-        options.tag_activities = True
         my_entry = Entry(time="11:00", mood="great", activities="bicycle | chess", title="I'm super pumped!")
 
         with io.StringIO() as my_fake_file_stream:
@@ -90,7 +87,6 @@ class TestDatedEntryOutput(TestCase):
         # WHEN
         # ---
         # Create our fake entry as well as a stream that acts like a file
-        options.tag_activities = True
         my_entry = Entry(time="11:00", mood="great", activities="bicycle | chess", title="I'm super pumped!",
                          note="I believe I can fly, I believe I can touch the sky.")
 
@@ -137,10 +133,8 @@ class TestDatedEntryOutput(TestCase):
 
         # WHEN
         # ---
-        # Set up the config
-        do_not_tag_my_activities = BaseEntryConfig(tag_activities=False)
         # Create our fake entry as well as a stream that acts like a file
-        my_entry = Entry(time="11:00", mood="great", activities="bicycle | chess", config=do_not_tag_my_activities)
+        my_entry = Entry(time="11:00", mood="great", activities="bicycle | chess", tag_activities=False)
 
         with io.StringIO() as my_fake_file_stream:
             my_entry.output(my_fake_file_stream)
@@ -159,10 +153,8 @@ class TestDatedEntryOutput(TestCase):
     def test_header_multiplier(self):
         # WHEN
         # ---
-        # Set up the config
-        header_lvl_5 = BaseEntryConfig(header_multiplier=5)
         # Create our fake entry as well as a stream that acts like a file
-        my_entry = Entry(time="11:00", mood="great", title="Feeling pumped@!", config=header_lvl_5)
+        my_entry = Entry(time="11:00", mood="great", title="Feeling pumped@!", header_multiplier=5)
 
         with io.StringIO() as my_fake_file_stream:
             my_entry.output(my_fake_file_stream)
@@ -200,7 +192,7 @@ class TestDatedEntriesGroup(TestCase):
             # Then create another stream and fill it with the same content, but written directly, not through object
             with io.StringIO() as compare_stream:
                 compare_stream.write("---" + "\n")
-                compare_stream.write("tags: daylio" + "\n")
+                compare_stream.write("frontmatter_tags: daylio" + "\n")
                 compare_stream.write("---" + "\n" * 2)
 
                 compare_stream.write("## vaguely ok | 10:00" + "\n" * 2)
@@ -238,7 +230,7 @@ class TestDatedEntriesGroup(TestCase):
             # Then create another stream and fill it with the same content, but written directly, not through object
             with io.StringIO() as compare_stream:
                 compare_stream.write("---" + "\n")
-                compare_stream.write("tags: daylio" + "\n")
+                compare_stream.write("frontmatter_tags: daylio" + "\n")
                 compare_stream.write("---" + "\n" * 2)
 
                 compare_stream.write("## vaguely ok | 10:00" + "\n")
@@ -255,15 +247,13 @@ class TestDatedEntriesGroup(TestCase):
     def test_outputting_day_with_two_entries_and_invalid_filetags(self):
         """
         Creates a file-like stream for a day with two valid entries and checks if the file contents are as expected.
-        The tricky part is that the file tags specified by the user are invalid.
+        The tricky part is that the file frontmatter_tags specified by the user are invalid.
         Therefore, the entire section with filetags should be omitted in the file contents.
         """
         # WHEN
         # ---
-        # Mess up user-configured file tags
-        my_config_with_empty_tags = BaseFileConfig(front_matter_tags=["", None])
         # Create a sample date
-        sample_date = EntriesFrom("2011-10-10", config=my_config_with_empty_tags)
+        sample_date = EntriesFrom("2011-10-10", front_matter_tags=["", None])
         entry_one = Entry(
             time="10:00 AM",
             mood="vaguely ok",
@@ -297,15 +287,13 @@ class TestDatedEntriesGroup(TestCase):
     def test_outputting_day_with_two_entries_and_partially_valid_filetags(self):
         """
         Creates a file-like stream for a day with two valid entries and checks if the file contents are as expected.
-        The tricky part is that the file tags specified by the user are only partially valid.
-        Therefore, the section will file tags at the beginning of the file should be sanitised.
+        The tricky part is that the file frontmatter_tags specified by the user are only partially valid.
+        Therefore, the section will file frontmatter_tags at the beginning of the file should be sanitised.
         """
         # WHEN
         # ---
         # Create a sample date
-        # Mess up user-configured file tags
-        my_file_config = BaseFileConfig(front_matter_tags=["", "foo", "bar", None])
-        sample_date = EntriesFrom("2011-10-10", config=my_file_config)
+        sample_date = EntriesFrom("2011-10-10", front_matter_tags=["", "foo", "bar", None])
         entry_one = Entry(
             time="10:00 AM",
             mood="vaguely ok",
@@ -326,7 +314,7 @@ class TestDatedEntriesGroup(TestCase):
             # Then create another stream and fill it with the same content, but written directly, not through object
             with io.StringIO() as compare_stream:
                 compare_stream.write("---" + "\n")
-                compare_stream.write("tags: bar,foo" + "\n")
+                compare_stream.write("frontmatter_tags: bar,foo" + "\n")
                 compare_stream.write("---" + "\n" * 2)
 
                 compare_stream.write("## vaguely ok | 10:00" + "\n")
