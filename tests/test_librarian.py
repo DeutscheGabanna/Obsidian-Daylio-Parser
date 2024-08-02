@@ -88,13 +88,13 @@ class TestLibrarian(TestCase):
         self.assertTrue(Librarian(
             path_to_file="tests/files/all-valid.csv",
             path_to_moods="tests/files/all-valid.json"
-        ).current_mood_set.get_custom_moods)
+        ).mood_set.get_custom_moods)
 
     @suppress.out
     def test_custom_moods_when_not_passed(self):
         """Pass no moods and see if it know it only has standard moods available."""
         lib = Librarian(path_to_file="tests/files/all-valid.csv")
-        self.assertEqual(0, len(lib.current_mood_set.get_custom_moods), msg=lib.current_mood_set)
+        self.assertEqual(0, len(lib.mood_set.get_custom_moods), msg=lib.mood_set)
 
     @suppress.out
     def test_custom_moods_with_invalid_jsons(self):
@@ -103,7 +103,7 @@ class TestLibrarian(TestCase):
             path_to_file="tests/files/all-valid.csv",
             path_to_moods="tests/files/scenarios/fail/empty.csv"
         )
-        self.assertEqual(0, len(lib.current_mood_set.get_custom_moods))
+        self.assertEqual(0, len(lib.mood_set.get_custom_moods))
 
     @suppress.out
     def test_custom_moods_when_json_invalid(self):
@@ -112,9 +112,9 @@ class TestLibrarian(TestCase):
             path_to_moods="tests/files/scenarios/fail/empty.csv"
         )
         default = Moodverse()
-        self.assertDictEqual(lib.current_mood_set.get_moods, default.get_moods,
+        self.assertDictEqual(lib.mood_set.get_moods, default.get_moods,
                              msg="\n".join([
-                                 "current ID:\t" + str(id(lib.current_mood_set)),
+                                 "current ID:\t" + str(id(lib.mood_set)),
                                  "default object ID:\t" + str(id(default))
                              ])
                              )
@@ -122,16 +122,16 @@ class TestLibrarian(TestCase):
             path_to_file="tests/files/all-valid.csv",
             path_to_moods="tests/files/scenarios/fail/empty.csv"
         )
-        self.assertDictEqual(lib.current_mood_set.get_moods, default.get_moods,
+        self.assertDictEqual(lib.mood_set.get_moods, default.get_moods,
                              msg="\n".join([
-                                 "current ID:\t" + str(id(lib.current_mood_set)),
+                                 "current ID:\t" + str(id(lib.mood_set)),
                                  "default object ID:\t" + str(id(default))
                              ])
                              )
         # TODO: move locked folder and locked file tests into Docker run
-        self.assertDictEqual(lib.current_mood_set.get_moods, default.get_moods,
+        self.assertDictEqual(lib.mood_set.get_moods, default.get_moods,
                              msg="\n".join([
-                                 "current ID:\t" + str(id(lib.current_mood_set)),
+                                 "current ID:\t" + str(id(lib.mood_set)),
                                  "default object ID:\t" + str(id(default))
                              ])
                              )
@@ -150,5 +150,5 @@ class TestLibrarian(TestCase):
             entries_from_builder=custom_config
         )
         # There are 11 moods, out of which one is a duplicate of a default mood, so 10 custom in total
-        self.assertEqual(10, len(lib_to_test.current_mood_set.get_custom_moods),
-                         msg=lib_to_test.current_mood_set.get_custom_moods.keys())
+        self.assertEqual(10, len(lib_to_test.mood_set.get_custom_moods),
+                         msg=lib_to_test.mood_set.get_custom_moods.keys())

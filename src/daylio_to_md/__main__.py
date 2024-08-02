@@ -24,14 +24,13 @@ def main():
         cli_options.suffix
     )
     file_template = EntriesFromBuilder(
-        cli_options.frontmatter_tags,
+        cli_options.front_matter_tags,
         entry_template
     )
     Librarian(
         cli_options.filepath,
         cli_options.destination,
-        entries_from_builder=file_template,
-        entry_builder=entry_template
+        entries_from_builder=file_template
     ).output_all()
 
 

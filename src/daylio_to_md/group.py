@@ -60,7 +60,7 @@ class EntriesFromBuilder:
     :param front_matter_tags: Tags in the YAML front-matter of each note
     :param entries_builder: Builder configured to create new :class:`Entry` objects
     """
-    front_matter_tags: tuple[str] = DEFAULTS.frontmatter_tags
+    front_matter_tags: tuple[str] = DEFAULTS.front_matter_tags
     entries_builder: journal_entry.EntryBuilder = field(default_factory=journal_entry.EntryBuilder)
 
     def build(self,
@@ -110,6 +110,11 @@ class EntriesFrom(utils.Core):
                  entries_builder: journal_entry.EntryBuilder = journal_entry.EntryBuilder(),
                  mood_set: Moodverse = Moodverse()):
 
+        # __new__ calls __init__ every time, even if it only returns the reference to an already existing object
+        # this skips __init__ if returning such an instance, since initialisation has already been done
+        if hasattr(self, "_initialised"):
+            return
+
         self.__logger = logging.getLogger(self.__class__.__name__)
         super().__init__(utils.guess_date_type(date))
 
@@ -118,6 +123,8 @@ class EntriesFrom(utils.Core):
         self.__entries_builder = entries_builder
         self.__known_entries: dict[datetime.time, Entry] = {}
         self.__known_moods: Moodverse = mood_set
+
+        self._initialised = True
 
     def create_entry(self, line: dict[str, str]) -> None:
         """
@@ -221,7 +228,7 @@ class EntriesFrom(utils.Core):
             # > use a single '\n' instead, on all platforms.
             # https://docs.python.org/3.10/library/os.html#os.linesep
             chars_written += stream.write("---" + "\n")
-            chars_written += stream.write("frontmatter_tags: " + ",".join(valid_tags) + "\n")
+            chars_written += stream.write("tags: " + ",".join(valid_tags) + "\n")
             chars_written += stream.write("---" + "\n" * 2)
 
         # THE ACTUAL ENTRY CONTENTS
@@ -258,3 +265,10 @@ class EntriesFrom(utils.Core):
     def __str__(self):
         """:return: the date that groups entries written on that day in ``YYYY-MM-DD`` format"""
         return self.uid.strftime("%Y-%m-%d")
+
+    def __len__(self):
+        """:return: how many entries it groups on that particular date"""
+        return len(self.__known_entries)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(date={self.date}, entries={len(self.__known_entries)})"

@@ -170,6 +170,11 @@ class TestEntriesFromOutput(TestCase):
 
 
 class TestDatedEntriesGroup(TestCase):
+    def setUp(self):
+        # It's okay to store information on created instances in a single run for a normal user, not for repeated tests
+        # Therefore we reset the memory of the class before every test
+        EntriesFrom._instances = {}
+
     @suppress.out
     def test_outputting_day_with_one_entry(self):
         """
@@ -192,7 +197,7 @@ class TestDatedEntriesGroup(TestCase):
             # Then create another stream and fill it with the same content, but written directly, not through object
             with io.StringIO() as compare_stream:
                 compare_stream.write("---" + "\n")
-                compare_stream.write("frontmatter_tags: daylio" + "\n")
+                compare_stream.write("tags: daylio" + "\n")
                 compare_stream.write("---" + "\n" * 2)
 
                 compare_stream.write("## vaguely ok | 10:00" + "\n" * 2)
@@ -230,7 +235,7 @@ class TestDatedEntriesGroup(TestCase):
             # Then create another stream and fill it with the same content, but written directly, not through object
             with io.StringIO() as compare_stream:
                 compare_stream.write("---" + "\n")
-                compare_stream.write("frontmatter_tags: daylio" + "\n")
+                compare_stream.write("tags: daylio" + "\n")
                 compare_stream.write("---" + "\n" * 2)
 
                 compare_stream.write("## vaguely ok | 10:00" + "\n")
@@ -314,7 +319,7 @@ class TestDatedEntriesGroup(TestCase):
             # Then create another stream and fill it with the same content, but written directly, not through object
             with io.StringIO() as compare_stream:
                 compare_stream.write("---" + "\n")
-                compare_stream.write("frontmatter_tags: bar,foo" + "\n")
+                compare_stream.write("tags: bar,foo" + "\n")
                 compare_stream.write("---" + "\n" * 2)
 
                 compare_stream.write("## vaguely ok | 10:00" + "\n")
@@ -337,25 +342,25 @@ class TestOutputFileStructure(TestCase):
     @suppress.out
     def test_directory_loop(self):
         """
-        Loops through known dates and asks each :class:`DatedEntriesGroup` to output its contents to a specified file.
+        Loops through known dates and asks each :class:`EntriesFrom` to output its contents to a specified file.
         """
 
         lib = Librarian("tests/files/all-valid.csv", path_to_output="tests/files/scenarios/ok/out")
         lib.output_all()
 
-        with open("tests/files/scenarios/ok/expect/2022-10-25.md", encoding="UTF-8") as parsed_result, \
+        with open("tests/files/scenarios/ok/out/2022/10/2022-10-25.md", encoding="UTF-8") as parsed_result, \
                 open("tests/files/scenarios/ok/expect/2022-10-25.md", encoding="UTF-8") as expected_result:
             self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
-        with open("tests/files/scenarios/ok/expect//2022-10-26.md", encoding="UTF-8") as parsed_result, \
+        with open("tests/files/scenarios/ok/out/2022/10/2022-10-26.md", encoding="UTF-8") as parsed_result, \
                 open("tests/files/scenarios/ok/expect/2022-10-26.md", encoding="UTF-8") as expected_result:
             self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
-        with open("tests/files/scenarios/ok/expect/2022-10-27.md", encoding="UTF-8") as parsed_result, \
+        with open("tests/files/scenarios/ok/out/2022/10/2022-10-27.md", encoding="UTF-8") as parsed_result, \
                 open("tests/files/scenarios/ok/expect/2022-10-27.md", encoding="UTF-8") as expected_result:
             self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
-        with open("tests/files/scenarios/ok/expect/2022-10-30.md", encoding="UTF-8") as parsed_result, \
+        with open("tests/files/scenarios/ok/out/2022/10/2022-10-30.md", encoding="UTF-8") as parsed_result, \
                 open("tests/files/scenarios/ok/expect/2022-10-30.md", encoding="UTF-8") as expected_result:
             self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
