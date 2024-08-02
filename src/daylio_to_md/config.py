@@ -41,7 +41,7 @@ DefaultSettings = namedtuple('DefaultSettings', [
     "force",
     "csv_delimiter",
     "header_level",
-    "frontmatter_tags",
+    "front_matter_tags",
     "prefix",
     "suffix",
     "tag_activities",
@@ -101,11 +101,11 @@ def parse_console(args: List[Any]) -> argparse.Namespace:
         "File structure"
     )
     file_structure_settings.add_argument(
-        "--frontmatter_tags",
+        "--front_matter_tags",
         help="Tags in the YAML of each note.",
         nargs='*',  # this allows, for example, "--frontmatter_tags one two three" --> ["one", "two", "three"]
-        default=DEFAULTS.frontmatter_tags,
-        dest="TAGS"
+        default=DEFAULTS.front_matter_tags,
+        dest="front_matter_tags"
     )
     """-------------------------------------------------------------------------------------------------------------
     JOURNAL ENTRY FORMATTING SETTINGS TO ARGPARSE
@@ -128,7 +128,7 @@ def parse_console(args: List[Any]) -> argparse.Namespace:
     journal_entry_settings.add_argument(
         "--tag_activities", "-a",
         default=DEFAULTS.tag_activities,
-        help="Tries to convert activities into valid frontmatter tags.",
+        help="Tries to convert activities into valid front-matter tags.",
         dest="tag_activities"
     )
     journal_entry_settings.add_argument(

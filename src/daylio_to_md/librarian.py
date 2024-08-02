@@ -123,6 +123,7 @@ class Librarian:
         :raises EmptyJournalError: if the file does not produce any valid results after processing.
         """
         self.__logger = logging.getLogger(self.__class__.__name__)
+        self.__filepath = path_to_file
         self.__known_dates: dict[datetime.date, EntriesFrom] = {}
         self.__entries_from_builder = entries_from_builder
         self.__entry_builder = entry_builder
@@ -315,5 +316,14 @@ class Librarian:
         self.__known_dates[date] = value
 
     @property
-    def current_mood_set(self):
+    def mood_set(self):
         return self.__mood_set
+
+    def __repr__(self):
+        total_entries = sum(len(entries_on_that_day) for entries_on_that_day in self.__known_dates.values())
+        str_entries_from = [str(entry) for entry in self.__known_dates.keys()]
+        return (f"{self.__class__.__name__}("
+                f"from={self.__filepath}, "
+                f"to={self.__destination}, "
+                f"total_entries={total_entries}, "
+                f"entries_from={str_entries_from})")
