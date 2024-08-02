@@ -168,6 +168,69 @@ class TestEntriesFromOutput(TestCase):
                 # ---
                 self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
 
+    @suppress.out
+    def test_valid_prefix_and_valid_suffix(self):
+        # WHEN
+        # ---
+        # Configure entries to output with prefixes and a suffixes in their headings
+        my_config = EntryBuilder(prefix="I felt", suffix="when doing:")
+        my_entry = my_config.build(time="11:00", mood="great", title="Feeling pumped!", activities="biking")
+
+        with io.StringIO() as my_fake_file_stream:
+            my_entry.output(my_fake_file_stream)
+            # AND
+            # ---
+            # Then create another stream and fill it with the same content, but written directly, not through object
+            with io.StringIO() as compare_stream:
+                compare_stream.write("## I felt | great | 11:00 | Feeling pumped! | when doing:\n")
+                compare_stream.write("#biking")
+
+                # THEN
+                # ---
+                self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
+
+    @suppress.out
+    def test_invalid_prefix_and_valid_suffix(self):
+        # WHEN
+        # ---
+        # Configure entries to output with prefixes and a suffixes in their headings
+        my_config = EntryBuilder(prefix=None, suffix="when doing:")
+        my_entry = my_config.build(time="11:00", mood="great", title="Feeling pumped!", activities="biking")
+
+        with io.StringIO() as my_fake_file_stream:
+            my_entry.output(my_fake_file_stream)
+            # AND
+            # ---
+            # Then create another stream and fill it with the same content, but written directly, not through object
+            with io.StringIO() as compare_stream:
+                compare_stream.write("## great | 11:00 | Feeling pumped! | when doing:\n")
+                compare_stream.write("#biking")
+
+                # THEN
+                # ---
+                self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
+
+    @suppress.out
+    def test_empty_prefix_and_suffix(self):
+        # WHEN
+        # ---
+        # Configure entries to output with prefixes and a suffixes in their headings
+        my_config = EntryBuilder(prefix="", suffix="when doing:")
+        my_entry = my_config.build(time="11:00", mood="great", title="Feeling pumped!", activities="biking")
+
+        with io.StringIO() as my_fake_file_stream:
+            my_entry.output(my_fake_file_stream)
+            # AND
+            # ---
+            # Then create another stream and fill it with the same content, but written directly, not through object
+            with io.StringIO() as compare_stream:
+                compare_stream.write("## great | 11:00 | Feeling pumped! | when doing:\n")
+                compare_stream.write("#biking")
+
+                # THEN
+                # ---
+                self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
+
 
 class TestDatedEntriesGroup(TestCase):
     def setUp(self):
