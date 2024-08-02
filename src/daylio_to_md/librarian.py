@@ -272,8 +272,7 @@ class Librarian:
 
     def output_all(self):
         """
-        Loops through known dates and calls :class:`DatedEntriesGroup` to output its contents inside the destination.
-        :raises NoDestinationSelectedError: when the parent object has been instantiated without a destination set.
+        Loops through known dates and calls each :class:`EntriesFrom` to output its contents inside the destination.
         """
         for known_date in self.__known_dates.values():
             # "2022/11/09/2022-11-09.md"
