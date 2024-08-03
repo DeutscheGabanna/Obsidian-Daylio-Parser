@@ -21,6 +21,7 @@ from daylio_to_md import utils, errors
 from daylio_to_md.config import DEFAULTS
 from daylio_to_md.journal_entry import Entry
 from daylio_to_md.entry.mood import Moodverse
+from daylio_to_md.utils import IncompleteDataRow
 
 # TODO: dependency_injector lib
 # TODO: fixtures
@@ -36,14 +37,6 @@ class EntryMissingError(KeyError):
     def __init__(self, key, date):
         self.__doc__ = self.__doc__.format(key=key, date=date)
         super().__init__()
-
-
-class IncompleteDataRow(Exception):
-    """Passed a row of data from CSV file that does not have all required fields."""
-
-
-class TriedCreatingDuplicateDatedEntryError(Exception):
-    """Tried to create object of :class:`DatedEntry` that would be a duplicate of one that already exists."""
 
 
 class ErrorMsg(errors.ErrorMsgBase):
@@ -134,9 +127,8 @@ class EntriesFrom(utils.Core):
         Create :class:`Entry` object with the specified parameters.
         Field with date is ignored, because :class:`Entry` inherits this field from parent :class:`EntriesFrom`.
         The assumption here is that .create_entry() should never be called for an entry from a different date.
-        :raises TriedCreatingDuplicateDatedEntryError: if it would result in making a duplicate :class:`DatedEntry`
         :raises IncompleteDataRow: if ``line`` does not have ``time mood`` keys at the very least, or either is empty
-        :raises ValueError: re-raises ValueError from :class:`DatedEntry`
+        :raises ValueError: re-raises ValueError from :class:`Entry`
         :param line: a dictionary of strings. Required keys: mood, activities, note_title & note.
         """
         # TODO: test case this
@@ -145,10 +137,10 @@ class EntriesFrom(utils.Core):
             try:
                 line[key]
             except KeyError as err:
-                raise IncompleteDataRow(key) from err
+                raise IncompleteDataRow(key, '') from err
             # is it empty then, maybe?
             if not line[key]:
-                raise IncompleteDataRow(key)
+                raise IncompleteDataRow(key, '')
 
         # TODO: date mismatch - this object has a different date than the full_date in line
 

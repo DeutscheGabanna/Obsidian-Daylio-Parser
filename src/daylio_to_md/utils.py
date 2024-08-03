@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import abc
 import csv
+import dataclasses
 import datetime
 import json
 import logging
@@ -12,13 +13,26 @@ import os
 import re
 import typing
 from contextlib import contextmanager
-from typing import List, TextIO, Optional
+from typing import List, TextIO, Optional, Union
 
 from daylio_to_md import errors
+
+EXPECTED_FIELDS = frozenset([
+   "full_date",
+   "date",
+   "weekday",
+   "time",
+   "mood",
+   "activities",
+   "note",
+   "note_title"
+])
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
 ---------------------------------------------------------------------------------------------------------------------"""
+CSV_ALL_FIELDS_PRESENT = "All expected columns are present in the CSV file columns, namely: {}."
+CSV_FIELDS_MISSING = "The following expected columns are missing: {}"
 
 
 class ErrorMsg(errors.ErrorMsgBase):
@@ -51,27 +65,60 @@ class InvalidDateError(ExpectedValueError, ValueError):
     """String {} is not a valid date. Check :class:`datetime.Date` for details."""
 
     def __init__(self, date_passed):
-        super().__init__("YYYY-MM-DD", str(date_passed))
+        super().__init__(datetime.date.__class__.__name__, str(date_passed))
 
 
 class InvalidTimeError(ExpectedValueError):
     """String {} is not a valid date. Check :class:`datetime.Time` for details."""
 
     def __init__(self, time_passed):
-        super().__init__("HH:MM with optional AM:PM suffix", str(time_passed))
+        super().__init__(datetime.time.__class__.__name__, str(time_passed))
 
 
 class CouldNotLoadFileError(Exception):
     """The file {} could not be accessed."""
 
-    def __init__(self, path: str):
+    def __init__(self, path):
         super().__init__()
-        self.__path = path
+        self.__path = str(path)
         self.__doc__ = self.__doc__.format(self.__path)
 
     @property
     def path(self):
         return self.__path
+
+
+class InvalidDataInFileError(ExpectedValueError):
+    """
+    The file does not follow the expected structure.
+    Fieldnames expected: {}
+    Fieldnames received: {}
+    """
+
+    def __init__(self, expected_fieldnames, actual_fieldnames):
+        super().__init__(expected_fieldnames, actual_fieldnames)
+
+
+class IncompleteDataRow(InvalidDataInFileError):
+    """
+    While the file appeared to follow expected structure in fieldnames, this particular row does not have enough cells.
+    Expected cells: {}
+    Received cells: {}
+    """
+
+    def __init__(self, expected_fields, actual_fields):
+        super().__init__(expected_fields, actual_fields)
+
+
+class TooManyCellsInRowError(InvalidDataInFileError):
+    """
+    While the file appeared to follow expected structure in fieldnames, this particular row has too many cells.
+    Expected cells: {}
+    Received cells: {}
+    """
+
+    def __init__(self, expected_fields, actual_fields):
+        super().__init__(expected_fields, actual_fields)
 
 
 class StreamError(Exception):
@@ -166,6 +213,13 @@ def strip_and_get_truthy(delimited_string: str, delimiter: str) -> List[str]:
 class FileLoader:
     # all subclasses of FileLoader need to implement this method one way or the other
     # basically an interface requirement
+    def __init__(self):
+        self.__logger = logging.getLogger(self.__class__.__name__)
+
+    @property
+    def logger(self):
+        return self.__logger
+
     @abc.abstractmethod
     def _load_file(self, file: TextIO):
         pass
@@ -186,6 +240,9 @@ class FileLoader:
 
 
 class JsonLoader(FileLoader):
+    def __init__(self):
+        super().__init__()
+
     def _load_file(self, file: TextIO):
         try:
             return json.load(file)
@@ -195,13 +252,82 @@ class JsonLoader(FileLoader):
 
 
 class CsvLoader(FileLoader):
+    """
+    :raises CouldNotLoadFileError: if file cannot be opened or processed
+    """
+    def __init__(self, expected_fields: frozenset[str] = EXPECTED_FIELDS):
+        super().__init__()
+        self.__expected_fields = expected_fields
+
     def _load_file(self, file: TextIO):
         try:
             # strict parameter throws csv.Error if parsing fails
-            return csv.DictReader(file, delimiter=',', quotechar='"', strict=True)
+            loaded_csv = csv.DictReader(file, delimiter=',', quotechar='"', strict=True)
+            self.validate_fieldnames(loaded_csv.fieldnames, self.__expected_fields)
+            return loaded_csv
         # CSV specific errors
-        except csv.Error as err:
+        except (csv.Error, InvalidDataInFileError) as err:
             raise CouldNotLoadFileError from err
+
+    def validate_fieldnames(self, fieldnames, expected_fields) -> set[str]:
+        # Does it have all the fields? Push any missing field into an array for later reference
+        # Even if only one column from the list below is missing in the CSV, it's a problem while parsing later
+        # Let's have a look at what columns we have in the parsed CSV
+        missing_strings = {
+            expected_field for expected_field in expected_fields if
+            expected_field not in fieldnames
+        }
+        if len(missing_strings) > 0:
+            self.__logger.critical(CSV_FIELDS_MISSING.format(', '.join(missing_strings)))
+            raise InvalidDataInFileError(expected_fields, fieldnames)
+
+        self.logger.debug(CSV_ALL_FIELDS_PRESENT.format(', '.join(missing_strings)))
+        return missing_strings
+
+
+# Optional[str] as key means either str or None. None can be a key and this case is explained below
+# noinspection PyTypeChecker
+def validate_line(line: dict[Optional[str], str]) -> dict[str, Union[str, datetime.date, datetime.time]]:
+    """
+    Checks
+    ------
+    If there are exactly as many cells as expected fields, even if some of them are empty (i.e. only commas)
+
+    Expected fields
+    ---------------
+    - "full_date",
+    - "date",
+    - "weekday",
+    - "time",
+    - "mood",
+    - "activities",
+    - "note",
+    - "note_title"
+
+    :param line: a dictionary with values from the currently processed CSV line
+    :raises TooManyCellsInRowError: if there are too many cells in a row
+    :raises IncompleteDataRow: if there are too few cells in a row
+    :raises InvalidDateError: if the date in the full_date cell is invalid
+    :returns: the same line, but...
+        - the value of date changed from :class:`str` to :class:`datetime.date`
+        - the value of time changed from :class:`str` to :class:`datetime.time`
+    """
+    # noinspection SpellCheckingInspection
+    # Does it have more cells than there are expected fields?
+    # from https://docs.python.org/3/library/csv.html#csv.DictReader
+    # If a row has more fields than fieldnames, the remaining data is put in a list and stored with the field name
+    # specified by restkey (which defaults to None). If a non-blank row has fewer fields than fieldnames,
+    # the missing values are filled-in with the value of restval (which defaults to None).
+    if None in line:
+        raise TooManyCellsInRowError(EXPECTED_FIELDS, line.keys())
+
+    # Even if it does not have actual values for all expected fields, does it at least have enough commas?
+    if len(line) < len(EXPECTED_FIELDS):
+        raise IncompleteDataRow(EXPECTED_FIELDS, line.keys())
+
+    # Good to go, at least for now
+    # The line could still be faulty, but any faults can now only be detected by Entry object
+    return line
 
 
 """---------------------------------------------------------------------------------------------------------------------
@@ -213,21 +339,21 @@ def guess_date_type(this: typing.Union[datetime.date, str, typing.List[str], typ
     """
     Supported formats
     -----------------
-        - "%Y-%m-%d"   - ISO 8601 format
-        - "%d/%m/%Y"   - Day/Month/Year format
-        - "%m/%d/%Y"   - Month/Day/Year format
-        - "%B %d, %Y"  - Month name, day, year
-        - "%d %B %Y"   - Day, month name, year
-        - "%Y%m%d"     - Basic ISO format (no separators)
+    - "%Y-%m-%d"   - ISO 8601 format
+    - "%d/%m/%Y"   - Day/Month/Year format
+    - "%m/%d/%Y"   - Month/Day/Year format
+    - "%B %d, %Y"  - Month name, day, year
+    - "%d %B %Y"   - Day, month name, year
+    - "%Y%m%d"     - Basic ISO format (no separators)
 
     Examples
     --------
-        - "%Y-%m-%d"   -> "2023-05-15"
-        - "%d/%m/%Y"   -> "15/05/2023"
-        - "%m/%d/%Y"   -> "05/15/2023"
-        - "%B %d, %Y"  -> "May 15, 2023"
-        - "%d %B %Y"   -> "15 May 2023"
-        - "%Y%m%d"     -> "20230515"
+    - "%Y-%m-%d"   -> "2023-05-15"
+    - "%d/%m/%Y"   -> "15/05/2023"
+    - "%m/%d/%Y"   -> "05/15/2023"
+    - "%B %d, %Y"  -> "May 15, 2023"
+    - "%d %B %Y"   -> "15 May 2023"
+    - "%Y%m%d"     -> "20230515"
 
     :param this: date to be coerced into :class:`datetime.date` object. Strips leading and trailing spaces if a string.
     :raise InvalidDateError: if it cannot be coerced into proper object type

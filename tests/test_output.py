@@ -4,7 +4,7 @@ import shutil
 from unittest import TestCase
 
 import tests.suppress as suppress
-from daylio_to_md.group import EntriesFrom, EntriesFromBuilder
+from daylio_to_md.group import EntriesFrom
 from daylio_to_md.journal_entry import Entry, EntryBuilder
 from daylio_to_md.librarian import Librarian
 
@@ -194,6 +194,7 @@ class TestEntriesFromOutput(TestCase):
         # WHEN
         # ---
         # Configure entries to output with prefixes and a suffixes in their headings
+        # noinspection PyTypeChecker
         my_config = EntryBuilder(prefix=None, suffix="when doing:")
         my_entry = my_config.build(time="11:00", mood="great", title="Feeling pumped!", activities="biking")
 
@@ -321,6 +322,7 @@ class TestDatedEntriesGroup(TestCase):
         # WHEN
         # ---
         # Create a sample date
+        # noinspection PyTypeChecker
         sample_date = EntriesFrom("2011-10-10", front_matter_tags=["", None])
         entry_one = Entry(
             time="10:00 AM",
@@ -361,6 +363,7 @@ class TestDatedEntriesGroup(TestCase):
         # WHEN
         # ---
         # Create a sample date
+        # noinspection PyTypeChecker
         sample_date = EntriesFrom("2011-10-10", front_matter_tags=["", "foo", "bar", None])
         entry_one = Entry(
             time="10:00 AM",

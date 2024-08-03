@@ -19,15 +19,14 @@ import typing
 import filecmp
 import logging
 import datetime
-from typing import IO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from daylio_to_md import entry
-from daylio_to_md import utils, errors, group
+from daylio_to_md import utils, errors
 from daylio_to_md.group import EntriesFrom, EntriesFromBuilder
 from daylio_to_md.journal_entry import EntryBuilder
-from daylio_to_md.utils import CsvLoader, CouldNotLoadFileError, guess_date_type, ensure_dir
+from daylio_to_md.utils import CsvLoader, CouldNotLoadFileError, guess_date_type, ensure_dir, InvalidDataInFileError
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
@@ -42,16 +41,7 @@ class ErrorMsg(errors.ErrorMsgBase):
     STANDARD_MOODS_USED = "Standard mood set (rad, good, neutral, bad, awful) will be used."
     DECODE_ERROR = "Error while decoding {}"
     NOT_A_FILE = "{} is not a file."
-    CSV_ALL_FIELDS_PRESENT = "All expected columns are present in the CSV file columns."
-    CSV_FIELDS_MISSING = "The following expected columns are missing: {}"
     COUNT_ROWS = "{} rows of data found in {}. Of that {} were processed correctly."
-
-
-class MissingValuesInRowError(utils.ExpectedValueError):
-    """The row does not have enough cells - {} needed, {} available."""
-
-    def __init__(self, cells_expected, cells_got):
-        super().__init__(cells_expected, cells_got)
 
 
 class CannotAccessJournalError(utils.CouldNotLoadFileError):
@@ -68,6 +58,7 @@ class EmptyJournalError(utils.CouldNotLoadFileError):
         super().__init__(path)
 
 
+# FIXME: unused exception - Librarian will never know the custom .json failed because utils never let it know
 class CannotAccessCustomMoodsError(utils.CouldNotLoadFileError):
     """The custom moods .json {} could not be accessed or parsed."""
 
@@ -75,23 +66,9 @@ class CannotAccessCustomMoodsError(utils.CouldNotLoadFileError):
         super().__init__(path)
 
 
-class InvalidDataInFileError(utils.ExpectedValueError):
-    """The file does not follow the expected structure."""
-
-    def __init__(self, expected_value, actual_value):
-        super().__init__(expected_value, actual_value)
-
-
 """---------------------------------------------------------------------------------------------------------------------
 MAIN
 ---------------------------------------------------------------------------------------------------------------------"""
-
-
-def create_and_open(filename: str, mode: str) -> IO:
-    os.makedirs(os.path.dirname(filename), exist_ok=True)
-    return open(filename, mode, encoding="UTF-8")
-
-
 # I've found a term that describes what this class does - it is a Director - even sounds similar to Librarian
 # https://refactoring.guru/design-patterns/builder
 
@@ -110,7 +87,7 @@ class Librarian:
 
     How to output the journal
     -------------------------
-    TODO: add missing documentation
+    Call :func:`output_all` method.
     """
 
     def __init__(self,
@@ -173,50 +150,33 @@ class Librarian:
         # Open file
         # ---
         # Let the custom context manager deal with the specific exceptions
-        # If any ValueError Exception is re-raised up to this method, just exit immediately - no point going further
         try:
             with CsvLoader().load(filepath) as file:
-                # TODO: move validation into CsvLoader maybe
-                # If the code reaches here, the program can access the file.
-                # Now let's determine if the file's contents are actually usable
-                # ---
-
-                # Does it have all the fields? Push any missing field into an array for later reference
-                # Even if only one column from the list below is missing in the CSV, it's a problem while parsing later
-                expected_fields = [
-                    "full_date",
-                    "date",
-                    "weekday",
-                    "time",
-                    "mood",
-                    "activities",
-                    "note",
-                    "note_title",
-                    "note"
-                ]
-
-                # Let's have a look at what columns we have in the parsed CSV
-                missing_strings = [
-                    expected_field for expected_field in expected_fields if
-                    expected_field not in file.fieldnames
-                ]
-                if not missing_strings:
-                    self.__logger.debug(ErrorMsg.CSV_ALL_FIELDS_PRESENT)
-                else:
-                    msg = ErrorMsg.CSV_FIELDS_MISSING.format(', '.join(missing_strings))
-                    self.__logger.critical(msg)
-                    raise InvalidDataInFileError(file.fieldnames, msg)
-
                 # Processing
                 # ---
                 lines_parsed = 0
                 lines_parsed_successfully = 0
-                for line in file:
-                    line: dict[str, str]
+                for raw_line in file:
+                    raw_line: dict[str, str]
+                    lines_parsed += 1
+
                     try:
-                        lines_parsed += self.__process_line(line)
-                    except MissingValuesInRowError as err:
+                        # First, simple validation
+                        validated_line = utils.validate_line(raw_line)
+                        # Second validation done by more specialised classes in their __inits__
+                        entries_from_this_date = self.__entries_from_builder.build(
+                            validated_line["full_date"],
+                            self.__mood_set
+                        )
+                        entries_from_this_date.create_entry(validated_line)
+                        # Remember this date
+                        self[entries_from_this_date.date] = entries_from_this_date
+                    except (utils.IncompleteDataRow,
+                            utils.TooManyCellsInRowError,
+                            utils.InvalidDateError,
+                            utils.InvalidTimeError) as err:
                         self.__logger.warning(err.__doc__)
+                        continue
                     else:
                         lines_parsed_successfully += 1
         except ValueError as err:
@@ -225,39 +185,6 @@ class Librarian:
         # Report back how many lines were parsed successfully out of all tried
         self.__logger.info(ErrorMsg.COUNT_ROWS.format(lines_parsed, filepath, lines_parsed_successfully))
         return lines_parsed_successfully, lines_parsed
-
-    # TODO: I guess it is more pythonic to raise exceptions than return False if I cannot complete the task
-    # TODO: this has to be tested
-    # https://eli.thegreenplace.net/2008/08/21/robust-exception-handling/
-    def __process_line(self, line: dict[str, str]) -> bool:
-        """
-        Goes row-by-row and passes the content to objects specialised in handling it from a journaling perspective.
-        :param line: a dictionary with values from the currently processed CSV line
-        :return: True if all columns had values for this CSV ``line``, False otherwise
-        :raises MissingValuesInRowError: if the row in CSV lacks enough commas to create 8 cells. It signals a problem.
-        """
-        # noinspection PyPep8Naming
-        EXPECTED_NUM_OF_CELLS = 8
-        # Does each of the 8 columns have values for this row?
-        if len(line) < EXPECTED_NUM_OF_CELLS:
-            # Oops, not enough values on this row, the file might be corrupted?
-            raise MissingValuesInRowError(EXPECTED_NUM_OF_CELLS, len(line))
-
-        # Let DatedEntriesGroup handle the rest and increment the counter (True == 1)
-        try:
-            date = guess_date_type(line["full_date"])
-            entries_from_this_date = (self.__entries_from_builder.build(date, self.__mood_set))
-            entries_from_this_date.create_entry(line)
-            # Overwriting existing keys is not a problem since EntriesFrom.__new__() returns the same object ID when
-            # it is initialised with the same date parameter. Also, since we are type-casting date into datetime.date
-            # identical dates will always be equal, so the same key-value pair will be returned by the dictionary.
-            self[date] = entries_from_this_date
-        except (group.TriedCreatingDuplicateDatedEntryError,
-                group.IncompleteDataRow,
-                utils.InvalidDateError,
-                ValueError):
-            return False
-        return True
 
     def output_all(self) -> tuple[int, int, int]:
         """
@@ -363,7 +290,7 @@ class Librarian:
 
     def __repr__(self):
         total_entries = sum(len(entries_on_that_day) for entries_on_that_day in self.__known_dates.values())
-        str_entries_from = [str(entry) for entry in self.__known_dates.keys()]
+        str_entries_from = [str(this_entry) for this_entry in self.__known_dates.keys()]
         return (f"{self.__class__.__name__}("
                 f"from={self.__filepath}, "
                 f"to={self.__destination}, "
