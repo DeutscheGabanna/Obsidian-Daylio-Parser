@@ -278,7 +278,7 @@ class CsvLoader(FileLoader):
             expected_field not in fieldnames
         }
         if len(missing_strings) > 0:
-            self.__logger.critical(CSV_FIELDS_MISSING.format(', '.join(missing_strings)))
+            self.logger.critical(CSV_FIELDS_MISSING.format(', '.join(missing_strings)))
             raise InvalidDataInFileError(expected_fields, fieldnames)
 
         self.logger.debug(CSV_ALL_FIELDS_PRESENT.format(', '.join(missing_strings)))
