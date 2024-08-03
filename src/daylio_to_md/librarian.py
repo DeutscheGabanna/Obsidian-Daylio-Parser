@@ -14,17 +14,20 @@ Here's a quick breakdown of what is the specialisation of this file in the journ
 from __future__ import annotations
 
 import os
+import shutil
 import typing
+import filecmp
 import logging
 import datetime
 from typing import IO
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 
+from daylio_to_md import entry
 from daylio_to_md import utils, errors, group
-from daylio_to_md.entry.mood import Moodverse
 from daylio_to_md.group import EntriesFrom, EntriesFromBuilder
 from daylio_to_md.journal_entry import EntryBuilder
-from daylio_to_md.utils import CsvLoader, JsonLoader, CouldNotLoadFileError, guess_date_type
-
+from daylio_to_md.utils import CsvLoader, CouldNotLoadFileError, guess_date_type, ensure_dir
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
@@ -91,6 +94,8 @@ def create_and_open(filename: str, mode: str) -> IO:
 
 # I've found a term that describes what this class does - it is a Director - even sounds similar to Librarian
 # https://refactoring.guru/design-patterns/builder
+
+
 class Librarian:
     """
     Orchestrates the entire process of parsing CSV & passing data to objects specialised to handle it as a journal.
@@ -112,6 +117,7 @@ class Librarian:
                  path_to_file: str,
                  path_to_output: str = None,
                  path_to_moods: str = None,
+                 force_overwrite: bool = None,
                  entries_from_builder: EntriesFromBuilder = EntriesFromBuilder(),
                  entry_builder: EntryBuilder = EntryBuilder()):
         """
@@ -127,6 +133,7 @@ class Librarian:
         self.__known_dates: dict[datetime.date, EntriesFrom] = {}
         self.__entries_from_builder = entries_from_builder
         self.__entry_builder = entry_builder
+        self.__force_overwrite = force_overwrite
 
         self.__start(path_to_file, path_to_output, path_to_moods)
 
@@ -139,7 +146,7 @@ class Librarian:
         # 1. Parse the path_to_moods JSON for a custom mood set
         # This method either returns custom moods or sets the defaults in case of problems
         # P.S Why am I starting first with moods? Because process_file first checks if it has moods installed.
-        self.__mood_set = self.__create_mood_set(path_to_moods)
+        self.__mood_set = entry.mood.create_from(path_to_moods)
 
         # 2. Access the CSV file and get all the rows with content
         #    then pass the data to specialised data objects that can handle them in a structured way
@@ -151,24 +158,6 @@ class Librarian:
 
         # Ok, if no exceptions were raised so far, the file is good, let's go through the rest of the attributes
         self.__destination = path_to_output
-
-    # TODO: this method might actually make more sense as a constructor for Moodverse (give optional arg for custom)
-    def __create_mood_set(self, filepath: str = None) -> 'Moodverse':
-        """
-        Overwrite the standard mood-set with a custom one. Mood-sets are used in colour-coding each dated entry.
-
-        :param filepath: path to the .JSON file with a non-standard mood set.
-         Should have five keys: ``rad``, ``good``, ``neutral``, ``bad`` and ``awful``.
-         Each of those keys should hold an array of any number of strings indicating various moods.
-         **Example**: ``[{"good": ["good"]},...]``
-        :returns: reference to the :class:`Moodverse` object
-        """
-        try:
-            with JsonLoader().load(filepath) as file:
-                return Moodverse(file)
-        except utils.CouldNotLoadFileError:
-            # oh, no! anyway... just load up a default moodverse then
-            return Moodverse()
 
     def __process_file(self, filepath: str) -> typing.Tuple[int, int]:
         """
@@ -270,17 +259,71 @@ class Librarian:
             return False
         return True
 
-    def output_all(self):
+    def output_all(self) -> tuple[int, int, int]:
         """
         Loops through known dates and calls each :class:`EntriesFrom` to output its contents inside the destination.
+        :returns: # of entries asked to output contents, # of overwrites, # of skipped overwrites
         """
+        files_total = 0
+        files_overwritten = 0
+        files_skipped = 0
+
         for known_date in self.__known_dates.values():
-            # "2022/11/09/2022-11-09.md"
-            filename = str(known_date.date) + ".md"
-            filepath = "/".join([self.__destination, str(known_date.date.year), str(known_date.date.month), filename])
-            # TODO: maybe add the mode option to settings in argparse? write/append
-            with create_and_open(filepath, 'w') as file:
-                known_date.output(file)
+            filepath = known_date.path(self.__destination)
+            # path does not exist
+            if not os.path.exists(filepath):
+                ensure_dir(filepath)
+                with Path(filepath).open(mode='w', encoding='UTF-8') as file:
+                    known_date.output(file)
+                    files_total += 1
+                    continue
+
+            # path exists
+            with NamedTemporaryFile(mode='w', encoding='UTF-8') as temp_file:
+                known_date.output(temp_file)
+                temp_file.flush()
+
+                # no changes detected
+                if filecmp.cmp(temp_file.name, filepath):
+                    self.__logger.info(f"{filepath.name} would be unchanged and was skipped.")
+                    files_skipped += 1
+                    continue
+
+                user_confirmed = None
+                if self.__force_overwrite is None:
+                    print(f"{filepath} already exists and differs from what has been created based on the CSV.\n"
+                          f"Overwrite the file with new content? (y/N)")
+                    user_confirmed = True if input().strip().lower() == 'y' else False
+
+                # do not overwrite and skip
+                if self.__force_overwrite == 'reject' or user_confirmed is False:
+                    self.__logger.info(f"{filepath} was skipped.")
+                    files_skipped += 1
+                    continue
+
+                # overwrite
+                try:
+                    shutil.copyfile(temp_file.name, filepath)
+                except shutil.SameFileError:
+                    self.__logger.warning("filecmp and shutil can't agree whether the file would be changed!")
+                    files_skipped += 1
+                    continue
+                except OSError:
+                    self.__logger.info(f"Cannot write to {os.path.dirname(filepath)}, skipping {filepath.name}.")
+                    files_skipped += 1
+                    continue
+                else:
+                    self.__logger.info(f"Successfully overwritten {filepath.name}.")
+                    files_overwritten += 1
+                    continue
+
+        print(f"\nCreated {files_total} {'file' if files_total == 1 else 'files'} "
+              f"and overwritten {files_overwritten} that already existed. "
+              f"{files_skipped} {'file' if files_skipped == 1 else 'files'} were skipped.")
+        if self.__force_overwrite is not None:
+            print(f"Used {'auto-overwrite' if self.__force_overwrite else 'auto-skip'} on all conflicts.")
+
+        return files_total, files_overwritten, files_skipped
 
     def __getitem__(self, key: typing.Union[datetime.date, str, typing.List[str], typing.List[int]]) -> EntriesFrom:
         """

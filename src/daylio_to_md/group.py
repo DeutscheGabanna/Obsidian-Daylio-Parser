@@ -6,6 +6,9 @@ Here's a quick breakdown of what is the specialisation of this file in the journ
 all notes -> _NOTES WRITTEN ON A PARTICULAR DATE_ -> a particular note
 """
 from __future__ import annotations
+
+import os
+import pathlib
 from dataclasses import dataclass, field
 
 import io
@@ -246,11 +249,14 @@ class EntriesFrom(utils.Core):
         return self.__known_entries
 
     @property
-    def date(self):
+    def date(self) -> datetime.date:
         """
         :return: :class:`datetime.date` object that identifies this instance of :class:`EntriesFrom`.
         """
         return self.uid
+
+    def path(self, *dest: typing.Union[os.PathLike, str]) -> pathlib.Path:
+        return pathlib.Path(*dest, str(self.date.year), str(self.date.month), f"{self.date}.md")
 
     def __eq__(self, other) -> bool:
         """Enables direct comparison with a :class:`datetime.date` or a date string. """

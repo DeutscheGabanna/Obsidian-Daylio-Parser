@@ -30,6 +30,7 @@ def main():
     Librarian(
         cli_options.filepath,
         cli_options.destination,
+        force_overwrite=cli_options.force,
         entries_from_builder=file_template
     ).output_all()
 

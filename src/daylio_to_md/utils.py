@@ -171,7 +171,7 @@ class FileLoader:
         pass
 
     @contextmanager
-    def load(self, path: str) -> None:
+    def load(self, path: str) -> typing.Any:
         """
         Loads the file into context manager and catches exceptions thrown while doing so.
         It catches errors specific to the implementation first, then tries to catch more general IO errors.
@@ -306,3 +306,7 @@ def guess_time_type(this: typing.Union[datetime.time, str, typing.List[str], typ
         raise InvalidTimeError(this)
 
     return proper_time_obj.replace(second=0, microsecond=0)
+
+
+def ensure_dir(filepath):
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
