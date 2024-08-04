@@ -32,16 +32,32 @@ class ColorHandler(logging.StreamHandler):
         self.stream.write(f"{csi}{color}m{formatted_msg}{csi}m\n")
 
 
+class DuplicateFilter(logging.Filter):
+    # Class-level attribute to store logged messages
+    logged_messages = set()
+
+    def filter(self, record):
+        # Create a unique identifier for the log message
+        current_log = (record.module, record.levelno, record.msg)
+
+        if current_log in DuplicateFilter.logged_messages:
+            return False  # Filter out the message if it's a duplicate
+
+        DuplicateFilter.logged_messages.add(current_log)
+        return True  # Allow the log through if it's not a duplicate
+
+
 # Create a console handler for the root logger
 # noinspection SpellCheckingInspection
 console_log_handler = ColorHandler(sys.stdout)
+console_log_handler.addFilter(DuplicateFilter())
 # interesting discussion on why setLevel on both handler AND logger: https://stackoverflow.com/a/17668861/8527654
+
 console_log_handler.setLevel(logging.INFO)
-
 # noinspection SpellCheckingInspection
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-console_log_handler.setFormatter(formatter)
+formatter = logging.Formatter("%(name)s\t%(levelname)s\t%(message)s")
 
+console_log_handler.setFormatter(formatter)
 # Add the handlers to the root logger
 logging.getLogger().addHandler(console_log_handler)
 logging.getLogger().setLevel(logging.INFO)
