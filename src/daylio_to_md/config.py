@@ -86,7 +86,6 @@ def parse_console(args: List[Any]) -> argparse.Namespace:
         type=str,
         help="Path to folder to output finished files into."
     )
-    # TODO: Force-argument does nothing yet.
     main_settings.add_argument(
         "--force",
         choices=["accept", "refuse"],

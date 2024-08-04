@@ -4,7 +4,7 @@ import shutil
 from unittest import TestCase
 
 import tests.suppress as suppress
-from daylio_to_md.group import EntriesFrom, EntriesFromBuilder
+from daylio_to_md.group import EntriesFrom
 from daylio_to_md.journal_entry import Entry, EntryBuilder
 from daylio_to_md.librarian import Librarian
 
@@ -168,6 +168,70 @@ class TestEntriesFromOutput(TestCase):
                 # ---
                 self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
 
+    @suppress.out
+    def test_valid_prefix_and_valid_suffix(self):
+        # WHEN
+        # ---
+        # Configure entries to output with prefixes and a suffixes in their headings
+        my_config = EntryBuilder(prefix="I felt", suffix="when doing:")
+        my_entry = my_config.build(time="11:00", mood="great", title="Feeling pumped!", activities="biking")
+
+        with io.StringIO() as my_fake_file_stream:
+            my_entry.output(my_fake_file_stream)
+            # AND
+            # ---
+            # Then create another stream and fill it with the same content, but written directly, not through object
+            with io.StringIO() as compare_stream:
+                compare_stream.write("## I felt | great | 11:00 | Feeling pumped! | when doing:\n")
+                compare_stream.write("#biking")
+
+                # THEN
+                # ---
+                self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
+
+    @suppress.out
+    def test_invalid_prefix_and_valid_suffix(self):
+        # WHEN
+        # ---
+        # Configure entries to output with prefixes and a suffixes in their headings
+        # noinspection PyTypeChecker
+        my_config = EntryBuilder(prefix=None, suffix="when doing:")
+        my_entry = my_config.build(time="11:00", mood="great", title="Feeling pumped!", activities="biking")
+
+        with io.StringIO() as my_fake_file_stream:
+            my_entry.output(my_fake_file_stream)
+            # AND
+            # ---
+            # Then create another stream and fill it with the same content, but written directly, not through object
+            with io.StringIO() as compare_stream:
+                compare_stream.write("## great | 11:00 | Feeling pumped! | when doing:\n")
+                compare_stream.write("#biking")
+
+                # THEN
+                # ---
+                self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
+
+    @suppress.out
+    def test_empty_prefix_and_suffix(self):
+        # WHEN
+        # ---
+        # Configure entries to output with prefixes and a suffixes in their headings
+        my_config = EntryBuilder(prefix="", suffix="when doing:")
+        my_entry = my_config.build(time="11:00", mood="great", title="Feeling pumped!", activities="biking")
+
+        with io.StringIO() as my_fake_file_stream:
+            my_entry.output(my_fake_file_stream)
+            # AND
+            # ---
+            # Then create another stream and fill it with the same content, but written directly, not through object
+            with io.StringIO() as compare_stream:
+                compare_stream.write("## great | 11:00 | Feeling pumped! | when doing:\n")
+                compare_stream.write("#biking")
+
+                # THEN
+                # ---
+                self.assertEqual(compare_stream.getvalue(), my_fake_file_stream.getvalue())
+
 
 class TestDatedEntriesGroup(TestCase):
     def setUp(self):
@@ -258,6 +322,7 @@ class TestDatedEntriesGroup(TestCase):
         # WHEN
         # ---
         # Create a sample date
+        # noinspection PyTypeChecker
         sample_date = EntriesFrom("2011-10-10", front_matter_tags=["", None])
         entry_one = Entry(
             time="10:00 AM",
@@ -298,6 +363,7 @@ class TestDatedEntriesGroup(TestCase):
         # WHEN
         # ---
         # Create a sample date
+        # noinspection PyTypeChecker
         sample_date = EntriesFrom("2011-10-10", front_matter_tags=["", "foo", "bar", None])
         entry_one = Entry(
             time="10:00 AM",

@@ -3,7 +3,8 @@ from __future__ import annotations
 import logging
 from typing import List
 
-from daylio_to_md import errors
+from daylio_to_md import errors, utils
+from daylio_to_md.utils import JsonLoader
 
 DEFAULT_DAYLIO_MOOD_GROUPS = "rad good neutral bad awful"
 
@@ -186,3 +187,21 @@ class Moodverse:
         :return: ``dict[str, str]`` where keys are moods and their values are mood groups they belong to
         """
         return self.__known_moods
+
+
+def create_from(filepath: str = None) -> 'Moodverse':
+    """
+    Overwrite the standard mood-set with a custom one. Mood-sets are used in colour-coding each dated entry.
+
+    :param filepath: path to the .JSON file with a non-standard mood set.
+     Should have five keys: ``rad``, ``good``, ``neutral``, ``bad`` and ``awful``.
+     Each of those keys should hold an array of any number of strings indicating various moods.
+     **Example**: ``[{"good": ["good"]},...]``
+    :returns: reference to the :class:`Moodverse` object
+    """
+    try:
+        with JsonLoader().load(filepath) as file:
+            return Moodverse(file)
+    except utils.CouldNotLoadFileError:
+        # oh, no! anyway... just load up a default moodverse then
+        return Moodverse()

@@ -175,11 +175,13 @@ class Entry(utils.Core):
         # e.g. "## great | 11:00 AM | Oh my, what a night!"
         # header_multiplier is an int that multiplies the # to create headers in markdown
         header_elements = [
-            self.__header_multiplier * "#" + ' ' + self.__mood,
+            self.__prefix,
+            self.__mood,
             self.time.strftime("%H:%M"),
-            self.__title
+            self.__title,
+            self.__suffix
         ]
-        header = ' | '.join([el for el in header_elements if el is not None])
+        header = self.__header_multiplier * "#" + ' ' + ' | '.join([el for el in header_elements if el])
         chars_written += stream.write(header)
         # ACTIVITIES
         # e.g. "bicycle skating pool swimming"
