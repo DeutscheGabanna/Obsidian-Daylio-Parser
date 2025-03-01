@@ -232,7 +232,7 @@ class FileLoader:
         :return: It is not specified what kind of object will be returned when opened. Left up to implementation.
         """
         try:
-            with open(expand_path(path), encoding='UTF-8') as file:
+            with open(expand_path(path), encoding='UTF-8-sig') as file:
                 yield self._load_file(file)
         # TypeError is thrown when a None argument is passed
         except (FileNotFoundError, PermissionError, OSError, UnicodeDecodeError, TypeError) as err:
