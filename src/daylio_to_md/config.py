@@ -28,9 +28,16 @@ from __future__ import annotations
 
 import argparse
 import logging
-from importlib.metadata import version # https://versioningit.readthedocs.io/en/stable/runtime-version.html
+from importlib.metadata import version, PackageNotFoundError # https://versioningit.readthedocs.io/en/stable/runtime-version.html
 from collections import namedtuple
 from typing import List, Any
+
+try:
+    __version__ = version("daylio-obsidian-parser")
+except PackageNotFoundError:
+    # Fallback for development/testing in workflow runners
+    # otherwise --> importlib.metadata.PackageNotFoundError: No package metadata was found for daylio-obsidian-parser
+    __version__ = "dev"
 
 # Logging for config library
 logger = logging.getLogger(__name__)
@@ -66,7 +73,7 @@ def parse_console(args: List[Any]) -> argparse.Namespace:
         '--version',
         action='version',
         # daylio_to_md and daylio-obsidian-parser are the same package, but the latter is the name on PyPI
-        version=version("daylio-obsidian-parser")
+        version=__version__
     )
     """-------------------------------------------------------------------------------------------------------------
     ADD MAIN SETTINGS TO ARGPARSE
