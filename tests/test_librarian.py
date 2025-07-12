@@ -111,7 +111,7 @@ class TestLibrarian(TestCase):
                              )
         lib = Librarian(
             path_to_file="tests/files/all-valid.csv",
-            path_to_moods="tests/files/scenarios/fail/empty.csv"
+            path_to_moods="tests/files/scenarios/fail/incomplete.csv"
         )
         self.assertDictEqual(lib.mood_set.get_moods, default.get_moods,
                              msg="\n".join([
