@@ -1,6 +1,13 @@
 name: Pylint
 
-on: [push]
+on:
+  push:
+    # unless the PR modifies actual code, don't run the lints
+    paths-ignore:
+      - '.github/workflows/**'
+      - 'LICENSE'
+      - '.idea/**'
+      - 'README.md'
 
 jobs:
   build:
