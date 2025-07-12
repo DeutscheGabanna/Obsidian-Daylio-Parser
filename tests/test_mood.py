@@ -1,12 +1,10 @@
 from unittest import TestCase
 
-import tests.suppress as suppress
 from daylio_to_md.entry.mood import Moodverse, MoodNotFoundError
 
 
 # noinspection SpellCheckingInspection
 class TestMoodverse(TestCase):
-    @suppress.out
     def test_default_moodverse_no_customisation(self):
         self.assertFalse(Moodverse().get_custom_moods)
         self.assertEqual("rad", Moodverse()["rad"])
@@ -17,7 +15,6 @@ class TestMoodverse(TestCase):
         # don't compare Moodverses by their memory address, but by their contents
         self.assertEqual(Moodverse(), Moodverse())
 
-    @suppress.out
     def test_loading_valid_moods_into_moodverse(self):
         # These moods are self-sufficient, because even if standard mood set didn't exist, they satisfy all requirements
         ok_moods_loaded_from_json = {
@@ -50,7 +47,6 @@ class TestMoodverse(TestCase):
             Moodverse()["terrific"]
 
     # noinspection PyStatementEffect
-    @suppress.out
     def test_loading_moodsets_with_unknown_keys(self):
         # This mood set contains unknown mood groups. They should be skipped.
         moodlist_with_unknown_group = {
@@ -77,7 +73,6 @@ class TestMoodverse(TestCase):
         with self.assertRaises(MoodNotFoundError):
             my_moodverse["falcon"]
 
-    @suppress.out
     def test_loading_incomplete_moodlists(self):
         moodlist_incomplete = {
             "awful": ["miserable"]
@@ -89,7 +84,6 @@ class TestMoodverse(TestCase):
         self.assertIn("awful", my_moodverse.get_moods)
         self.assertIn("good", my_moodverse.get_moods)
 
-    @suppress.out
     def test_loading_invalid_moodlists(self):
         bad_moods_loaded_from_json = {
             "rad": ["", None],
@@ -109,7 +103,6 @@ class TestMoodverse(TestCase):
         }
         self.assertEqual(1, len(Moodverse(bad_moods_loaded_from_json).get_custom_moods))
 
-    @suppress.out
     def test_loading_same_moods_as_already_existing(self):
         self.assertDictEqual(
             {"rad": "rad", "good": "good", "neutral": "neutral", "bad": "bad", "awful": "awful"},
