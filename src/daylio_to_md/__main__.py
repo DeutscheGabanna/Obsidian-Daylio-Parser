@@ -14,7 +14,7 @@ def main():
     # Read arguments from console and update the global_settings accordingly
     cli_options = parse_console(sys.argv[1:])  # [1:] skips the program name, such as ["foo.py", ...]
 
-    # And now let's start processing
+    # Set up the builders
     # ---
     entry_template = EntryBuilder(
         cli_options.csv_delimiter,
@@ -27,6 +27,8 @@ def main():
         cli_options.front_matter_tags,
         entry_template
     )
+    # Run the main program, which outputs the entries
+    # ---
     Librarian(
         cli_options.filepath,
         cli_options.destination,
@@ -37,10 +39,17 @@ def main():
 if __name__ == '__main__':
     try:
         main()
+    # Custom application return codes should be within this range:
+    # "150-199	reserved for application use" - as per: https://docs.python.org/3/library/sys.html#sys.exit
+    # also: "Unix programs generally use 2 for command line syntax errors and 1 for all other kind of errors"
+    # 2 is reserved for argparse error
+    except KeyboardInterrupt:
+        logging.getLogger(__name__).info("KeyboardInterrupt received, exiting gracefully.")
+        sys.exit(150)
     except CannotAccessJournalError as err:
         # Invoking help() instead of writing it directly just helps to cut down on duplicate strings
         logging.getLogger(__name__).critical(err.__doc__)
-        sys.exit(1)
+        sys.exit(151)
     except EmptyJournalError as err:
         logging.getLogger(__name__).critical(err.__doc__)
-        sys.exit(2)
+        sys.exit(152)
