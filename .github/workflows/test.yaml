@@ -1,5 +1,12 @@
 name: Test
-on: [ pull_request ]
+on:
+  pull_request:
+    # unless the PR modifies actual code, don't run the tests
+    paths-ignore:
+      - '.github/workflows/**'
+      - 'LICENSE'
+      - '.idea/**'
+      - 'README.md'
 jobs:
   test:
     strategy:
