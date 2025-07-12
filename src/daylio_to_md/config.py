@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+from importlib.metadata import version # https://versioningit.readthedocs.io/en/stable/runtime-version.html
 from collections import namedtuple
 from typing import List, Any
 
@@ -52,7 +53,7 @@ DEFAULTS = DefaultSettings(None, None, None, '|', 2, tuple(["daylio"]), '', '', 
 
 def parse_console(args: List[Any]) -> argparse.Namespace:
     """
-    Parses the list as if it were a list of arguments given to a script.
+    Parse the list with argparse. Use either sys.argv[1:] for actual console args or spoof your own.
     :param args: either console arguments from sys.argv or spoofed ones
     """
     console_arguments = argparse.ArgumentParser(
@@ -64,7 +65,8 @@ def parse_console(args: List[Any]) -> argparse.Namespace:
     console_arguments.add_argument(
         '--version',
         action='version',
-        version='%(prog)s 0.3'
+        # daylio_to_md and daylio-obsidian-parser are the same package, but the latter is the name on PyPI
+        version=version("daylio-obsidian-parser")
     )
     """-------------------------------------------------------------------------------------------------------------
     ADD MAIN SETTINGS TO ARGPARSE
