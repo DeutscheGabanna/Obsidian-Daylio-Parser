@@ -1,0 +1,35 @@
+name: Upload Obsidian Daylio Parser to Test PyPi
+
+on:
+  push:
+    branches:
+      - development
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Check-out
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1 # Shallow clone to speed up the workflow
+      - name: Set up Python env
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build
+        run: |
+          python -m pip install build
+          python -m build
+      - name: Publish on Test PyPi
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
