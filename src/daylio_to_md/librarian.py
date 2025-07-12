@@ -105,7 +105,8 @@ class Librarian:
 
     How to output the journal
     -------------------------
-    TODO: add missing documentation
+    First, create an instance of this class with the path to the CSV file and provide the destination path.
+    Then call .output_all() method on the instance of this class to output all the entries from the journal.
     """
 
     def __init__(self,
