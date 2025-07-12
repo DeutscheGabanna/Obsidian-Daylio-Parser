@@ -1,7 +1,6 @@
 import datetime
 from unittest import TestCase
 
-import tests.suppress as suppress
 from daylio_to_md.utils import InvalidTimeError
 from daylio_to_md.journal_entry import \
     Entry, \
@@ -10,7 +9,6 @@ from daylio_to_md.journal_entry import \
 
 
 class TestJournalEntry(TestCase):
-    @suppress.out
     def test_bare_minimum_journal_entries_as_standalone_class(self):
         # When
         bare_minimum_entry = Entry(
@@ -39,7 +37,6 @@ class TestJournalEntry(TestCase):
         self.assertIsNone(bare_minimum_entry.note)
         self.assertListEqual([], bare_minimum_entry.activities)
 
-    @suppress.out
     def test_other_variants_of_journal_entries(self):
         # When
         entry = EntryBuilder().build(
@@ -102,12 +99,10 @@ class TestJournalEntry(TestCase):
         self.assertEqual("A completely normal situation just occurred.", entry.note)
         self.assertListEqual(["bicycle", "chess", "gaming"], entry.activities)
 
-    @suppress.out
     def test_insufficient_journal_entries(self):
         self.assertRaises(NoMoodError, Entry, time="2:00", mood="")
         self.assertRaises(InvalidTimeError, Entry, time=":00", mood="vaguely ok")
 
-    @suppress.out
     def test_entries_with_weird_activity_lists(self):
         # When
         entry = Entry(
