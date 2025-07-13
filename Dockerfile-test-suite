@@ -18,6 +18,8 @@ RUN <<EOF
 EOF
 # This variable will be used in unittest to unlock some tests for checking specific OS-related edge cases
 ENV ISDOCKER=true
+# since some tests require locking files or folders, we run them as a non-root user
+USER sync
 
 # User can append additional arguments to the entrypoint
 ENTRYPOINT ["daylio_to_md"]

@@ -1,4 +1,5 @@
-from unittest import TestCase
+import os
+from unittest import TestCase, skipUnless
 
 from daylio_to_md.entry.mood import Moodverse
 from daylio_to_md.journal_entry import EntryBuilder
@@ -35,7 +36,10 @@ class TestLibrarian(TestCase):
         # dd if=/dev/urandom of="$corrupted_file" bs=1024 count=10
         # generates random bytes and writes them into a given file
 
+    @skipUnless(os.getenv('ISDOCKER'), "Docker-specific test run without ISDOCKER environment variable")
+    def test_locked_file(self):
         # TODO: move check locked file test into Docker run
+        self.skipTest("TBD")
 
     def test_valid_access_dates(self):
         """
