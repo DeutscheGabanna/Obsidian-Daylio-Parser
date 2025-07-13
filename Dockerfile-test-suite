@@ -1,4 +1,4 @@
-FROM python:3.13.0b2-slim-bookworm
+FROM python:3.13-slim-bookworm
 
 LABEL org.label-schema.schema-version="1.0"
 LABEL org.label-schema.name="Obsidian Daylio Parser"
@@ -6,8 +6,20 @@ LABEL org.label-schema.description="Convert .csv Daylio backup into markdown not
 LABEL org.label-schema.url="https://github.com/DeutscheGabanna/Obsidian-Daylio-Parser/"
 
 WORKDIR /app
-COPY tests/  .
-RUN pip install daylio-obsidian-parser
+COPY tests/ ./tests/
+COPY src/ ./src/
+COPY pyproject.toml ./
+COPY . .
+RUN <<EOF
+  apt-get update
+  apt-get install -y git
+  pip install --upgrade pip
+  pip install -e .
+EOF
+# This variable will be used in unittest to unlock some tests for checking specific OS-related edge cases
+ENV ISDOCKER=true
 
+# User can append additional arguments to the entrypoint
 ENTRYPOINT ["daylio_to_md"]
+# If they don't, we show the help message
 CMD ["--help"]
