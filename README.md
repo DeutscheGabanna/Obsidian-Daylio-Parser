@@ -6,7 +6,7 @@ Daylio is an amazing journaling and mood-tracking app, but you may want to store
 ## Installation
 If you are an end-user and wish to just convert your .csv file into markdown:
 ```commandline
-pip install obsidian-daylio-parser
+pip install daylio-obsidian-parser
 daylio_to_md --help
 ```
 
