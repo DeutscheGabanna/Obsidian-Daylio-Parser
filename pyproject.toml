@@ -35,3 +35,6 @@ vcs = "git"
 next-version = "null"
 [tool.versioningit.tag2version]
 rmprefix = "v."
+
+[pytest]
+testpaths = ["tests"]

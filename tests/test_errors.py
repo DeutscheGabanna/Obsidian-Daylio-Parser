@@ -1,11 +1,9 @@
 from unittest import TestCase
 
-import tests.suppress as suppress
 from daylio_to_md import errors
 
 
 class TestErrorMsgBase(TestCase):
-    @suppress.out
     def test_print(self):
         # All arguments correctly passed
         self.assertIsInstance(

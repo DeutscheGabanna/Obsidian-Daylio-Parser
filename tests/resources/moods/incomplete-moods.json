@@ -1,0 +1,21 @@
+{
+    "rad": [
+        "rad",
+        "blissful"
+    ],
+    "neutral": [
+        "vaguely ok",
+        "a bit helpless"
+    ],
+    "bad": [
+        "vaguely bad",
+        "helpless",
+        "misunderstood"
+    ],
+    "awful": [
+        "vaguely awful",
+        "hollow",
+        "trapped",
+        "dying of pain"
+    ]
+}

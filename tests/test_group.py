@@ -1,7 +1,6 @@
 import datetime
 from unittest import TestCase
 
-import tests.suppress as suppress
 from daylio_to_md.group import \
     EntriesFrom, \
     EntryMissingError, \
@@ -10,7 +9,6 @@ from daylio_to_md.utils import InvalidDateError, InvalidTimeError
 
 
 class TestDate(TestCase):
-    @suppress.out
     def setUp(self):
         # Create a sample date
         self.sample_date = EntriesFrom("2011-10-10")
@@ -34,7 +32,6 @@ class TestDate(TestCase):
             }
         )
 
-    @suppress.out
     def test_creating_duplicates_which_are_allowed_in_daylio(self):
         # TODO: actually test this
         self.sample_date.create_entry(
@@ -47,7 +44,6 @@ class TestDate(TestCase):
             }
         )
 
-    @suppress.out
     def test_creating_entries_from_row(self):
         """
         Test whether you can successfully create :class:`Entry` objects from this builder class.
@@ -74,7 +70,6 @@ class TestDate(TestCase):
                 }
             )
 
-    @suppress.out
     def test_create_entry_groups(self):
         """
         Try to instantiate an object of :class:`DatedEntriesGroup` with either valid or invalid dates
@@ -120,7 +115,6 @@ class TestDate(TestCase):
         self.assertRaises(InvalidDateError, EntriesFrom, "")  # Empty string
 
     # noinspection PyStatementEffect,SpellCheckingInspection
-    @suppress.out
     def test_access_dated_entry(self):
         self.assertEqual("21:30", str(self.sample_date["9:30PM"]))
         self.assertEqual(datetime.time(10, 0), self.sample_date["10:00"].time)
@@ -164,7 +158,6 @@ class TestDate(TestCase):
         with self.assertRaises(InvalidTimeError):
             self.sample_date[":30"]
 
-    @suppress.out
     def test_get_known_dated_entries(self):
         self.assertEqual("21:30", str(self.sample_date["9:30 PM"]))
         self.assertEqual("10:00", str(self.sample_date["10:00 AM"]))
@@ -173,14 +166,12 @@ class TestDate(TestCase):
         self.assertRaises(KeyError, lambda: self.sample_date["23:00"])
         self.assertRaises(EntryMissingError, lambda: self.sample_date["11:50 AM"])
 
-    @suppress.out
     def test_truthiness_of_dated_entries_group(self):
         """
         DatedEntriesGroup should be truthy if it has a valid UID and has any known entries.
         """
         self.assertGreater(len(self.sample_date.known_entries), 0)
 
-    @suppress.out
     def test_falseness_of_dated_entries_group(self):
         """
         DatedEntriesGroup should be falsy if it has a valid UID but no known entries.

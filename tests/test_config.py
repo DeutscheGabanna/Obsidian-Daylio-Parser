@@ -1,11 +1,9 @@
 from unittest import TestCase
 
-import tests.suppress as suppress
 from daylio_to_md import config
 
 
 class TestSettingsManager(TestCase):
-    @suppress.out
     def test_spoofed_keyword_option_without_equality_sign(self):
         """
         In this case, SettingsManager can receive either "--force accept", "--force refuse" or None as prog arguments.
@@ -26,7 +24,6 @@ class TestSettingsManager(TestCase):
         config.parse_console(["foo", "bar", "--force", "refuse"])
         config.parse_console(["foo", "bar", "--force", "accept"])
 
-    @suppress.out
     def test_spoofed_keyword_option_with_equality_sign(self):
         """
         In this case, SettingsManager can receive either "--force=accept", "--force=refuse" or None as prog arguments.
@@ -50,7 +47,6 @@ class TestSettingsManager(TestCase):
         this_config = config.parse_console(["foo", "bar", "--force=accept"])
         self.assertEqual("accept", this_config.force)
 
-    @suppress.out
     def test_check_if_required_arguments_passed(self):
         # User did not provide the required argument - should fail
         with self.assertRaises(SystemExit) as cm:
@@ -62,7 +58,6 @@ class TestSettingsManager(TestCase):
         self.assertEqual("wakanda", this_config.filepath)
         self.assertEqual("forever", this_config.destination)
 
-    @suppress.out
     def test_expected_failure_empty_argument_array(self):
         # User provided no arguments whatsoever - should fail
         with self.assertRaises(SystemExit) as cm:
