@@ -4,8 +4,8 @@ import shutil
 from unittest import TestCase
 
 import tests.suppress as suppress
-from daylio_to_md.group import EntriesFrom, EntriesFromBuilder
-from daylio_to_md.journal_entry import Entry, EntryBuilder
+from daylio_to_md.group import EntriesFrom
+from daylio_to_md.journal_entry import Entry
 from daylio_to_md.librarian import Librarian
 
 

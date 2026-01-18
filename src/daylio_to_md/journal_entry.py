@@ -33,8 +33,8 @@ class NoMoodError(utils.ExpectedValueError):
 
 
 class ErrorMsg(errors.ErrorMsgBase):
-    INVALID_MOOD = "Mood {} is missing from a list of known moods. Not critical, but colouring won't work on the entry."
-    WRONG_TIME = "Received {}, expected valid time. Cannot create this entry without a valid time."
+    INVALID_MOOD = "Mood [italic]{}[/italic] is missing from a list of known moods. Not critical, but colouring won't work on the entry."
+    WRONG_TIME = "Received [italic]{}[/italic], expected valid time. Cannot create this entry without a valid time."
     WRONG_ACTIVITIES = "Received a non-empty string containing activities. Parsing it resulted in an empty list."
 
 

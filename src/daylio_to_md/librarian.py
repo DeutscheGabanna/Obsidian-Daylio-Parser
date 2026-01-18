@@ -19,8 +19,11 @@ import logging
 import datetime
 from typing import IO
 
+from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TaskProgressColumn, TimeRemainingColumn
+
 from daylio_to_md import utils, errors, group
 from daylio_to_md.entry.mood import Moodverse
+from daylio_to_md.errors import console
 from daylio_to_md.group import EntriesFrom, EntriesFromBuilder
 from daylio_to_md.journal_entry import EntryBuilder
 from daylio_to_md.utils import CsvLoader, JsonLoader, CouldNotLoadFileError, guess_date_type
@@ -32,16 +35,16 @@ ERRORS
 
 
 class ErrorMsg(errors.ErrorMsgBase):
-    FILE_INCOMPLETE = "{} is incomplete."
-    FILE_EMPTY = "{} is empty."
-    FILE_MISSING = "{} does not exist."
-    PERMISSION_ERROR = "Cannot access {}."
+    FILE_INCOMPLETE = "[italic]{}[/italic] is incomplete."
+    FILE_EMPTY = "[italic]{}[/italic] is empty."
+    FILE_MISSING = "[italic]{}[/italic] does not exist."
+    PERMISSION_ERROR = "Cannot access [italic]{}[/italic]."
     STANDARD_MOODS_USED = "Standard mood set (rad, good, neutral, bad, awful) will be used."
     DECODE_ERROR = "Error while decoding {}"
     NOT_A_FILE = "{} is not a file."
     CSV_ALL_FIELDS_PRESENT = "All expected columns are present in the CSV file columns."
-    CSV_FIELDS_MISSING = "The following expected columns are missing: {}"
-    COUNT_ROWS = "{} rows of data found in {}. Of that {} were processed correctly."
+    CSV_FIELDS_MISSING = "The following expected columns are missing: [italic]{}[/italic]"
+    COUNT_ROWS = "{} rows of data found in {}. Of that {} ({}%) were processed correctly."
 
 
 class MissingValuesInRowError(utils.ExpectedValueError):
@@ -220,21 +223,40 @@ class Librarian:
 
                 # Processing
                 # ---
+                # Count total lines for progress bar
+                rows = list(file)
+                total_lines = len(rows)
                 lines_parsed = 0
                 lines_parsed_successfully = 0
-                for line in file:
-                    line: dict[str, str]
-                    try:
-                        lines_parsed += self.__process_line(line)
-                    except MissingValuesInRowError as err:
-                        self.__logger.warning(err.__doc__)
-                    else:
-                        lines_parsed_successfully += 1
+                with Progress(
+                        SpinnerColumn(),
+                        TextColumn("[progress.description]{task.description}"),
+                        BarColumn(),
+                        TaskProgressColumn(),
+                        TimeRemainingColumn(),
+                        console=console
+                ) as progress:
+                    task = progress.add_task(
+                        f"[bold cyan]Processing {filepath}...",
+                        total=total_lines
+                    )
+
+                    for line in rows:
+                        line: dict[str, str]
+                        try:
+                            lines_parsed += self.__process_line(line)
+                        except MissingValuesInRowError as err:
+                            self.__logger.warning(err.__doc__)
+                        else:
+                            lines_parsed_successfully += 1
+                        finally:
+                            progress.update(task, advance=1)
+
         except ValueError as err:
             raise CannotAccessJournalError(filepath) from err
 
         # Report back how many lines were parsed successfully out of all tried
-        self.__logger.info(ErrorMsg.COUNT_ROWS.format(lines_parsed, filepath, lines_parsed_successfully))
+        self.__logger.info(ErrorMsg.COUNT_ROWS.format(lines_parsed, filepath, lines_parsed_successfully, lines_parsed_successfully / lines_parsed * 100))
         return lines_parsed_successfully, lines_parsed
 
     # TODO: I guess it is more pythonic to raise exceptions than return False if I cannot complete the task
@@ -275,13 +297,28 @@ class Librarian:
         Loops through known dates and calls :class:`DatedEntriesGroup` to output its contents inside the destination.
         :raises NoDestinationSelectedError: when the parent object has been instantiated without a destination set.
         """
-        for known_date in self.__known_dates.values():
-            # "2022/11/09/2022-11-09.md"
-            filename = str(known_date.date) + ".md"
-            filepath = "/".join([self.__destination, str(known_date.date.year), str(known_date.date.month), filename])
-            # TODO: maybe add the mode option to settings in argparse? write/append
-            with create_and_open(filepath, 'w') as file:
-                known_date.output(file)
+        total = len(self.__known_dates.values())
+        with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                TaskProgressColumn(),
+                TimeRemainingColumn(),
+                console=console
+        ) as progress:
+            task = progress.add_task(
+                f"[bold cyan]Creating markdown files in {self.__destination}...",
+                total=total
+            )
+            for known_date in self.__known_dates.values():
+                # "2022/11/09/2022-11-09.md"
+                # TODO: This is where prefixes and suffixes should be added - in the filename
+                filename = str(known_date.date) + ".md"
+                filepath = os.path.join(self.__destination, str(known_date.date.year), str(known_date.date.month), filename)
+                # TODO: maybe add the mode option to settings in argparse? write/append
+                with create_and_open(filepath, 'w') as file:
+                    known_date.output(file)
+                    progress.update(task, advance=1)
 
     def __getitem__(self, key: typing.Union[datetime.date, str, typing.List[str], typing.List[int]]) -> EntriesFrom:
         """

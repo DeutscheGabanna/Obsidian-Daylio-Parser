@@ -25,6 +25,7 @@ class TestJournalEntry(TestCase):
         self.assertIsNone(bare_minimum_entry.note)
         self.assertListEqual([], bare_minimum_entry.activities)
 
+    @suppress.out
     def test_bare_minimum_journal_entries_from_builder_class(self):
         # When
         bare_minimum_entry = EntryBuilder().build(
