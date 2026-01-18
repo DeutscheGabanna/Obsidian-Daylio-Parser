@@ -21,7 +21,7 @@ keywords = [ "csv", "markdown", ".md", ".csv", "daylio", "obsidian", "file conve
 [project.scripts]
 # Make daylio_to_md command be recognised by shell as a program
 # No need to type: python -m <package> anymore
-daylio_to_md = "daylio_to_md.__main__:main"
+daylio_to_md = "daylio_to_md.__main__:run"
 
 [build-system]
 requires = ["setuptools", "build", "wheel", "versioningit"]
