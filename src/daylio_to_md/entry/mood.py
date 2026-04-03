@@ -4,6 +4,7 @@ import logging
 from typing import List
 
 from daylio_to_md import errors
+from daylio_to_md.utils import JsonLoader, CouldNotLoadFileError
 
 DEFAULT_DAYLIO_MOOD_GROUPS = "rad good neutral bad awful"
 
@@ -90,6 +91,26 @@ class Moodverse:
             except MoodNotFoundError:
                 msg = ErrorMsg.print(ErrorMsg.STANDARD_MOODS_USED, ', '.join(str(item) for item in self.__known_moods))
                 self.__logger.warning(msg)
+
+    @classmethod
+    def from_file(cls, filepath: str = None) -> 'Moodverse':
+        """
+        Load a custom mood set from a JSON file. Falls back to default moods if the file is missing or invalid.
+
+        :param filepath: path to the ``.json`` file with a non-standard mood set.
+            Pass ``None`` to use the default mood set.
+        :returns: :class:`Moodverse` instance — custom if the file loaded successfully, default otherwise.
+        """
+        if filepath is None:
+            return cls()
+        try:
+            with JsonLoader().load(filepath) as data:
+                return cls(data)
+        except CouldNotLoadFileError:
+            logging.getLogger(cls.__name__).warning(
+                "Could not load custom moods from %s. Using defaults.", filepath
+            )
+            return cls()
 
     def __expand_moodset_with_customs(self, moods_to_process: dict[str, List[str]]) -> dict[str, str]:
         """

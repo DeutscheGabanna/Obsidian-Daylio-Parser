@@ -4,6 +4,9 @@ import logging
 from daylio_to_md.journal_entry import EntryBuilder
 from daylio_to_md.group import EntriesFromBuilder
 from daylio_to_md.config import parse_console
+from daylio_to_md.entry.mood import Moodverse
+from daylio_to_md.reader import CsvJournalReader
+from daylio_to_md.writer import MarkdownWriter
 from daylio_to_md.librarian import Librarian, CannotAccessJournalError, EmptyJournalError
 
 
@@ -14,8 +17,10 @@ def main():
     # Read arguments from console and update the global_settings accordingly
     cli_options = parse_console(sys.argv[1:])  # [1:] skips the program name, such as ["foo.py", ...]
 
-    # Set up the builders
+    # Assemble the pipeline via dependency injection
     # ---
+    reader = CsvJournalReader(cli_options.filepath)
+    mood_set = Moodverse.from_file(getattr(cli_options, 'moods', None))
     entry_template = EntryBuilder(
         cli_options.csv_delimiter,
         cli_options.header_level,
@@ -27,13 +32,11 @@ def main():
         cli_options.front_matter_tags,
         entry_template
     )
-    # Run the main program, which outputs the entries
+
+    # Run the main program: parse the journal, then write it out
     # ---
-    Librarian(
-        cli_options.filepath,
-        cli_options.destination,
-        entries_from_builder=file_template
-    ).output_all()
+    journal = Librarian(reader, mood_set, file_template).parse()
+    MarkdownWriter(cli_options.destination).write_all(journal)
 
 
 if __name__ == '__main__':
@@ -47,7 +50,6 @@ if __name__ == '__main__':
         logging.getLogger(__name__).info("KeyboardInterrupt received, exiting gracefully.")
         sys.exit(150)
     except CannotAccessJournalError as err:
-        # Invoking help() instead of writing it directly just helps to cut down on duplicate strings
         logging.getLogger(__name__).critical(err.__doc__)
         sys.exit(151)
     except EmptyJournalError as err:
