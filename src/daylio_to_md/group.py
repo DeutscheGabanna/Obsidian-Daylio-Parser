@@ -85,40 +85,11 @@ class EntriesFrom(utils.Core):
     :param entries_builder: Builder configured to create new :class:`Entry` objects
     :param mood_set: Use custom :class:`Moodverse` or default if not provided.
     """
-    _instances: dict[datetime.date, EntriesFrom] = {}
-
-    @classmethod
-    def reset_instances(cls) -> None:
-        """Reset singleton cache; intended for test isolation."""
-        cls._instances.clear()
-
-    def __new__(cls,
-                date: typing.Union[datetime.date, str, typing.List[str], typing.List[int]],
-                *args,
-                **kwargs):
-
-        type_casted_date = utils.guess_date_type(date)
-
-        # Check if an instance for the given date already exists
-        if type_casted_date in cls._instances:
-            return cls._instances[type_casted_date]
-
-        # If not, create a new instance
-        instance = super(EntriesFrom, cls).__new__(cls)
-        cls._instances[type_casted_date] = instance
-
-        return instance
-
     def __init__(self,
                  date: typing.Union[datetime.date, str, typing.List[str], typing.List[int]],
                  front_matter_tags: tuple[str] = EntriesFromBuilder.front_matter_tags,
                  entries_builder: journal_entry.EntryBuilder = journal_entry.EntryBuilder(),
                  mood_set: Moodverse = Moodverse()):
-
-        # __new__ calls __init__ every time, even if it only returns the reference to an already existing object
-        # this skips __init__ if returning such an instance, since initialisation has already been done
-        if hasattr(self, "_initialised"):
-            return
 
         self.__logger = logging.getLogger(self.__class__.__name__)
         super().__init__(utils.guess_date_type(date))
@@ -129,7 +100,6 @@ class EntriesFrom(utils.Core):
         self.__known_entries: dict[datetime.time, Entry] = {}
         self.__known_moods: Moodverse = mood_set
 
-        self._initialised = True
 
     def create_entry(self, line: dict[str, str]) -> None:
         """

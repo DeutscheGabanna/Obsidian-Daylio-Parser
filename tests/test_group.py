@@ -10,8 +10,6 @@ from daylio_to_md.utils import InvalidDateError, InvalidTimeError
 
 class TestDate(TestCase):
     def setUp(self):
-        EntriesFrom.reset_instances()
-
         # Create a sample date
         self.sample_date = EntriesFrom("2011-10-10")
         # Append two sample entries to that day
@@ -181,3 +179,10 @@ class TestDate(TestCase):
         another_day = EntriesFrom("2019-09-12")
         self.assertEqual(len(another_day.known_entries), 0)
         self.assertFalse(another_day.known_entries)
+
+    def test_same_date_creates_independent_group_instances(self):
+        first_group = EntriesFrom("2020-01-01")
+        second_group = EntriesFrom("2020-01-01")
+
+        self.assertIsNot(first_group, second_group)
+
