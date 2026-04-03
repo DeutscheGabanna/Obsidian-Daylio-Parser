@@ -167,7 +167,7 @@ class TestDatedEntriesGroup(TestCase):
     def setUp(self):
         # It's okay to store information on created instances in a single run for a normal user, not for repeated tests
         # Therefore we reset the memory of the class before every test
-        EntriesFrom._instances = {}
+        EntriesFrom.reset_instances()
 
     def test_outputting_day_with_one_entry(self):
         """
