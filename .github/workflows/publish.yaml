@@ -11,7 +11,11 @@ permissions:
   id-token: write
 
 jobs:
+  integration:
+    uses: ./.github/workflows/integration-gate.yaml
+
   deploy:
+    needs: integration
 
     runs-on: ubuntu-latest
 
