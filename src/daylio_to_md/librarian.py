@@ -257,11 +257,11 @@ class Librarian:
         # Let DatedEntriesGroup handle the rest and increment the counter (True == 1)
         try:
             date = guess_date_type(line["full_date"])
-            entries_from_this_date = (self.__entries_from_builder.build(date, self.__mood_set))
+            entries_from_this_date = self.__known_dates.get(date)
+            if entries_from_this_date is None:
+                entries_from_this_date = self.__entries_from_builder.build(date, self.__mood_set)
             entries_from_this_date.create_entry(line)
-            # Overwriting existing keys is not a problem since EntriesFrom.__new__() returns the same object ID when
-            # it is initialised with the same date parameter. Also, since we are type-casting date into datetime.date
-            # identical dates will always be equal, so the same key-value pair will be returned by the dictionary.
+            # Keep one group object per date within this Librarian instance.
             self[date] = entries_from_this_date
         except (group.TriedCreatingDuplicateDatedEntryError,
                 group.IncompleteDataRow,
