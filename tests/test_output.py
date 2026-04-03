@@ -6,6 +6,8 @@ from unittest import TestCase
 from daylio_to_md.group import EntriesFrom, EntriesFromBuilder
 from daylio_to_md.journal_entry import Entry, EntryBuilder
 from daylio_to_md.librarian import Librarian
+from daylio_to_md.reader import CsvJournalReader
+from daylio_to_md.writer import MarkdownWriter
 
 
 class TestEntriesFromOutput(TestCase):
@@ -330,8 +332,9 @@ class TestOutputFileStructure(TestCase):
         Loops through known dates and asks each :class:`EntriesFrom` to output its contents to a specified file.
         """
 
-        lib = Librarian("tests/files/all-valid.csv", path_to_output="tests/files/scenarios/ok/out")
-        lib.output_all()
+        reader = CsvJournalReader("tests/files/all-valid.csv")
+        journal = Librarian(reader).parse()
+        MarkdownWriter("tests/files/scenarios/ok/out").write_all(journal)
 
         with open("tests/files/scenarios/ok/out/2022/10/2022-10-25.md", encoding="UTF-8") as parsed_result, \
                 open("tests/files/scenarios/ok/expect/2022-10-25.md", encoding="UTF-8") as expected_result:
