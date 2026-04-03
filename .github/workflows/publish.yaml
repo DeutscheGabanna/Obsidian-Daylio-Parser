@@ -4,27 +4,19 @@ on:
   release:
     types: [published]
 
-permissions:
-  contents: read
-  # https://docs.pypi.org/trusted-publishers/using-a-publisher/
-  # Note the id-token: write permission: you must provide this permission at either the job level (strongly recommended) or workflow level (discouraged). Without it, the publishing action won't have sufficient permissions to identify itself to PyPI.
-  id-token: write
-
 jobs:
   # first make sure that the integration tests pass on the code
   integration:
+    permissions:
+      contents: read
     uses: ./.github/workflows/integration-gate.yaml
 
-  # then
-  deploy:
+  # build in a separate job so that build-time dependencies
+  # don't run with the elevated id-token: write privilege
+  build:
     needs: integration
     permissions:
       contents: read
-      id-token: write
-    # every job that specifies an environment will automatically deploy the result
-    # https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/control-deployments#using-environments-without-deployments
-    environment: production
-
     runs-on: ubuntu-latest
 
     steps:
@@ -40,6 +32,32 @@ jobs:
         run: |
           python -m pip install build
           python -m build
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  # then publish in a job with only the privileges it needs
+  deploy:
+    needs: build
+    permissions:
+      contents: read
+      # https://docs.pypi.org/trusted-publishers/using-a-publisher/
+      # id-token: write is required for OIDC Trusted Publishing to PyPI
+      id-token: write
+    # every job that specifies an environment will automatically deploy the result
+    # https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/control-deployments#using-environments-without-deployments
+    environment: production
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
       - name: Publish this release
         # with trusted publishing
         uses: pypa/gh-action-pypi-publish@v1.13.0
