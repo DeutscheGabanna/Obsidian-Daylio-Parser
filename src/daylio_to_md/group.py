@@ -87,6 +87,11 @@ class EntriesFrom(utils.Core):
     """
     _instances: dict[datetime.date, EntriesFrom] = {}
 
+    @classmethod
+    def reset_instances(cls) -> None:
+        """Reset singleton cache; intended for test isolation."""
+        cls._instances.clear()
+
     def __new__(cls,
                 date: typing.Union[datetime.date, str, typing.List[str], typing.List[int]],
                 *args,

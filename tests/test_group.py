@@ -10,6 +10,8 @@ from daylio_to_md.utils import InvalidDateError, InvalidTimeError
 
 class TestDate(TestCase):
     def setUp(self):
+        EntriesFrom.reset_instances()
+
         # Create a sample date
         self.sample_date = EntriesFrom("2011-10-10")
         # Append two sample entries to that day
