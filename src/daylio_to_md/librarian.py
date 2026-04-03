@@ -202,7 +202,6 @@ class Librarian:
                     "time",
                     "mood",
                     "activities",
-                    "note",
                     "note_title",
                     "note"
                 ]

@@ -1,7 +1,7 @@
 [project]
 name = "daylio-obsidian-parser"
 dynamic = ["version", "readme"]
-requires-python = ">= 3.8"
+requires-python = ">= 3.10"
 authors = [
 	{name = "Paweł Ilnicki", email = "59067099+DeutscheGabanna@users.noreply.github.com"}
 ]
