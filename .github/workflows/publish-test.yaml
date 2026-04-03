@@ -24,7 +24,7 @@ jobs:
       - name: Check-out
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1 # Shallow clone to speed up the workflow
+          fetch-depth: 0 # versioningit needs full history and tags
       - name: Set up Python env
         uses: actions/setup-python@v5
         with:
