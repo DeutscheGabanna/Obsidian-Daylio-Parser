@@ -40,6 +40,8 @@ Quisque dictum odio quis augue consectetur.
 pip install obsidian-daylio-parser
 ```
 
+There was a previous package called `daylio-obsidian-parser` (https://pypi.org/project/daylio-obsidian-parser/) that has been deprecated in favour of this one for consistency. If you have the old package installed, please uninstall it to avoid confusion.
+
 ### From source
 
 ```bash
@@ -102,9 +104,12 @@ Activities as plain text (no `#` prefix):
 obsidian-daylio-parser export.csv ./vault --tag_activities False
 ```
 
+For example, if you have an activity in Daylio named `69` it wouldn't work correctly as a tag in Obsidian.
+With `--tag_activities=False` they won't break when the note is displayed in Obsidian.
+
 ## Custom moods
 
-By default, Daylio uses five mood groups: **rad**, **good**, **neutral**, **bad**, and **awful**. Each group maps to exactly one mood of the same name.
+Daylio supports exactly five predefined mood groups: **rad**, **good**, **neutral**, **bad**, and **awful**. Each group in Daylio initially maps to exactly one mood of the same name, but user is free to expand this list with their own moods.
 
 To use your own expanded mood vocabulary, create a `.json` file with the five mood groups as keys, each containing an array of mood names:
 
@@ -144,6 +149,9 @@ All columns must be present. `activities`, `note_title`, and `note` may be empty
 - **Entries at the same time on the same day are overwritten.** If two entries share the exact same date and time, only the last one in the CSV is kept.
 
 ## Exit codes
+Contributors are encouraged to use custom exit codes when raising critical exceptions.
+You can define new exit codes as necessary.
+Integration tests that only have access to the stdout and stderr of the CLI can then assess the cause of failure with the edit code.
 
 | Code | Meaning |
 |---|---|
@@ -186,8 +194,6 @@ pipenv run coverage run -m unittest discover -s . -t .
 ### Publishing
 Pushes to the `dev-stage` branch trigger a test publish to TestPyPI. To publish to the official PyPI repository, merge into `main` and create a new release.
 
-```bash
-
 ### Linting
 
 ```bash
@@ -197,7 +203,7 @@ flake8 src/
 
 ## Requirements
 
-- Python ≥ 3.8
+- Python ≥ 3.10
 
 ## License
 
