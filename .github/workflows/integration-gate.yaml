@@ -9,6 +9,8 @@ jobs:
       matrix:
         os: [ ubuntu-latest, windows-latest ]
     runs-on: ${{ matrix.os }}
+    env:
+      PYTHONUTF8: 1  # Force UTF-8 on Windows — prevents cp1252 encoding errors with non-ASCII CSV data
     steps:
       - name: Check-out
         uses: actions/checkout@v4
