@@ -1,13 +1,13 @@
 import sys
 import logging
 
-from daylio_to_md.journal_entry import EntryBuilder
-from daylio_to_md.group import EntriesFromBuilder
-from daylio_to_md.config import parse_console
-from daylio_to_md.entry.mood import Moodverse
-from daylio_to_md.reader import CsvJournalReader
-from daylio_to_md.writer import MarkdownWriter
-from daylio_to_md.librarian import Librarian, CannotAccessJournalError, EmptyJournalError
+from obsidian_daylio_parser.journal_entry import EntryBuilder
+from obsidian_daylio_parser.group import EntriesFromBuilder
+from obsidian_daylio_parser.config import parse_console
+from obsidian_daylio_parser.entry.mood import Moodverse
+from obsidian_daylio_parser.reader import CsvJournalReader
+from obsidian_daylio_parser.writer import MarkdownWriter
+from obsidian_daylio_parser.librarian import Librarian, CannotAccessJournalError, EmptyJournalError
 
 
 def main():

@@ -13,11 +13,11 @@ import typing
 import logging
 import datetime
 
-from daylio_to_md import journal_entry
-from daylio_to_md import utils, errors
-from daylio_to_md.config import DEFAULTS
-from daylio_to_md.journal_entry import Entry
-from daylio_to_md.entry.mood import Moodverse
+from obsidian_daylio_parser import journal_entry
+from obsidian_daylio_parser import utils, errors
+from obsidian_daylio_parser.config import DEFAULTS
+from obsidian_daylio_parser.journal_entry import Entry
+from obsidian_daylio_parser.entry.mood import Moodverse
 
 # TODO: dependency_injector lib
 # TODO: fixtures

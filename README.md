@@ -37,7 +37,7 @@ Quisque dictum odio quis augue consectetur.
 ### pip (recommended)
 
 ```bash
-pip install daylio-obsidian-parser
+pip install obsidian-daylio-parser
 ```
 
 ### From source
@@ -51,14 +51,14 @@ pip install .
 ### Docker
 
 ```bash
-docker build -t daylio-parser .
-docker run -v /path/to/your/files:/data daylio-parser /data/export.csv /data/output
+docker build -t obsidian-daylio-parser .
+docker run -v /path/to/your/files:/data obsidian-daylio-parser /data/export.csv /data/output
 ```
 
 ## Usage
 
 ```bash
-daylio_to_md <filepath> <destination> [options]
+obsidian-daylio-parser <filepath> <destination> [options]
 ```
 
 ### Arguments
@@ -87,19 +87,19 @@ daylio_to_md <filepath> <destination> [options]
 Basic conversion:
 
 ```bash
-daylio_to_md ~/Downloads/daylio_export.csv ~/ObsidianVault/Journal
+obsidian-daylio-parser ~/Downloads/daylio_export.csv ~/ObsidianVault/Journal
 ```
 
 Custom front-matter tags with `###` headings:
 
 ```bash
-daylio_to_md export.csv ./vault --front_matter_tags journal mood-tracking --header 3
+obsidian-daylio-parser export.csv ./vault --front_matter_tags journal mood-tracking --header 3
 ```
 
 Activities as plain text (no `#` prefix):
 
 ```bash
-daylio_to_md export.csv ./vault --tag_activities False
+obsidian-daylio-parser export.csv ./vault --tag_activities False
 ```
 
 ## Custom moods
@@ -156,7 +156,7 @@ All columns must be present. `activities`, `note_title`, and `note` may be empty
 ## Project structure
 
 ```
-src/daylio_to_md/
+src/obsidian_daylio_parser/
 ├── __main__.py        # CLI entry point
 ├── config.py          # Argument parsing and defaults
 ├── errors.py          # Logging setup and base error classes

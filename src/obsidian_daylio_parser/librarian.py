@@ -21,11 +21,11 @@ from __future__ import annotations
 import logging
 import datetime
 
-from daylio_to_md import utils, errors, group
-from daylio_to_md.entry.mood import Moodverse
-from daylio_to_md.group import EntriesFrom, EntriesFromBuilder
-from daylio_to_md.journal import Journal
-from daylio_to_md.reader import JournalReader, InvalidDataInFileError
+from obsidian_daylio_parser import utils, errors, group
+from obsidian_daylio_parser.entry.mood import Moodverse
+from obsidian_daylio_parser.group import EntriesFrom, EntriesFromBuilder
+from obsidian_daylio_parser.journal import Journal
+from obsidian_daylio_parser.reader import JournalReader, InvalidDataInFileError
 
 
 """---------------------------------------------------------------------------------------------------------------------

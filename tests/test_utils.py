@@ -2,8 +2,8 @@ import logging
 import datetime
 from unittest import TestCase
 
-from daylio_to_md import utils
-from daylio_to_md.utils import guess_time_type, guess_date_type
+from obsidian_daylio_parser import utils
+from obsidian_daylio_parser.utils import guess_time_type, guess_date_type
 
 
 class TestSlugify(TestCase):
@@ -18,10 +18,10 @@ class TestSlugify(TestCase):
         self.assertEqual("хлеба-нашего-повшеднего", utils.slugify("Хлеба нашего повшеднего", False))
 
         # check if the slug is a valid tag
-        with self.assertLogs(logging.getLogger("daylio_to_md.utils"), logging.WARNING):
+        with self.assertLogs(logging.getLogger("obsidian_daylio_parser.utils"), logging.WARNING):
             utils.slugify("1. Digit cannot appear at the beginning of a tag", True)
 
-        current_logger = logging.getLogger("daylio_to_md.utils")
+        current_logger = logging.getLogger("obsidian_daylio_parser.utils")
         with self.assertLogs(current_logger, logging.WARNING) as logs:
             # We want to assert there are no warnings, but the 'assertLogs' method does not support that.
             # Therefore, we are adding a dummy warning, and then we will assert it is the only warning.
@@ -31,7 +31,7 @@ class TestSlugify(TestCase):
         # assertLogs.output is a list of strings containing formatted logs, so len() == 0 is noLogs
         # I refrain from using assertNoLogs because that bumps Python version requirement to 3.10
         # https://docs.python.org/3/library/unittest.html#unittest.TestCase.assertNoLogs
-        self.assertListEqual(["WARNING:daylio_to_md.utils:Dummy warning"], logs.output)
+        self.assertListEqual(["WARNING:obsidian_daylio_parser.utils:Dummy warning"], logs.output)
 
 
 class TestExpandPath(TestCase):

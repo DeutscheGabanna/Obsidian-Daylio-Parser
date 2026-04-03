@@ -3,11 +3,11 @@ import os
 import shutil
 from unittest import TestCase
 
-from daylio_to_md.group import EntriesFrom, EntriesFromBuilder
-from daylio_to_md.journal_entry import Entry, EntryBuilder
-from daylio_to_md.librarian import Librarian
-from daylio_to_md.reader import CsvJournalReader
-from daylio_to_md.writer import MarkdownWriter
+from obsidian_daylio_parser.group import EntriesFrom, EntriesFromBuilder
+from obsidian_daylio_parser.journal_entry import Entry, EntryBuilder
+from obsidian_daylio_parser.librarian import Librarian
+from obsidian_daylio_parser.reader import CsvJournalReader
+from obsidian_daylio_parser.writer import MarkdownWriter
 
 
 class TestEntriesFromOutput(TestCase):
