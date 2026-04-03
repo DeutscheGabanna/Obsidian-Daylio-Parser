@@ -7,6 +7,9 @@ on:
 
 permissions:
   contents: read
+  # https://docs.pypi.org/trusted-publishers/using-a-publisher/
+  # Note the id-token: write permission: you must provide this permission at either the job level (strongly recommended) or workflow level (discouraged). Without it, the publishing action won't have sufficient permissions to identify itself to PyPI.
+  id-token: write  # OIDC token for Trusted Publishing
 
 jobs:
   deploy:
@@ -30,6 +33,5 @@ jobs:
       - name: Publish on Test PyPi
         uses: pypa/gh-action-pypi-publish@v1.13.0
         with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
+          # with trusted publishing
           repository-url: https://test.pypi.org/legacy/
