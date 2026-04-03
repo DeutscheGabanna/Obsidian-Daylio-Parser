@@ -4,12 +4,6 @@ on:
   push:
     branches:
       - dev-stage
-    # unless the push modifies actual dev-stage code, don't publish (no point)
-    paths-ignore:
-      - '.github/workflows/**'
-      - 'LICENSE'
-      - '.idea/**'
-      - 'README.md'
 
 permissions:
   contents: read
