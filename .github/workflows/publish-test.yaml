@@ -12,7 +12,11 @@ permissions:
   id-token: write  # OIDC token for Trusted Publishing
 
 jobs:
+  integration:
+    uses: ./.github/workflows/integration-gate.yaml
+
   deploy:
+    needs: integration
 
     runs-on: ubuntu-latest
     environment: development
