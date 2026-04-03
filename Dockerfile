@@ -1,4 +1,4 @@
-FROM python:3.13.0b2-slim-bookworm
+FROM python:3.13-slim-bookworm
 
 LABEL org.label-schema.schema-version="1.0"
 LABEL org.label-schema.name="Obsidian Daylio Parser"
