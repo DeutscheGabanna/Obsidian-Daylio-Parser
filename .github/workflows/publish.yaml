@@ -11,11 +11,16 @@ permissions:
   id-token: write
 
 jobs:
+  # first make sure that the integration tests pass on the code
   integration:
     uses: ./.github/workflows/integration-gate.yaml
 
+  # then
   deploy:
     needs: integration
+    # every job that specifies an environment will automatically deploy the result
+    # https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/control-deployments#using-environments-without-deployments
+    environment: production
 
     runs-on: ubuntu-latest
 
