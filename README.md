@@ -183,6 +183,11 @@ pipenv install --dev
 pipenv run coverage run -m unittest discover -s . -t .
 ```
 
+### Publishing
+Pushes to the `dev-stage` branch trigger a test publish to TestPyPI. To publish to the official PyPI repository, merge into `main` and create a new release.
+
+```bash
+
 ### Linting
 
 ```bash
