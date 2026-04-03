@@ -11,9 +11,9 @@ from __future__ import annotations
 import datetime
 import typing
 
-from daylio_to_md.group import EntriesFrom
-from daylio_to_md.entry.mood import Moodverse
-from daylio_to_md.utils import guess_date_type
+from obsidian_daylio_parser.group import EntriesFrom
+from obsidian_daylio_parser.entry.mood import Moodverse
+from obsidian_daylio_parser.utils import guess_date_type
 
 
 class Journal:

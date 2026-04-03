@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from daylio_to_md import config
+from obsidian_daylio_parser import config
 
 
 class TestSettingsManager(TestCase):

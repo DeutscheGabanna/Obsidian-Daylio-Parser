@@ -29,7 +29,7 @@ class TestCliIntegration(TestCase):
 
             # --- Run CLI ---
             completed = subprocess.run(
-                ["daylio_to_md", str(input_csv), str(output_dir)],
+                ["obsidian-daylio-parser", str(input_csv), str(output_dir)],
                 capture_output=True,
                 text=True,
                 check=False,

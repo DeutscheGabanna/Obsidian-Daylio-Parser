@@ -7,7 +7,7 @@ LABEL org.label-schema.url="https://github.com/DeutscheGabanna/Obsidian-Daylio-P
 
 WORKDIR /app
 COPY tests .
-RUN pip install daylio-obsidian-parser
+RUN pip install obsidian-daylio-parser
 
-ENTRYPOINT ["daylio_to_md"]
+ENTRYPOINT ["obsidian-daylio-parser"]
 CMD ["--help"]

@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from daylio_to_md import errors
+from obsidian_daylio_parser import errors
 
 
 class TestErrorMsgBase(TestCase):

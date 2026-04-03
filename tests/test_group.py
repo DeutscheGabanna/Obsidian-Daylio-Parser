@@ -1,11 +1,11 @@
 import datetime
 from unittest import TestCase
 
-from daylio_to_md.group import \
+from obsidian_daylio_parser.group import \
     EntriesFrom, \
     EntryMissingError, \
     IncompleteDataRow
-from daylio_to_md.utils import InvalidDateError, InvalidTimeError
+from obsidian_daylio_parser.utils import InvalidDateError, InvalidTimeError
 
 
 class TestDate(TestCase):

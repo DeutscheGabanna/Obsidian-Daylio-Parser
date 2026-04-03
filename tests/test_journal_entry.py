@@ -1,8 +1,8 @@
 import datetime
 from unittest import TestCase
 
-from daylio_to_md.utils import InvalidTimeError
-from daylio_to_md.journal_entry import \
+from obsidian_daylio_parser.utils import InvalidTimeError
+from obsidian_daylio_parser.journal_entry import \
     Entry, \
     EntryBuilder, \
     NoMoodError

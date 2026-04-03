@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 from typing import IO
 
-from daylio_to_md.journal import Journal
+from obsidian_daylio_parser.journal import Journal
 
 
 def _create_and_open(filename: str, mode: str) -> IO:

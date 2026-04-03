@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from daylio_to_md.entry.mood import Moodverse, MoodNotFoundError
+from obsidian_daylio_parser.entry.mood import Moodverse, MoodNotFoundError
 
 
 # noinspection SpellCheckingInspection

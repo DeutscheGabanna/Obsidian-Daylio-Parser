@@ -10,7 +10,7 @@ import typing
 import logging
 from abc import ABC, abstractmethod
 
-from daylio_to_md import utils, errors
+from obsidian_daylio_parser import utils, errors
 
 
 """---------------------------------------------------------------------------------------------------------------------

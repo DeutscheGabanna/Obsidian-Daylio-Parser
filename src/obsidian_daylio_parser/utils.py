@@ -14,7 +14,7 @@ import typing
 from contextlib import contextmanager
 from typing import List, TextIO, Optional
 
-from daylio_to_md import errors
+from obsidian_daylio_parser import errors
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS

@@ -33,10 +33,10 @@ from collections import namedtuple
 from typing import List, Any
 
 try:
-    __version__ = version("daylio-obsidian-parser")
+    __version__ = version("obsidian-daylio-parser")
 except PackageNotFoundError:
     # Fallback for development/testing in workflow runners
-    # otherwise --> importlib.metadata.PackageNotFoundError: No package metadata was found for daylio-obsidian-parser
+    # otherwise --> importlib.metadata.PackageNotFoundError: No package metadata was found for obsidian-daylio-parser
     __version__ = "dev"
 
 # Logging for config library
@@ -65,14 +65,14 @@ def parse_console(args: List[Any]) -> argparse.Namespace:
     """
     console_arguments = argparse.ArgumentParser(
         fromfile_prefix_chars="@",
-        prog="Daylio to Obsidian Parser",
+        prog="obsidian-daylio-parser",
         description="Converts Daylio .CSV backup file into Markdown files for Obsidian.",
         epilog="Created by DeutscheGabanna"
     )
     console_arguments.add_argument(
         '--version',
         action='version',
-        # daylio_to_md and daylio-obsidian-parser are the same package, but the latter is the name on PyPI
+        # obsidian_daylio_parser is the internal module package, but obsidian-daylio-parser is the public package name
         version=__version__
     )
     """-------------------------------------------------------------------------------------------------------------
