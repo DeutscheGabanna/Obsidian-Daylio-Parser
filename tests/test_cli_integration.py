@@ -1,4 +1,5 @@
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from unittest import TestCase
@@ -29,7 +30,7 @@ class TestCliIntegration(TestCase):
 
             # --- Run CLI ---
             completed = subprocess.run(
-                ["obsidian-daylio-parser", str(input_csv), str(output_dir)],
+                [sys.executable, "-m", "obsidian_daylio_parser", str(input_csv), str(output_dir)],
                 capture_output=True,
                 text=True,
                 check=False,
