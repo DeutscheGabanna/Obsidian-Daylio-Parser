@@ -1,6 +1,6 @@
 import io
 import os
-import shutil
+import tempfile
 from unittest import TestCase
 
 from obsidian_daylio_parser.group import EntriesFrom
@@ -334,32 +334,22 @@ class TestOutputFileStructure(TestCase):
 
         reader = CsvJournalReader("tests/files/all-valid.csv")
         journal = Librarian(reader).parse()
-        MarkdownWriter("tests/files/scenarios/ok/out").write_all(journal)
 
-        with open("tests/files/scenarios/ok/out/2022/10/2022-10-25.md", encoding="UTF-8") as parsed_result, \
-                open("tests/files/scenarios/ok/expect/2022-10-25.md", encoding="UTF-8") as expected_result:
-            self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
+        with tempfile.TemporaryDirectory() as temp_dir:
+            MarkdownWriter(temp_dir).write_all(journal)
 
-        with open("tests/files/scenarios/ok/out/2022/10/2022-10-26.md", encoding="UTF-8") as parsed_result, \
-                open("tests/files/scenarios/ok/expect/2022-10-26.md", encoding="UTF-8") as expected_result:
-            self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
+            with open(os.path.join(temp_dir, "2022", "10", "2022-10-25.md"), encoding="UTF-8") as parsed_result, \
+                    open("tests/files/scenarios/ok/expect/2022-10-25.md", encoding="UTF-8") as expected_result:
+                self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
-        with open("tests/files/scenarios/ok/out/2022/10/2022-10-27.md", encoding="UTF-8") as parsed_result, \
-                open("tests/files/scenarios/ok/expect/2022-10-27.md", encoding="UTF-8") as expected_result:
-            self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
+            with open(os.path.join(temp_dir, "2022", "10", "2022-10-26.md"), encoding="UTF-8") as parsed_result, \
+                    open("tests/files/scenarios/ok/expect/2022-10-26.md", encoding="UTF-8") as expected_result:
+                self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
-        with open("tests/files/scenarios/ok/out/2022/10/2022-10-30.md", encoding="UTF-8") as parsed_result, \
-                open("tests/files/scenarios/ok/expect/2022-10-30.md", encoding="UTF-8") as expected_result:
-            self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
+            with open(os.path.join(temp_dir, "2022", "10", "2022-10-27.md"), encoding="UTF-8") as parsed_result, \
+                    open("tests/files/scenarios/ok/expect/2022-10-27.md", encoding="UTF-8") as expected_result:
+                self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
 
-    def tearDown(self) -> None:
-        folder = 'tests/files/scenarios/ok/out'
-        for filename in os.listdir(folder):
-            file_path = os.path.join(folder, filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
-            except OSError as e:
-                print(f"Failed to delete {file_path} while cleaning up after a test. Reason: {e}")
+            with open(os.path.join(temp_dir, "2022", "10", "2022-10-30.md"), encoding="UTF-8") as parsed_result, \
+                    open("tests/files/scenarios/ok/expect/2022-10-30.md", encoding="UTF-8") as expected_result:
+                self.assertListEqual(expected_result.readlines(), parsed_result.readlines())
