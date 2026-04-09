@@ -17,7 +17,7 @@ import datetime
 from dataclasses import dataclass
 
 from obsidian_daylio_parser.config import DEFAULTS
-from obsidian_daylio_parser import utils, errors
+from obsidian_daylio_parser import utils, errors, logs
 from obsidian_daylio_parser.entry.mood import Moodverse
 
 
@@ -32,7 +32,7 @@ class NoMoodError(utils.ExpectedValueError):
         super().__init__(expected_value, actual_value)
 
 
-class ErrorMsg(errors.ErrorMsgBase):
+class ErrorMsg(logs.LogMsg):
     INVALID_MOOD = "Mood [italic]{}[/italic] is missing from a list of known moods. Not critical, but colouring won't work on the entry."
     WRONG_TIME = "Received [italic]{}[/italic], expected valid time. Cannot create this entry without a valid time."
     WRONG_ACTIVITIES = "Received a non-empty string containing activities. Parsing it resulted in an empty list."

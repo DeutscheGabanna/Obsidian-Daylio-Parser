@@ -7,6 +7,10 @@ authors = [
 ]
 description = "Converts Daylio app .csv file into markdown files for use in Obsidian."
 license = {file = "LICENSE", content-type = "text/markdown"}
+dependencies = [
+	"rich ~= 14.3.3",
+	"typer ~= 0.24"
+]
 classifiers = [
 	"Topic :: Text Processing :: Markup :: Markdown",
 	"Intended Audience :: Developers",
