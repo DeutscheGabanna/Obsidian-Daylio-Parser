@@ -8,7 +8,6 @@ import typer
 
 from obsidian_daylio_parser.journal_entry import EntryBuilder
 from obsidian_daylio_parser.group import EntriesFromBuilder
-from obsidian_daylio_parser.config import parse_console
 from obsidian_daylio_parser.entry.mood import Moodverse
 from obsidian_daylio_parser.reader import CsvJournalReader
 from obsidian_daylio_parser.writer import MarkdownWriter
@@ -67,10 +66,6 @@ def main(
         )] = False
 ):
     """Parse a Daylio CSV into an Obsidian-compatible .MD file"""
-    # Compile global settings
-    # ---
-    # Read arguments from console and update the global_settings accordingly
-    cli_options = parse_console(sys.argv[1:])  # [1:] skips the program name, such as ["foo.py", ...]
 
     # Assemble the pipeline via dependency injection
     # ---
