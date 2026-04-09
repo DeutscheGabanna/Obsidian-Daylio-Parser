@@ -1,9 +1,7 @@
 """End-to-end test: invoke the CLI as a subprocess and compare gold files."""
-import os
 import subprocess
 import sys
 from pathlib import Path
-import pytest
 
 
 def _tree(path: Path) -> str:

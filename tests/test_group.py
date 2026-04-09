@@ -1,7 +1,9 @@
 """Unit tests for EntriesFrom — date grouping, entry access, and day-level markdown output."""
-import io
 import datetime
+import io
+
 import pytest
+
 from obsidian_daylio_parser.group import EntriesFrom, EntryMissingError, IncompleteDataRow
 from obsidian_daylio_parser.journal_entry import Entry
 from obsidian_daylio_parser.utils import InvalidDateError, InvalidTimeError

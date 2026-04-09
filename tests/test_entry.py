@@ -1,7 +1,9 @@
 """Unit tests for Entry — construction, validation, and markdown output."""
-import io
 import datetime
+import io
+
 import pytest
+
 from obsidian_daylio_parser.journal_entry import Entry, EntryBuilder, NoMoodError
 from obsidian_daylio_parser.utils import InvalidTimeError
 
@@ -102,7 +104,18 @@ class TestEntryOutput:
         )
         assert result == expected
 
-    def test_tagged_vs_untagged_activities(self):
+    def test_tagged_vs_untagged_activities_with_builder(self):
+        tagged = self._render(EntryBuilder(tag_activities=True).build(
+            time="11:00", mood="great", activities="bicycle | chess",
+        ))
+        assert "#bicycle #chess" in tagged
+
+        untagged = self._render(EntryBuilder(tag_activities=False).build(
+            time="11:00", mood="great", activities="bicycle | chess",
+        ))
+        assert "bicycle chess" in untagged
+
+    def test_tagged_vs_untagged_activities_without_builder(self):
         tagged = self._render(Entry(time="11:00", mood="great", activities="bicycle | chess"))
         assert "#bicycle #chess" in tagged
 
@@ -111,8 +124,14 @@ class TestEntryOutput:
         ))
         assert "bicycle chess" in untagged
 
-    def test_header_multiplier(self):
+    def test_header_multiplier_with_builder(self):
+        result = self._render(EntryBuilder(header_multiplier=5).build(
+            time="11:00", mood="great", title="Feeling pumped@!"
+        ))
+        assert result == "##### great | 11:00 | Feeling pumped@!"
+
+    def test_header_multiplier_without_builder(self):
         result = self._render(Entry(
-            time="11:00", mood="great", title="Feeling pumped@!", header_multiplier=5,
+            time="11:00", mood="great", title="Feeling pumped@!", header_multiplier=5
         ))
         assert result == "##### great | 11:00 | Feeling pumped@!"
