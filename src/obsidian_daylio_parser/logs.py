@@ -1,0 +1,128 @@
+from __future__ import annotations
+
+import logging
+import sys
+from logging import LogRecord
+from typing import Optional
+
+from rich.console import Console
+from rich.logging import RichHandler
+from rich.theme import Theme
+from rich.traceback import install
+
+
+class UniqueLogFilter:
+    # copied directly from https://github.com/twizmwazin/unique_log_filter/blob/main/unique_log_filter.py
+    # all credit goes to https://github.com/twizmwazin
+    _logged: set[str]
+
+    def __init__(self):
+        self._logged = set()
+
+    def filter(self, record: LogRecord):
+        msg = record.getMessage()
+        if msg in self._logged:
+            return False
+        self._logged.add(msg)
+        return True
+
+
+
+# makes uncaught exceptions handled by rich logging module
+install(show_locals=True)
+
+
+
+class LogMsg:
+    """
+    Used for common errors that will be logged by almost (if not all) loggers.
+    Therefore, it is the base class of other Error child classes in specific files.
+    It also provides a shorthand method for inserting variables into error messages - print().
+    """
+    # some common errors have been raised in scope into base class instead of child classes
+    OBJECT_FOUND = "{}-class object found."
+    OBJECT_NOT_FOUND = "{}-class object not found."
+    FAULTY_OBJECT = "Called a {}-class object method but the object has been incorrectly instantiated."
+    WRONG_VALUE = "Received {}, expected {}."
+
+    @staticmethod
+    def print(message: str, *args: str) -> Optional[str]:
+        """
+        Insert the args into an error message. If the error message expects n variables, provide n arguments.
+        Returns a string with the already filled out message.
+        """
+        expected_args = message.count("{}")
+
+        if len(args) != expected_args:
+            logging.getLogger(__name__).warning(
+                f"Expected {expected_args} arguments for \"{message}\", but got {len(args)} instead."
+            )
+            return None
+        return message.format(*args)
+
+
+class ColorHandler(logging.StreamHandler):
+    # https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
+    GRAY8 = "38;5;8"
+    GRAY7 = "38;5;7"
+    ORANGE = "33"
+    RED = "31"
+    WHITE = "0"
+
+    # noinspection PyPep8
+    def emit(self, record):
+        # We don't use white for any logging, to help distinguish from user print statements
+        # noinspection PyPep8
+        level_color_map = {
+            logging.DEBUG: self.GRAY8,
+            logging.INFO: self.GRAY7,
+            logging.WARNING: self.ORANGE,
+            logging.ERROR: self.RED,
+            logging.CRITICAL: f"1;{self.RED}",  # Bold for critical errors
+        }
+
+        csi = f"{chr(27)}["  # control sequence introducer
+        color = level_color_map.get(record.levelno, self.WHITE)
+
+        # Apply the formatter to format the log message
+        formatted_msg = self.format(record)
+
+        self.stream.write(f"{csi}{color}m{formatted_msg}{csi}m\n")
+
+
+console_log_handler = ColorHandler(sys.stdout)
+journal_theme = Theme({
+    "logging.level.info": "cyan",
+    "logging.level.warning": "bold yellow",
+    "logging.level.error": "bold red",
+    "logging.level.critical": "reverse red"
+})
+console = Console(theme=journal_theme, force_terminal=True)
+rich_handler = RichHandler(
+    console=console,
+    rich_tracebacks=True,
+    markup=True,
+    highlighter=None,
+    show_path=False
+)
+# Create a console handler for the root logger
+# noinspection SpellCheckingInspection
+# interesting discussion on why setLevel on both handler AND logger: https://stackoverflow.com/a/17668861/8527654
+console_log_handler.setLevel(logging.INFO)
+
+# noinspection SpellCheckingInspection
+# formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+# console_log_handler.setFormatter(formatter)
+
+
+# Configure root logger with idempotent setup
+root = logging.getLogger()
+root.setLevel(logging.INFO)
+
+# Add dedupe filter to the handler (not root logger) so it applies to propagated child records
+unique_filter = UniqueLogFilter()
+rich_handler.addFilter(unique_filter)
+
+# Prevent duplicate handlers if logs.py is imported multiple times
+if rich_handler not in root.handlers:
+    root.addHandler(rich_handler)

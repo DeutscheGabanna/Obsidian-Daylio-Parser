@@ -12,7 +12,7 @@ from typing import IO
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn
 
 from obsidian_daylio_parser.journal import Journal
-from obsidian_daylio_parser.errors import console
+from obsidian_daylio_parser.logs import console
 
 
 def _create_and_open(filename: str, mode: str) -> IO:

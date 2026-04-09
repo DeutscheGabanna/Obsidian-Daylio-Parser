@@ -3,13 +3,13 @@ from __future__ import annotations
 import logging
 from typing import List
 
-from obsidian_daylio_parser import errors
+from obsidian_daylio_parser import errors, logs
 from obsidian_daylio_parser.utils import JsonLoader, CouldNotLoadFileError
 
 DEFAULT_DAYLIO_MOOD_GROUPS = "rad good neutral bad awful"
 
 
-class ErrorMsg(errors.ErrorMsgBase):
+class ErrorMsg(logs.LogMsg):
     STANDARD_MOODS_USED = "Problem parsing custom moods file. Standard mood set - i.e. {} - will be used."
 
 

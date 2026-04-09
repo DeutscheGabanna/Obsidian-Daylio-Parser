@@ -13,7 +13,7 @@ import typing
 import logging
 import datetime
 
-from obsidian_daylio_parser import journal_entry
+from obsidian_daylio_parser import journal_entry, logs
 from obsidian_daylio_parser import utils, errors
 from obsidian_daylio_parser.config import DEFAULTS
 from obsidian_daylio_parser.journal_entry import Entry
@@ -43,7 +43,7 @@ class TriedCreatingDuplicateDatedEntryError(Exception):
     """Tried to create object of :class:`DatedEntry` that would be a duplicate of one that already exists."""
 
 
-class ErrorMsg(errors.ErrorMsgBase):
+class ErrorMsg(logs.LogMsg):
     CSV_ROW_INCOMPLETE_DATA = "Passed .csv contains rows with invalid data. Tried to parse {} as date."
 
 

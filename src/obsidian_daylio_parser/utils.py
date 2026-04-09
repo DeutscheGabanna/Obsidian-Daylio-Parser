@@ -16,14 +16,14 @@ from contextlib import contextmanager
 from typing import List, TextIO, Optional
 from rich import progress
 
-from obsidian_daylio_parser import errors
+from obsidian_daylio_parser import errors, logs
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
 ---------------------------------------------------------------------------------------------------------------------"""
 
 
-class ErrorMsg(errors.ErrorMsgBase):
+class ErrorMsg(logs.LogMsg):
     INVALID_OBSIDIAN_TAGS = "You want your activities as frontmatter_tags, but [italic]{}[/italic] is invalid."
 
 

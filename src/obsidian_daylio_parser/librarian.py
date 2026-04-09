@@ -22,7 +22,7 @@ from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TaskPr
 import logging
 import datetime
 
-from obsidian_daylio_parser import utils, errors, group
+from obsidian_daylio_parser import utils, errors, group, logs
 from obsidian_daylio_parser.entry.mood import Moodverse
 from obsidian_daylio_parser.group import EntriesFrom, EntriesFromBuilder
 from obsidian_daylio_parser.journal import Journal
@@ -34,7 +34,7 @@ ERRORS
 ---------------------------------------------------------------------------------------------------------------------"""
 
 
-class ErrorMsg(errors.ErrorMsgBase):
+class ErrorMsg(logs.LogMsg):
     STANDARD_MOODS_USED = "Standard mood set (rad, good, neutral, bad, awful) will be used."
     COUNT_ROWS = "{} rows of data found. Of that, {} were processed correctly."
 

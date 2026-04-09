@@ -11,15 +11,14 @@ import logging
 from abc import ABC, abstractmethod
 from os import PathLike
 
-from obsidian_daylio_parser import utils, errors
-
+from obsidian_daylio_parser import utils, errors, logs
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
 ---------------------------------------------------------------------------------------------------------------------"""
 
 
-class ErrorMsg(errors.ErrorMsgBase):
+class ErrorMsg(logs.LogMsg):
     CSV_ALL_FIELDS_PRESENT = "All expected columns are present in the CSV file columns."
     CSV_FIELDS_MISSING = "The following expected columns are missing: {}"
 
