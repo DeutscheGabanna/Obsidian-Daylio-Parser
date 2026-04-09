@@ -4,9 +4,14 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+rich = "~=14.2"
+typer = "~=0.21.1"
 
 [dev-packages]
 coverage = "~=7.6"
 flake8 = "~=7.1"
-setuptools = "~=71.0"
+setuptools = "78.1.1"
 wheel = "~=0.4"
+build = "1.4.0"
+pip = "25.3"
+pytest ="9.0.2"

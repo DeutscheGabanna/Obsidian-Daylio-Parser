@@ -17,6 +17,7 @@ Usage::
     MarkdownWriter("/output").write_all(journal)
 """
 from __future__ import annotations
+from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TaskProgressColumn, TimeRemainingColumn
 
 import logging
 import datetime

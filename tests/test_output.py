@@ -3,8 +3,8 @@ import os
 import shutil
 from unittest import TestCase
 
-from obsidian_daylio_parser.group import EntriesFrom, EntriesFromBuilder
-from obsidian_daylio_parser.journal_entry import Entry, EntryBuilder
+from obsidian_daylio_parser.group import EntriesFrom
+from obsidian_daylio_parser.journal_entry import Entry
 from obsidian_daylio_parser.librarian import Librarian
 from obsidian_daylio_parser.reader import CsvJournalReader
 from obsidian_daylio_parser.writer import MarkdownWriter
