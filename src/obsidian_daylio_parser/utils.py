@@ -2,6 +2,7 @@
 Contains universally useful functions
 """
 from __future__ import annotations
+from collections.abc import Generator
 
 import abc
 import csv
@@ -13,6 +14,7 @@ import re
 import typing
 from contextlib import contextmanager
 from typing import List, TextIO, Optional
+from rich import progress
 
 from obsidian_daylio_parser import errors
 
@@ -22,7 +24,7 @@ ERRORS
 
 
 class ErrorMsg(errors.ErrorMsgBase):
-    INVALID_OBSIDIAN_TAGS = "You want your activities as frontmatter_tags, but {} is invalid."
+    INVALID_OBSIDIAN_TAGS = "You want your activities as frontmatter_tags, but [italic]{}[/italic] is invalid."
 
 
 class ExpectedValueError(TypeError):
@@ -171,14 +173,15 @@ class FileLoader:
         pass
 
     @contextmanager
-    def load(self, path: str) -> None:
+    def load(self, path: str) -> Generator[typing.Any, None, None]:
         """
         Loads the file into context manager and catches exceptions thrown while doing so.
         It catches errors specific to the implementation first, then tries to catch more general IO errors.
         :return: It is not specified what kind of object will be returned when opened. Left up to implementation.
         """
         try:
-            with open(expand_path(path), encoding='UTF-8') as file:
+            # just in case it's a BOM file. UTF-8-sig can read files without BOM too, so it's more universal this way
+            with progress.open(expand_path(path), mode="r", encoding='UTF-8-sig') as file:
                 yield self._load_file(file)
         # TypeError is thrown when a None argument is passed
         except (FileNotFoundError, PermissionError, OSError, UnicodeDecodeError, TypeError) as err:

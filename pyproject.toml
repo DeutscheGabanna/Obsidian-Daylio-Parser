@@ -21,7 +21,7 @@ keywords = [ "csv", "markdown", ".md", ".csv", "daylio", "obsidian", "file conve
 [project.scripts]
 # Make obsidian-daylio-parser command be recognised by shell as a program
 # No need to type: python -m <package> anymore
-obsidian-daylio-parser = "obsidian_daylio_parser.__main__:main"
+obsidian-daylio-parser = "obsidian_daylio_parser.__main__:run"
 
 [build-system]
 requires = ["setuptools", "build", "wheel", "versioningit"]
@@ -30,11 +30,6 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.dynamic]
 readme = {file = "README.md", content-type = "text/markdown"}
 
-[tool.versioningit]
-vcs = "git"
-next-version = "null"
-[tool.versioningit.tag2version]
-rmprefix = "v."
 [tool.versioningit.format]
 # Default format includes +gHASH local segment which PyPI rejects
 # Use .postN for untagged commits so Test PyPI accepts them

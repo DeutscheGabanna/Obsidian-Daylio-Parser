@@ -2,6 +2,11 @@ import logging
 import sys
 from typing import Optional
 
+from rich.console import Console
+from rich.highlighter import Highlighter
+from rich.logging import RichHandler
+from rich.theme import Theme
+
 
 class ColorHandler(logging.StreamHandler):
     # https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
@@ -39,11 +44,31 @@ console_log_handler = ColorHandler(sys.stdout)
 console_log_handler.setLevel(logging.INFO)
 
 # noinspection SpellCheckingInspection
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-console_log_handler.setFormatter(formatter)
+# formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+# console_log_handler.setFormatter(formatter)
+
+
+# 1. Define styles ONLY for the levels
+journal_theme = Theme({
+    "logging.level.info": "cyan",
+    "logging.level.warning": "bold yellow",
+    "logging.level.error": "bold red",
+    "logging.level.critical": "reverse red"
+})
+
+console = Console(theme=journal_theme, force_terminal=True)
+
+rich_handler = RichHandler(
+    console=console,
+    rich_tracebacks=False,
+    markup=True,
+    highlighter=None,
+    show_path=False
+)
 
 # Add the handlers to the root logger
-logging.getLogger().addHandler(console_log_handler)
+# logging.getLogger().addHandler(console_log_handler)
+logging.getLogger().addHandler(rich_handler)
 logging.getLogger().setLevel(logging.INFO)
 
 

@@ -9,6 +9,7 @@ from __future__ import annotations
 import typing
 import logging
 from abc import ABC, abstractmethod
+from os import PathLike
 
 from obsidian_daylio_parser import utils, errors
 
@@ -79,7 +80,7 @@ class CsvJournalReader(JournalReader):
     Opens the file, checks that all expected columns are present, and yields one dict per row.
     """
 
-    def __init__(self, filepath: str):
+    def __init__(self, filepath: PathLike | str):
         self.__filepath = filepath
         self.__logger = logging.getLogger(self.__class__.__name__)
 
@@ -92,6 +93,35 @@ class CsvJournalReader(JournalReader):
         :raises utils.CouldNotLoadFileError: if the CSV cannot be opened or decoded.
         :raises InvalidDataInFileError: if required columns are missing from the CSV header.
         """
+
+        # # Count total lines for progress bar
+        # rows = list(file)
+        # total_lines = len(rows)
+        # lines_parsed = 0
+        # lines_parsed_successfully = 0
+        # with Progress(
+        #         SpinnerColumn(),
+        #         TextColumn("[progress.description]{task.description}"),
+        #         BarColumn(),
+        #         TaskProgressColumn(),
+        #         TimeRemainingColumn(),
+        #         console=console
+        # ) as progress:
+        #     task = progress.add_task(
+        #         f"[bold cyan]Processing {filepath}...",
+        #         total=total_lines
+        #     )
+        #
+        #     for line in rows:
+        #         line: dict[str, str]
+        #         try:
+        #             lines_parsed += self.__process_line(line)
+        #         except MissingValuesInRowError as err:
+        #             self.__logger.warning(err.__doc__)
+        #         else:
+        #             lines_parsed_successfully += 1
+        #         finally:
+        #             progress.update(task, advance=1)
         try:
             with utils.CsvLoader().load(self.__filepath) as file:
                 # Validate that all expected columns are present
