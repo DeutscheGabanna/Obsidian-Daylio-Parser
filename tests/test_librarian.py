@@ -1,8 +1,9 @@
 """Integration tests for the Reader → Librarian → Journal pipeline."""
 import pytest
+
 from obsidian_daylio_parser.entry.mood import Moodverse
-from obsidian_daylio_parser.journal_entry import EntryBuilder
 from obsidian_daylio_parser.group import EntriesFromBuilder
+from obsidian_daylio_parser.journal_entry import EntryBuilder
 from obsidian_daylio_parser.librarian import Librarian, CannotAccessJournalError
 from obsidian_daylio_parser.reader import CsvJournalReader
 

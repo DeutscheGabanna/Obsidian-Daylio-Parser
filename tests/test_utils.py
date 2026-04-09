@@ -1,7 +1,9 @@
 """Unit tests for obsidian_daylio_parser.utils — pure functions, no I/O beyond fixture files."""
 import datetime
 import logging
+
 import pytest
+
 from obsidian_daylio_parser import utils, logs
 
 

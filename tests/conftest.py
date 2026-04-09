@@ -64,7 +64,7 @@ def sample_entry() -> Entry:
 
 @pytest.fixture()
 def sample_day() -> EntriesFrom:
-    """A day (2011-10-10) pre-loaded with two entries."""
+    """A day (2011-10-10) preloaded with two entries."""
     day = EntriesFrom("2011-10-10")
     day.add(
         Entry(time="10:00 AM", mood="vaguely ok"),
@@ -75,6 +75,6 @@ def sample_day() -> EntriesFrom:
 
 @pytest.fixture()
 def parsed_journal(ok_csv):
-    """Journal parsed from the ok scenario CSV with default moods."""
+    """Journal parsed from the OK scenario CSV with default moods."""
     reader = CsvJournalReader(str(ok_csv))
     return Librarian(reader).parse()

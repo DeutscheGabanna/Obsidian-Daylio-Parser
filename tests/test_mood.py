@@ -1,5 +1,6 @@
 """Unit tests for Moodverse — mood loading, lookup, and validation."""
 import pytest
+
 from obsidian_daylio_parser.entry.mood import Moodverse, MoodNotFoundError
 
 
@@ -63,7 +64,8 @@ class TestCustomMoods:
 
     @pytest.mark.parametrize("moods, expected_custom_count", [
         ({"rad": ["", None], "good": [""], "neutral": ["", 15], "bad": ["", True], "awful": [""]}, 0),
-        ({"rad": ["rad"], "good": ["good"], "neutral": ["neutral"], "bad": ["bed"], "awful": [""]}, 1),
+        ({"rad": ["rad"], "good": ["good"], "neutral": ["neutral"], "bad": ["FALCON"], "awful": [""]}, 1),
+        ({"rad": ["rad"], "good": ["good"], "neutral": ["neutral"], "bad": [None, 29, "badger"], "awful": [""]}, 1),
     ])
     def test_invalid_mood_values_skipped(self, moods, expected_custom_count):
         assert len(Moodverse(moods).get_custom_moods) == expected_custom_count
