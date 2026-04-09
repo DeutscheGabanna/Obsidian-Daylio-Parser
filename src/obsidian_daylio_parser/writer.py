@@ -7,6 +7,7 @@ To add support for a new output format, create a new writer class that accepts a
 from __future__ import annotations
 
 import os
+from os import PathLike
 from typing import IO
 
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn
@@ -34,7 +35,7 @@ class MarkdownWriter:
         MarkdownWriter("/output").write_all(journal)
     """
 
-    def __init__(self, destination: str):
+    def __init__(self, destination: PathLike | str):
         self.__destination = destination
 
     def write_all(self, journal: Journal) -> None:
