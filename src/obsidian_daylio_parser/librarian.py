@@ -17,17 +17,15 @@ Usage::
     MarkdownWriter("/output").write_all(journal)
 """
 from __future__ import annotations
-from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TaskProgressColumn, TimeRemainingColumn
 
-import logging
 import datetime
+import logging
 
-from obsidian_daylio_parser import utils, errors, group, logs
+from obsidian_daylio_parser import utils, group, logs
 from obsidian_daylio_parser.entry.mood import Moodverse
 from obsidian_daylio_parser.group import EntriesFrom, EntriesFromBuilder
 from obsidian_daylio_parser.journal import Journal
 from obsidian_daylio_parser.reader import JournalReader, InvalidDataInFileError
-
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
@@ -148,4 +146,3 @@ class Librarian:
                 ValueError):
             return False
         return True
-

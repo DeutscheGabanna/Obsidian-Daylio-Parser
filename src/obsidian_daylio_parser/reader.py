@@ -6,12 +6,12 @@ To add support for a new format, subclass :class:`JournalReader` and implement :
 """
 from __future__ import annotations
 
-import typing
 import logging
+import typing
 from abc import ABC, abstractmethod
 from os import PathLike
 
-from obsidian_daylio_parser import utils, errors, logs
+from obsidian_daylio_parser import utils, logs
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
@@ -143,4 +143,3 @@ class CsvJournalReader(JournalReader):
             raise
         except ValueError as err:
             raise utils.CouldNotLoadFileError(self.__filepath) from err
-

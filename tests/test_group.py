@@ -13,7 +13,7 @@ from obsidian_daylio_parser.utils import InvalidDateError, InvalidTimeError
 # Date parsing
 # ---------------------------------------------------------------------------
 class TestDateParsing:
-    @pytest.mark.parametrize("raw, expected_str", [
+    @pytest.mark.parametrize(tuple("raw, expected_str"), [
         ("2023-10-15", "2023-10-15"),
         ("2019-5-9", "2019-05-09"),
         ("2023-11-25", "2023-11-25"),
@@ -154,4 +154,3 @@ class TestEntriesFromOutput:
         )
         result = self._render(day)
         assert result.startswith("---\ntags: bar,foo\n---\n\n")
-

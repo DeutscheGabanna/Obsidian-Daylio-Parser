@@ -2,7 +2,6 @@
 Contains universally useful functions
 """
 from __future__ import annotations
-from collections.abc import Generator
 
 import abc
 import csv
@@ -12,11 +11,13 @@ import logging
 import os
 import re
 import typing
+from collections.abc import Generator
 from contextlib import contextmanager
 from typing import List, TextIO, Optional
+
 from rich import progress
 
-from obsidian_daylio_parser import errors, logs
+from obsidian_daylio_parser import logs
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS

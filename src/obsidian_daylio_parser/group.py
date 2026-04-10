@@ -6,18 +6,18 @@ Here's a quick breakdown of what is the specialisation of this file in the journ
 all notes -> _NOTES WRITTEN ON A PARTICULAR DATE_ -> a particular note
 """
 from __future__ import annotations
+
+import datetime
+import io
+import logging
+import typing
 from dataclasses import dataclass, field
 
-import io
-import typing
-import logging
-import datetime
-
 from obsidian_daylio_parser import journal_entry, logs
-from obsidian_daylio_parser import utils, errors
+from obsidian_daylio_parser import utils
 from obsidian_daylio_parser.config import DEFAULTS
-from obsidian_daylio_parser.journal_entry import Entry
 from obsidian_daylio_parser.entry.mood import Moodverse
+from obsidian_daylio_parser.journal_entry import Entry
 
 # TODO: dependency_injector lib
 # TODO: fixtures
@@ -30,6 +30,7 @@ ERRORS
 
 class EntryMissingError(KeyError):
     """The entry written at {key} does not exist in the dictionary of known entries from {date}."""
+
     def __init__(self, key, date):
         self.__doc__ = self.__doc__.format(key=key, date=date)
         super().__init__()
@@ -66,7 +67,6 @@ class EntriesFromBuilder:
     def build(self,
               date: typing.Union[datetime.date, str, typing.List[str], typing.List[int]],
               mood_set: Moodverse = Moodverse()) -> EntriesFrom:
-
         return EntriesFrom(
             utils.guess_date_type(date),
             self.front_matter_tags,
@@ -85,6 +85,7 @@ class EntriesFrom(utils.Core):
     :param entries_builder: Builder configured to create new :class:`Entry` objects
     :param mood_set: Use custom :class:`Moodverse` or default if not provided.
     """
+
     def __init__(self,
                  date: typing.Union[datetime.date, str, typing.List[str], typing.List[int]],
                  front_matter_tags: tuple[str] = EntriesFromBuilder.front_matter_tags,
@@ -99,7 +100,6 @@ class EntriesFrom(utils.Core):
         self.__entries_builder = entries_builder
         self.__known_entries: dict[datetime.time, Entry] = {}
         self.__known_moods: Moodverse = mood_set
-
 
     def create_entry(self, line: dict[str, str]) -> None:
         """

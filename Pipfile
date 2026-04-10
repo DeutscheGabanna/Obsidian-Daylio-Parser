@@ -10,6 +10,7 @@ typer = "~=0.24"
 [dev-packages]
 coverage = "~=7.6"
 flake8 = "~=7.1"
+flake8-pytest-style = "~=2.2"
 setuptools = "78.1.1"
 wheel = "~=0.4"
 build = "1.4.0"

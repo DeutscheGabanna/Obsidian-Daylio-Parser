@@ -62,7 +62,7 @@ class TestCustomMoods:
         assert "miserable" in mv.get_moods
         assert "good" in mv.get_moods
 
-    @pytest.mark.parametrize("moods, expected_custom_count", [
+    @pytest.mark.parametrize(tuple("moods, expected_custom_count"), [
         ({"rad": ["", None], "good": [""], "neutral": ["", 15], "bad": ["", True], "awful": [""]}, 0),
         ({"rad": ["rad"], "good": ["good"], "neutral": ["neutral"], "bad": ["FALCON"], "awful": [""]}, 1),
         ({"rad": ["rad"], "good": ["good"], "neutral": ["neutral"], "bad": [None, 29, "badger"], "awful": [""]}, 1),

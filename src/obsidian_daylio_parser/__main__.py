@@ -1,19 +1,19 @@
-import sys
 import logging
-from os import PathLike
+import sys
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
-from obsidian_daylio_parser.journal_entry import EntryBuilder
-from obsidian_daylio_parser.group import EntriesFromBuilder
 from obsidian_daylio_parser.entry.mood import Moodverse
+from obsidian_daylio_parser.group import EntriesFromBuilder
+from obsidian_daylio_parser.journal_entry import EntryBuilder
+from obsidian_daylio_parser.librarian import Librarian, CannotAccessJournalError, EmptyJournalError
 from obsidian_daylio_parser.reader import CsvJournalReader
 from obsidian_daylio_parser.writer import MarkdownWriter
-from obsidian_daylio_parser.librarian import Librarian, CannotAccessJournalError, EmptyJournalError
 
 app = typer.Typer()
+
 
 @app.command()
 def main(
@@ -53,17 +53,17 @@ def main(
             rich_help_panel="How to print markdown"
         )] = "",
         tag_activities: Annotated[bool, typer.Option("--tag-activities",
-            help="Convert activities into valid front-matter tags",
-            rich_help_panel="How to print markdown"
-        )] = True,
+                                                     help="Convert activities into valid front-matter tags",
+                                                     rich_help_panel="How to print markdown"
+                                                     )] = True,
         colour: Annotated[bool, typer.Option("--color",
-            help="Prepend a colour emoji to each entry depending on mood",
-            rich_help_panel="How to print markdown"
-        )] = False,
+                                             help="Prepend a colour emoji to each entry depending on mood",
+                                             rich_help_panel="How to print markdown"
+                                             )] = False,
         force: Annotated[bool, typer.Option("--force",
-            help="Instead of asking for confirmation every time when overwriting files, accept or refuse all such "
-             "requests."
-        )] = False
+                                            help="Instead of asking for confirmation every time when overwriting files, accept or refuse all such "
+                                                 "requests."
+                                            )] = False
 ):
     """Parse a Daylio CSV into an Obsidian-compatible .MD file"""
 
@@ -88,11 +88,13 @@ def main(
     journal = Librarian(reader, mood_set, file_template).parse()
     MarkdownWriter(destination).write_all(journal)
 
+
 # Without this intermediary function pyproject.toml cannot make a CLI entry-point for the program
 # because if it points to __main__.main() then it won't have Typer working
 # relevant discussion: https://github.com/fastapi/typer/issues/34
 def run():
     app()
+
 
 if __name__ == '__main__':
     try:

@@ -12,7 +12,7 @@ import pytest
 
 from obsidian_daylio_parser.entry.mood import Moodverse
 from obsidian_daylio_parser.group import EntriesFrom
-from obsidian_daylio_parser.journal_entry import Entry, EntryBuilder
+from obsidian_daylio_parser.journal_entry import Entry
 from obsidian_daylio_parser.librarian import Librarian
 from obsidian_daylio_parser.reader import CsvJournalReader
 
@@ -24,17 +24,17 @@ FIXTURES = Path(__file__).parent / "files"
 SCENARIOS = FIXTURES / "scenarios"
 
 
-@pytest.fixture()
+@pytest.fixture
 def fixtures_path() -> Path:
     return FIXTURES
 
 
-@pytest.fixture()
+@pytest.fixture
 def ok_csv() -> Path:
     return SCENARIOS / "ok" / "all-valid.csv"
 
 
-@pytest.fixture()
+@pytest.fixture
 def ok_expected_dir() -> Path:
     return SCENARIOS / "ok" / "expect"
 
@@ -44,25 +44,25 @@ def ok_expected_dir() -> Path:
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
+@pytest.fixture
 def default_moodverse() -> Moodverse:
     """The five built-in Daylio moods with no custom additions."""
     return Moodverse()
 
 
-@pytest.fixture()
+@pytest.fixture
 def custom_moodverse() -> Moodverse:
     """Moodverse loaded from the full test JSON (all-valid.json)."""
     return Moodverse.from_file(str(FIXTURES / "all-valid.json"))
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_entry() -> Entry:
     """A minimal valid entry: time + mood only."""
     return Entry(time="11:00", mood="great")
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_day() -> EntriesFrom:
     """A day (2011-10-10) preloaded with two entries."""
     day = EntriesFrom("2011-10-10")
@@ -73,7 +73,7 @@ def sample_day() -> EntriesFrom:
     return day
 
 
-@pytest.fixture()
+@pytest.fixture
 def parsed_journal(ok_csv):
     """Journal parsed from the OK scenario CSV with default moods."""
     reader = CsvJournalReader(str(ok_csv))
