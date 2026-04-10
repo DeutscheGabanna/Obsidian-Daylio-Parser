@@ -27,10 +27,8 @@ class UniqueLogFilter:
         return True
 
 
-
 # makes uncaught exceptions handled by rich logging module
 install(show_locals=True)
-
 
 
 class LogMsg:

@@ -6,12 +6,12 @@ To add support for a new format, subclass :class:`JournalReader` and implement :
 """
 from __future__ import annotations
 
-import typing
 import logging
+import typing
 from abc import ABC, abstractmethod
 from os import PathLike
 
-from obsidian_daylio_parser import utils, errors, logs
+from obsidian_daylio_parser import utils, logs
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
@@ -79,12 +79,12 @@ class CsvJournalReader(JournalReader):
     Opens the file, checks that all expected columns are present, and yields one dict per row.
     """
 
-    def __init__(self, filepath: PathLike | str):
+    def __init__(self, filepath: PathLike):
         self.__filepath = filepath
         self.__logger = logging.getLogger(self.__class__.__name__)
 
     @property
-    def source(self) -> str:
+    def source(self) -> PathLike:
         return self.__filepath
 
     def read(self) -> typing.Iterator[dict[str, str]]:
@@ -143,4 +143,3 @@ class CsvJournalReader(JournalReader):
             raise
         except ValueError as err:
             raise utils.CouldNotLoadFileError(self.__filepath) from err
-

@@ -154,4 +154,3 @@ class TestEntriesFromOutput:
         )
         result = self._render(day)
         assert result.startswith("---\ntags: bar,foo\n---\n\n")
-
