@@ -2,7 +2,6 @@
 Contains universally useful functions
 """
 from __future__ import annotations
-from collections.abc import Generator
 
 import abc
 import csv
@@ -12,11 +11,14 @@ import logging
 import os
 import re
 import typing
+from collections.abc import Generator
 from contextlib import contextmanager
+from os import PathLike
 from typing import List, TextIO, Optional
+
 from rich import progress
 
-from obsidian_daylio_parser import errors, logs
+from obsidian_daylio_parser import logs
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
@@ -66,7 +68,7 @@ class InvalidTimeError(ExpectedValueError):
 class CouldNotLoadFileError(Exception):
     """The file {} could not be accessed."""
 
-    def __init__(self, path: str):
+    def __init__(self, path: os.PathLike):
         super().__init__()
         self.__path = path
         self.__doc__ = self.__doc__.format(self.__path)
@@ -125,7 +127,7 @@ def slugify(text: str, taggify: bool) -> str:
     return '#' + text if taggify else text
 
 
-def expand_path(path: str) -> str:
+def expand_path(path: PathLike) -> PathLike:
     """
     Expand all %variables%, ~/home-directories and relative parts in the path. Return the expanded path.
     It does not use os.path.abspath() because it treats current script directory as root.
@@ -173,7 +175,7 @@ class FileLoader:
         pass
 
     @contextmanager
-    def load(self, path: str) -> Generator[typing.Any, None, None]:
+    def load(self, path: os.PathLike) -> Generator[typing.Any, None, None]:
         """
         Loads the file into context manager and catches exceptions thrown while doing so.
         It catches errors specific to the implementation first, then tries to catch more general IO errors.

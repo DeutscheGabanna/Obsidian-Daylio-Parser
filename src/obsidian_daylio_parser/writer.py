@@ -68,4 +68,3 @@ class MarkdownWriter:
                 with _create_and_open(filepath, 'w') as file:
                     entries_from.output(file)
                     progress.update(task, advance=1)
-

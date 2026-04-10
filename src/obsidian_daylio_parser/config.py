@@ -24,13 +24,12 @@ Sets up all necessary options and arguments.
 """
 from __future__ import annotations
 
-# https://www.doc.ic.ac.uk/~nuric/posts/coding/how-to-handle-configuration-in-python/
-
-import argparse
 import logging
-from importlib.metadata import version, PackageNotFoundError # https://versioningit.readthedocs.io/en/stable/runtime-version.html
 from collections import namedtuple
-from typing import List, Any
+from importlib.metadata import version, \
+    PackageNotFoundError  # https://versioningit.readthedocs.io/en/stable/runtime-version.html
+
+# https://www.doc.ic.ac.uk/~nuric/posts/coding/how-to-handle-configuration-in-python/
 
 try:
     __version__ = version("obsidian-daylio-parser")
