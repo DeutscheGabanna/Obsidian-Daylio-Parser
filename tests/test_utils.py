@@ -11,7 +11,7 @@ from obsidian_daylio_parser import utils, logs
 # slugify
 # ---------------------------------------------------------------------------
 class TestSlugify:
-    @pytest.mark.parametrize("text, expected", [
+    @pytest.mark.parametrize(("text", "expected"), [
         ("ConvertThis to-------a SLUG", "convertthis-to-a-slug"),
         ("Zażółć gęślą jaźń    ", "zażółć-gęślą-jaźń"),
         ("  Multiple   spaces  between    words", "multiple-spaces-between-words"),
@@ -63,11 +63,11 @@ class TestStripping:
 class TestIOContextManagers:
     def test_json_loader(self, fixtures_path):
         expected = {"rad": ["rad"], "good": ["good"], "neutral": ["okay"], "bad": ["bad"], "awful": ["awful"]}
-        with utils.JsonLoader().load(str(fixtures_path / "moods" / "smallest.json")) as data:
+        with utils.JsonLoader().load(fixtures_path / "moods" / "smallest.json") as data:
             assert data == expected
 
     def test_csv_loader(self, fixtures_path):
-        with utils.CsvLoader().load(str(fixtures_path / "all-valid.csv")) as reader:
+        with utils.CsvLoader().load(fixtures_path / "all-valid.csv") as reader:
             first_row = next(reader)
         assert first_row["full_date"] == "2022-10-30"
         assert first_row["mood"] == "vaguely ok"
@@ -77,7 +77,7 @@ class TestIOContextManagers:
 # guess_time_type
 # ---------------------------------------------------------------------------
 class TestGuessTimeType:
-    @pytest.mark.parametrize("raw, expected", [
+    @pytest.mark.parametrize(("raw", "expected"), [
         ("02:30 PM", datetime.time(14, 30)),
         ("12:00 AM", datetime.time(0, 0)),
         ("12:00 PM", datetime.time(12, 0)),
@@ -97,7 +97,7 @@ class TestGuessTimeType:
     def test_valid_strings(self, raw, expected):
         assert utils.guess_time_type(raw) == expected
 
-    @pytest.mark.parametrize("raw, expected", [
+    @pytest.mark.parametrize(("raw", "expected"), [
         ([14, 30], datetime.time(14, 30)),
         ([0, 0], datetime.time(0, 0)),
         ([23, 59], datetime.time(23, 59)),
@@ -128,7 +128,7 @@ class TestGuessTimeType:
 # guess_date_type
 # ---------------------------------------------------------------------------
 class TestGuessDateType:
-    @pytest.mark.parametrize("raw, expected", [
+    @pytest.mark.parametrize(("raw", "expected"), [
         ("2023-05-15", datetime.date(2023, 5, 15)),
         ("2000-01-01", datetime.date(2000, 1, 1)),
         ("2099-12-31", datetime.date(2099, 12, 31)),
@@ -140,7 +140,7 @@ class TestGuessDateType:
     def test_valid_strings(self, raw, expected):
         assert utils.guess_date_type(raw) == expected
 
-    @pytest.mark.parametrize("raw, expected", [
+    @pytest.mark.parametrize(("raw", "expected"), [
         ([2023, 5, 15], datetime.date(2023, 5, 15)),
         ([2000, 1, 1], datetime.date(2000, 1, 1)),
         (["2023", "05", "15"], datetime.date(2023, 5, 15)),

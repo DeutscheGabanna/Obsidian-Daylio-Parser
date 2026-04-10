@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import List
 
-from obsidian_daylio_parser import errors, logs
+from obsidian_daylio_parser import logs
 from obsidian_daylio_parser.utils import JsonLoader, CouldNotLoadFileError
 
 DEFAULT_DAYLIO_MOOD_GROUPS = "rad good neutral bad awful"

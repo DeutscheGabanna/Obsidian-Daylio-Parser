@@ -77,4 +77,3 @@ class Journal:
         total = sum(len(g) for g in self.__entries.values())
         dates = [str(d) for d in self.__entries.keys()]
         return f"Journal(dates={dates}, total_entries={total})"
-

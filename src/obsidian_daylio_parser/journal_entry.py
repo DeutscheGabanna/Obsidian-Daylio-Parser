@@ -10,16 +10,15 @@ Here's a quick breakdown of what is the specialisation of this file in the journ
 """
 from __future__ import annotations
 
+import datetime
 import io
 import logging
 import typing
-import datetime
 from dataclasses import dataclass
 
+from obsidian_daylio_parser import utils, logs
 from obsidian_daylio_parser.config import DEFAULTS
-from obsidian_daylio_parser import utils, errors, logs
 from obsidian_daylio_parser.entry.mood import Moodverse
-
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
@@ -28,6 +27,7 @@ ERRORS
 
 class NoMoodError(utils.ExpectedValueError):
     """Required non-empty mood."""
+
     def __init__(self, expected_value, actual_value):
         super().__init__(expected_value, actual_value)
 
@@ -67,7 +67,6 @@ class EntryBuilder:
               title: str = None,
               note: str = None,
               mood_set: Moodverse = Moodverse()) -> Entry:
-
         return Entry(
             utils.guess_time_type(time),
             mood,
