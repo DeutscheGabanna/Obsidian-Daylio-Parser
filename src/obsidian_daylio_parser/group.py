@@ -126,10 +126,16 @@ class EntriesFrom(utils.Core):
 
         # Instantiate the entry
         time = utils.guess_time_type(line["time"])
+        try:
+            tried_scales = line["scales"]
+        except KeyError:
+            tried_scales = None
+
         self[time] = self.__entries_builder.build(
             time,
             line["mood"],
             line["activities"],
+            tried_scales,
             line["note_title"],
             line["note"],
             mood_set=self.__known_moods,

@@ -64,6 +64,7 @@ class EntryBuilder:
               time: typing.Union[datetime.time, str, typing.List[str], typing.List[int]],
               mood: str,
               activities: str = None,
+              scales = None,
               title: str = None,
               note: str = None,
               mood_set: Moodverse = Moodverse()) -> Entry:
@@ -71,6 +72,7 @@ class EntryBuilder:
             utils.guess_time_type(time),
             mood,
             activities,
+            scales,
             title,
             note,
             self.csv_delimiter,
@@ -107,6 +109,7 @@ class Entry(utils.Core):
                  time: typing.Union[datetime.time, str, typing.List[str], typing.List[int]],
                  mood: str,
                  activities: str = None,
+                 scales = None,
                  title: str = None,
                  note: str = None,
                  csv_delimiter: str = EntryBuilder.csv_delimiter,
@@ -152,6 +155,8 @@ class Entry(utils.Core):
                     self.__activities.append(utils.slugify(activity, self.__tag_activities))
             else:
                 self.__logger.warning(ErrorMsg.WRONG_ACTIVITIES.format(activities))
+        # Process scales
+        self.__scales = utils.strip_and_get_truthy(scales, self.__csv_delimiter)
         # Process title
         self.__title = utils.slice_quotes(title) if title else None
         # Process note
@@ -172,7 +177,7 @@ class Entry(utils.Core):
         chars_written = 0
         # HEADER OF THE NOTE
         # e.g. "## great | 11:00 AM | Oh my, what a night!"
-        # header_multiplier is an int that multiplies the # to create headers in markdown
+        # header_multiplier is an int that multiplies the # to create headers in Markdown
         header_elements = [
             self.__header_multiplier * "#" + ' ' + self.__mood,
             self.time.strftime("%H:%M"),
@@ -200,11 +205,15 @@ class Entry(utils.Core):
         return self.__activities
 
     @property
-    def title(self) -> str:
+    def scales(self) -> typing.List[str]:
+        return self.__scales
+
+    @property
+    def title(self) -> str | None:
         return self.__title
 
     @property
-    def note(self) -> str:
+    def note(self) -> str | None:
         return self.__note
 
     @property
