@@ -164,7 +164,7 @@ def strip_and_get_truthy(delimited_string: str, delimiter: str) -> List[str]:
 
     sliced_del_string = slice_quotes(delimited_string)
 
-    return [el for el in sliced_del_string.split(delimiter) if el] if sliced_del_string else []
+    return [el.strip() for el in sliced_del_string.split(delimiter) if el] if sliced_del_string else []
 
 
 class FileLoader:
