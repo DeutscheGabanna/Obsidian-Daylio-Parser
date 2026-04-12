@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import datetime
 import logging
+from os import PathLike
 
 from obsidian_daylio_parser import utils, group, logs
 from obsidian_daylio_parser.entry.mood import Moodverse
@@ -47,14 +48,14 @@ class MissingValuesInRowError(utils.ExpectedValueError):
 class CannotAccessJournalError(utils.CouldNotLoadFileError):
     """The journal {} could not be accessed or parsed."""
 
-    def __init__(self, path: str):
+    def __init__(self, path: PathLike):
         super().__init__(path)
 
 
 class EmptyJournalError(utils.CouldNotLoadFileError):
     """The journal {} did not produce any valid journal entries."""
 
-    def __init__(self, path: str):
+    def __init__(self, path: PathLike):
         super().__init__(path)
 
 

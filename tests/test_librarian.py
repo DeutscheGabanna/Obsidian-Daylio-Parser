@@ -1,4 +1,6 @@
 """Integration tests for the Reader → Librarian → Journal pipeline."""
+from os import PathLike
+
 import pytest
 
 from obsidian_daylio_parser.entry.mood import Moodverse
@@ -17,7 +19,7 @@ class TestParsing:
         "tests/files/scenarios/fail/wrong-format.txt",
         "tests/files/fail/missing.csv",
     ])
-    def test_invalid_sources_raise(self, path):
+    def test_invalid_sources_raise(self, path: PathLike):
         with pytest.raises(CannotAccessJournalError):
             Librarian(CsvJournalReader(path)).parse()
 
@@ -41,7 +43,7 @@ class TestJournalAccess:
 class TestMoodLoading:
     def test_custom_moods_loaded(self, ok_csv, fixtures_path):
         mood_set = Moodverse.from_file(str(fixtures_path / "all-valid.json"))
-        journal = Librarian(CsvJournalReader(str(ok_csv)), mood_set).parse()
+        journal = Librarian(CsvJournalReader(ok_csv), mood_set).parse()
         assert journal.mood_set.get_custom_moods
 
     def test_no_custom_moods_by_default(self, parsed_journal):
@@ -49,11 +51,11 @@ class TestMoodLoading:
 
     def test_invalid_json_falls_back_to_defaults(self, ok_csv, fixtures_path):
         mood_set = Moodverse.from_file(str(fixtures_path / "scenarios" / "fail" / "empty.csv"))
-        journal = Librarian(CsvJournalReader(str(ok_csv)), mood_set).parse()
+        journal = Librarian(CsvJournalReader(ok_csv), mood_set).parse()
         assert journal.mood_set.get_moods == Moodverse().get_moods
 
     def test_incomplete_json_loads_partial_customs(self, fixtures_path):
-        reader = CsvJournalReader(str(fixtures_path / "scenarios" / "ok" / "all-valid.csv"))
+        reader = CsvJournalReader(fixtures_path / "scenarios" / "ok" / "all-valid.csv")
         mood_set = Moodverse.from_file(str(fixtures_path / "moods" / "incomplete.json"))
         config = EntriesFromBuilder(entries_builder=EntryBuilder(tag_activities=True))
         journal = Librarian(reader, mood_set, config).parse()

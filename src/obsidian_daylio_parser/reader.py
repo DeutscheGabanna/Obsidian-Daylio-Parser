@@ -21,6 +21,7 @@ ERRORS
 class ErrorMsg(logs.LogMsg):
     CSV_ALL_FIELDS_PRESENT = "All expected columns are present in the CSV file columns."
     CSV_FIELDS_MISSING = "The following expected columns are missing: {}"
+    CSV_NEW_FIELDS_MISSING = "This seems to be an old Daylio export without the new fields: {}. They are optional."
 
 
 class InvalidDataInFileError(utils.ExpectedValueError):
@@ -56,9 +57,18 @@ class JournalReader(ABC):
         "note",
     )
 
+    # fields not present in older Daylio .csv, for backwards compatibility
+    OPTIONAL_FIELDS = (
+        "scales",
+    )
+
+    @classmethod
+    def check_fields(cls, present: tuple[str, ...], expected: tuple[str, ...]):
+        return [ field for field in expected if field not in present ]
+
     @property
     @abstractmethod
-    def source(self) -> str:
+    def source(self) -> PathLike:
         """A human-readable description of the source (e.g. a filepath)."""
         ...
 
@@ -93,47 +103,20 @@ class CsvJournalReader(JournalReader):
         :raises InvalidDataInFileError: if required columns are missing from the CSV header.
         """
 
-        # # Count total lines for progress bar
-        # rows = list(file)
-        # total_lines = len(rows)
-        # lines_parsed = 0
-        # lines_parsed_successfully = 0
-        # with Progress(
-        #         SpinnerColumn(),
-        #         TextColumn("[progress.description]{task.description}"),
-        #         BarColumn(),
-        #         TaskProgressColumn(),
-        #         TimeRemainingColumn(),
-        #         console=console
-        # ) as progress:
-        #     task = progress.add_task(
-        #         f"[bold cyan]Processing {filepath}...",
-        #         total=total_lines
-        #     )
-        #
-        #     for line in rows:
-        #         line: dict[str, str]
-        #         try:
-        #             lines_parsed += self.__process_line(line)
-        #         except MissingValuesInRowError as err:
-        #             self.__logger.warning(err.__doc__)
-        #         else:
-        #             lines_parsed_successfully += 1
-        #         finally:
-        #             progress.update(task, advance=1)
         try:
             with utils.CsvLoader().load(self.__filepath) as file:
                 # Validate that all expected columns are present
-                missing = [
-                    field for field in self.EXPECTED_FIELDS
-                    if field not in file.fieldnames
-                ]
+                missing = self.check_fields(file.fieldnames, self.EXPECTED_FIELDS)
                 if missing:
                     msg = ErrorMsg.CSV_FIELDS_MISSING.format(', '.join(missing))
                     self.__logger.critical(msg)
                     raise InvalidDataInFileError(file.fieldnames, msg)
 
                 self.__logger.debug(ErrorMsg.CSV_ALL_FIELDS_PRESENT)
+                optionals = self.check_fields(file.fieldnames, self.OPTIONAL_FIELDS)
+                if optionals:
+                    msg = ErrorMsg.CSV_NEW_FIELDS_MISSING.format(', '.join(optionals))
+                    self.__logger.info(msg)
 
                 for line in file:
                     yield line

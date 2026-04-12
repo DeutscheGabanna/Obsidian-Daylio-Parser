@@ -18,6 +18,7 @@ class TestEntryConstruction:
         assert e.time == datetime.time(1, 49)
         assert e.title is None
         assert e.note is None
+        assert e.scales == []
         assert e.activities == []
 
     def test_via_builder(self):
@@ -57,6 +58,13 @@ class TestEntryConstruction:
         )
         assert e.activities == ["#bicycle", "#qqchess", "#gaming-q4"]
 
+    def test_scales(self):
+        e = Entry(
+            time="10:05 PM", mood="great",
+            scales='Sleep Quality: 4/10 points | Sleep Time: 7:00'
+        )
+        assert e.scales == ["Sleep Quality: 4/10 points", "Sleep Time: 7:00"]
+
 
 # ---------------------------------------------------------------------------
 # Validation
@@ -72,7 +80,7 @@ class TestEntryValidation:
 
 
 # ---------------------------------------------------------------------------
-# Output (markdown rendering of a single entry)
+# Output (Markdown rendering of a single entry)
 # ---------------------------------------------------------------------------
 class TestEntryOutput:
     @staticmethod
