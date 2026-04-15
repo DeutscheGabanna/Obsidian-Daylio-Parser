@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from os import PathLike
 from typing import List
 
 from obsidian_daylio_parser import logs
@@ -93,7 +94,7 @@ class Moodverse:
                 self.__logger.warning(msg)
 
     @classmethod
-    def from_file(cls, filepath: str = None) -> 'Moodverse':
+    def from_file(cls, filepath: PathLike = None) -> 'Moodverse':
         """
         Load a custom mood set from a JSON file. Falls back to default moods if the file is missing or invalid.
 

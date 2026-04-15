@@ -41,22 +41,22 @@ class TestJournalAccess:
 
 
 class TestMoodLoading:
-    def test_custom_moods_loaded(self, ok_csv, fixtures_path):
-        mood_set = Moodverse.from_file(str(fixtures_path / "all-valid.json"))
+    def test_custom_moods_loaded(self, ok_csv, resources_path):
+        mood_set = Moodverse.from_file(resources_path / "moods_ok_custom.json")
         journal = Librarian(CsvJournalReader(ok_csv), mood_set).parse()
         assert journal.mood_set.get_custom_moods
 
     def test_no_custom_moods_by_default(self, parsed_journal):
         assert len(parsed_journal.mood_set.get_custom_moods) == 0
 
-    def test_invalid_json_falls_back_to_defaults(self, ok_csv, fixtures_path):
-        mood_set = Moodverse.from_file(str(fixtures_path / "scenarios" / "fail" / "empty.csv"))
+    def test_invalid_json_falls_back_to_defaults(self, ok_csv, resources_path):
+        mood_set = Moodverse.from_file(resources_path / "daylio_export_bad_empty.csv")
         journal = Librarian(CsvJournalReader(ok_csv), mood_set).parse()
         assert journal.mood_set.get_moods == Moodverse().get_moods
 
-    def test_incomplete_json_loads_partial_customs(self, fixtures_path):
-        reader = CsvJournalReader(fixtures_path / "scenarios" / "ok" / "all-valid.csv")
-        mood_set = Moodverse.from_file(str(fixtures_path / "moods" / "incomplete.json"))
+    def test_incomplete_json_loads_partial_customs(self, resources_path):
+        reader = CsvJournalReader(resources_path / "daylio_export_ok.csv")
+        mood_set = Moodverse.from_file(resources_path / "moods_bad_missing_group.json")
         config = EntriesFromBuilder(entries_builder=EntryBuilder(tag_activities=True))
         journal = Librarian(reader, mood_set, config).parse()
         assert len(journal.mood_set.get_custom_moods) == 10

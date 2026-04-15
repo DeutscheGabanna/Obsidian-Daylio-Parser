@@ -61,13 +61,13 @@ class TestStripping:
 # IO context managers
 # ---------------------------------------------------------------------------
 class TestIOContextManagers:
-    def test_json_loader(self, fixtures_path):
+    def test_json_loader(self, resources_path):
         expected = {"rad": ["rad"], "good": ["good"], "neutral": ["okay"], "bad": ["bad"], "awful": ["awful"]}
-        with utils.JsonLoader().load(fixtures_path / "moods" / "smallest.json") as data:
+        with utils.JsonLoader().load(resources_path / "moods_ok_smallest.json") as data:
             assert data == expected
 
-    def test_csv_loader(self, fixtures_path):
-        with utils.CsvLoader().load(fixtures_path / "all-valid.csv") as reader:
+    def test_csv_loader(self, resources_path):
+        with utils.CsvLoader().load(resources_path / "daylio_export_ok.csv") as reader:
             first_row = next(reader)
         assert first_row["full_date"] == "2022-10-30"
         assert first_row["mood"] == "vaguely ok"

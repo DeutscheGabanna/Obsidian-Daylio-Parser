@@ -79,11 +79,11 @@ class TestMoodverseFromFile:
         mv = Moodverse.from_file(None)
         assert not mv.get_custom_moods
 
-    def test_from_invalid_file_gives_default(self, fixtures_path):
-        mv = Moodverse.from_file(str(fixtures_path / "scenarios" / "fail" / "empty.csv"))
+    def test_from_invalid_file_gives_default(self, resources_path):
+        mv = Moodverse.from_file(resources_path / "daylio_export_bad_empty.csv")
         assert not mv.get_custom_moods
 
-    def test_incomplete_json_loads_partial_customs(self, fixtures_path):
-        mv = Moodverse.from_file(str(fixtures_path / "moods" / "incomplete.json"))
+    def test_incomplete_json_loads_partial_customs(self, resources_path):
+        mv = Moodverse.from_file(resources_path / "moods_bad_missing_group.json")
         # incomplete.json has moods in rad, neutral, bad, awful but not good → 10 customs
         assert len(mv.get_custom_moods) == 10
