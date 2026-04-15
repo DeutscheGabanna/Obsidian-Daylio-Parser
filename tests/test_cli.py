@@ -15,7 +15,7 @@ def _tree(path: Path) -> str:
 class TestCli:
     def test_generates_expected_markdown(self, ok_csv, ok_expected_dir, tmp_path):
         completed = subprocess.run(
-            [sys.executable, "-m", "obsidian_daylio_parser", str(ok_csv), str(tmp_path)],
+            [sys.executable, "-m", "obsidian_daylio_parser", ok_csv, tmp_path],
             capture_output=True, text=True, check=False
         )
         assert completed.returncode == 0, (
