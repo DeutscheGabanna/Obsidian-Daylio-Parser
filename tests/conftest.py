@@ -20,23 +20,22 @@ from obsidian_daylio_parser.reader import CsvJournalReader
 # Path helpers
 # ---------------------------------------------------------------------------
 
-FIXTURES = Path(__file__).parent / "files"
-SCENARIOS = FIXTURES / "scenarios"
+FILES = Path(__file__).parent / "files"
 
 
 @pytest.fixture
-def fixtures_path() -> Path:
-    return FIXTURES
+def resources_path() -> Path:
+    return FILES
 
 
 @pytest.fixture
 def ok_csv() -> Path:
-    return SCENARIOS / "ok" / "all-valid.csv"
+    return FILES / f"daylio_export_ok.csv"
 
 
 @pytest.fixture
 def ok_expected_dir() -> Path:
-    return SCENARIOS / "ok" / "expect"
+    return FILES / "golden_files"
 
 
 # ---------------------------------------------------------------------------
@@ -53,7 +52,7 @@ def default_moodverse() -> Moodverse:
 @pytest.fixture
 def custom_moodverse() -> Moodverse:
     """Moodverse loaded from the full test JSON (all-valid.json)."""
-    return Moodverse.from_file(str(FIXTURES / "all-valid.json"))
+    return Moodverse.from_file(FILES / "moods_ok_custom.json")
 
 
 @pytest.fixture
@@ -76,5 +75,5 @@ def sample_day() -> EntriesFrom:
 @pytest.fixture
 def parsed_journal(ok_csv):
     """Journal parsed from the OK scenario CSV with default moods."""
-    reader = CsvJournalReader(str(ok_csv))
+    reader = CsvJournalReader(ok_csv)
     return Librarian(reader).parse()
