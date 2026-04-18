@@ -52,75 +52,19 @@ class LogMsg:
         expected_args = message.count("{}")
 
         if len(args) != expected_args:
-            logging.getLogger(__name__).warning(
+            logger.warning(
                 f"Expected {expected_args} arguments for \"{message}\", but got {len(args)} instead."
             )
             return None
         return message.format(*args)
 
 
-class ColorHandler(logging.StreamHandler):
-    # https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
-    GRAY8 = "38;5;8"
-    GRAY7 = "38;5;7"
-    ORANGE = "33"
-    RED = "31"
-    WHITE = "0"
-
-    # noinspection PyPep8
-    def emit(self, record):
-        # We don't use white for any logging, to help distinguish from user print statements
-        # noinspection PyPep8
-        level_color_map = {
-            logging.DEBUG: self.GRAY8,
-            logging.INFO: self.GRAY7,
-            logging.WARNING: self.ORANGE,
-            logging.ERROR: self.RED,
-            logging.CRITICAL: f"1;{self.RED}",  # Bold for critical errors
-        }
-
-        csi = f"{chr(27)}["  # control sequence introducer
-        color = level_color_map.get(record.levelno, self.WHITE)
-
-        # Apply the formatter to format the log message
-        formatted_msg = self.format(record)
-
-        self.stream.write(f"{csi}{color}m{formatted_msg}{csi}m\n")
-
-
-console_log_handler = ColorHandler(sys.stdout)
-journal_theme = Theme({
-    "logging.level.info": "cyan",
-    "logging.level.warning": "bold yellow",
-    "logging.level.error": "bold red",
-    "logging.level.critical": "reverse red"
-})
-console = Console(theme=journal_theme, force_terminal=True)
-rich_handler = RichHandler(
-    console=console,
+handler = RichHandler(
+    level="WARNING",
     rich_tracebacks=True,
-    markup=True,
-    highlighter=None,
-    show_path=False
+    markup=True
 )
-# Create a console handler for the root logger
-# noinspection SpellCheckingInspection
+handler.addFilter(UniqueLogFilter())
 # interesting discussion on why setLevel on both handler AND logger: https://stackoverflow.com/a/17668861/8527654
-console_log_handler.setLevel(logging.INFO)
-
-# noinspection SpellCheckingInspection
-# formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-# console_log_handler.setFormatter(formatter)
-
-
-# Configure root logger with idempotent setup
-root = logging.getLogger()
-root.setLevel(logging.INFO)
-
-# Add dedupe filter to the handler (not root logger) so it applies to propagated child records
-unique_filter = UniqueLogFilter()
-rich_handler.addFilter(unique_filter)
-
-# Prevent duplicate handlers if logs.py is imported multiple times
-if rich_handler not in root.handlers:
-    root.addHandler(rich_handler)
+logging.basicConfig(level="DEBUG", handlers=[handler])
+logger = logging.getLogger('rich')

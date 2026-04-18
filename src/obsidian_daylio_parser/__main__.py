@@ -11,6 +11,7 @@ from obsidian_daylio_parser.entry.mood import Moodverse
 from obsidian_daylio_parser.group import EntriesFromBuilder
 from obsidian_daylio_parser.journal_entry import EntryBuilder
 from obsidian_daylio_parser.librarian import Librarian, CannotAccessJournalError, EmptyJournalError
+from obsidian_daylio_parser.logs import logger
 from obsidian_daylio_parser.reader import CsvJournalReader
 from obsidian_daylio_parser.writer import MarkdownWriter
 
@@ -119,11 +120,11 @@ if __name__ == '__main__':
     # also: "Unix programs generally use 2 for command line syntax errors and 1 for all other kind of errors"
     # 2 is reserved for argparse error
     except KeyboardInterrupt:
-        logging.getLogger(__name__).info("KeyboardInterrupt received, exiting gracefully.")
+        logger.info("KeyboardInterrupt received, exiting gracefully.")
         sys.exit(150)
     except CannotAccessJournalError as err:
-        logging.getLogger(__name__).critical(err.__doc__)
+        logger.critical(err.__doc__)
         sys.exit(151)
     except EmptyJournalError as err:
-        logging.getLogger(__name__).critical(err.__doc__)
+        logger.critical(err.__doc__)
         sys.exit(152)

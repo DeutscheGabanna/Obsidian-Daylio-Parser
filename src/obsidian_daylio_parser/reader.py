@@ -12,6 +12,7 @@ from abc import ABC, abstractmethod
 from os import PathLike
 
 from obsidian_daylio_parser import utils, logs
+from obsidian_daylio_parser.logs import logger
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
@@ -91,7 +92,6 @@ class CsvJournalReader(JournalReader):
 
     def __init__(self, filepath: PathLike):
         self.__filepath = filepath
-        self.__logger = logging.getLogger(self.__class__.__name__)
 
     @property
     def source(self) -> PathLike:
@@ -109,14 +109,14 @@ class CsvJournalReader(JournalReader):
                 missing = self.check_fields(file.fieldnames, self.EXPECTED_FIELDS)
                 if missing:
                     msg = ErrorMsg.CSV_FIELDS_MISSING.format(', '.join(missing))
-                    self.__logger.critical(msg)
+                    logger.critical(msg)
                     raise InvalidDataInFileError(file.fieldnames, msg)
 
-                self.__logger.debug(ErrorMsg.CSV_ALL_FIELDS_PRESENT)
+                logger.debug(ErrorMsg.CSV_ALL_FIELDS_PRESENT)
                 optionals = self.check_fields(file.fieldnames, self.OPTIONAL_FIELDS)
                 if optionals:
                     msg = ErrorMsg.CSV_NEW_FIELDS_MISSING.format(', '.join(optionals))
-                    self.__logger.info(msg)
+                    logger.info(msg)
 
                 for line in file:
                     yield line

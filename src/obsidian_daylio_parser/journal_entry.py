@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from obsidian_daylio_parser import utils, logs
 from obsidian_daylio_parser.config import DEFAULTS
 from obsidian_daylio_parser.entry.mood import Moodverse
+from obsidian_daylio_parser.logs import logger
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
@@ -119,7 +120,6 @@ class Entry(utils.Core):
                  suffix: str = EntryBuilder.suffix,
                  mood_set: Moodverse = Moodverse()):
 
-        self.__logger = logging.getLogger(self.__class__.__name__)
         self.__csv_delimiter = csv_delimiter
         self.__header_multiplier = header_multiplier
         self.__tag_activities = tag_activities
@@ -140,7 +140,7 @@ class Entry(utils.Core):
 
         # Check if the mood is valid - i.e. it does exist in the currently used Moodverse
         if mood not in mood_set.get_moods:
-            self.__logger.warning(ErrorMsg.INVALID_MOOD.format(mood))
+            logger.warning(ErrorMsg.INVALID_MOOD.format(mood))
         # Warning is enough, it just disables colouring so not big of a deal
         self.__mood = mood
 
@@ -154,7 +154,7 @@ class Entry(utils.Core):
                 for activity in working_array:
                     self.__activities.append(utils.slugify(activity, self.__tag_activities))
             else:
-                self.__logger.warning(ErrorMsg.WRONG_ACTIVITIES.format(activities))
+                logger.warning(ErrorMsg.WRONG_ACTIVITIES.format(activities))
         # Process scales
         self.__scales = utils.strip_and_get_truthy(scales, self.__csv_delimiter)
         # Process title
