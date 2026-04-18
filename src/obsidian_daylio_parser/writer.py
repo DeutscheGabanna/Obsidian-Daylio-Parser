@@ -65,4 +65,4 @@ class MarkdownWriter:
                 # TODO: maybe add the mode option to settings in argparse? write/append
                 with _create_and_open(filepath, 'w') as file:
                     entries_from.output(file)
-                    progress.update(task, advance=1)
+                    progress.update(task, advance=len(entries_from))
