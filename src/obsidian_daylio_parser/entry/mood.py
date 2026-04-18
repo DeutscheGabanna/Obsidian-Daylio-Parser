@@ -5,6 +5,7 @@ from os import PathLike
 from typing import List
 
 from obsidian_daylio_parser import logs
+from obsidian_daylio_parser.logs import logger
 from obsidian_daylio_parser.utils import JsonLoader, CouldNotLoadFileError
 
 DEFAULT_DAYLIO_MOOD_GROUPS = "rad good neutral bad awful"
@@ -61,7 +62,6 @@ class Moodverse:
     __custom_moods: dict[str, str]
 
     def __init__(self, moods_to_process: dict[str, List[str]] = None):
-        self.__logger = logging.getLogger(self.__class__.__name__)
 
         # DEFAULT PART OF INIT
         # --------------------
@@ -108,7 +108,7 @@ class Moodverse:
             with JsonLoader().load(filepath) as data:
                 return cls(data)
         except CouldNotLoadFileError:
-            logging.getLogger(cls.__name__).warning(
+            logger.warning(
                 "Could not load custom moods from %s. Using defaults.", filepath
             )
             return cls()

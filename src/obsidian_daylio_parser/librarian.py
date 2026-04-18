@@ -26,6 +26,7 @@ from obsidian_daylio_parser import utils, group, logs
 from obsidian_daylio_parser.entry.mood import Moodverse
 from obsidian_daylio_parser.group import EntriesFrom, EntriesFromBuilder
 from obsidian_daylio_parser.journal import Journal
+from obsidian_daylio_parser.logs import logger
 from obsidian_daylio_parser.reader import JournalReader, InvalidDataInFileError
 
 """---------------------------------------------------------------------------------------------------------------------
@@ -83,7 +84,6 @@ class Librarian:
                  mood_set: Moodverse = None,
                  entries_from_builder: EntriesFromBuilder = EntriesFromBuilder()):
 
-        self.__logger = logging.getLogger(self.__class__.__name__)
         self.__reader = reader
         self.__mood_set = mood_set or Moodverse()
         self.__entries_from_builder = entries_from_builder
@@ -97,7 +97,7 @@ class Librarian:
         :returns: a :class:`Journal` containing all successfully parsed entries.
         """
         if not self.__mood_set.get_custom_moods:
-            self.__logger.info(ErrorMsg.STANDARD_MOODS_USED)
+            logger.info(ErrorMsg.STANDARD_MOODS_USED)
 
         known_dates: dict[datetime.date, EntriesFrom] = {}
         lines_total = 0
@@ -110,11 +110,11 @@ class Librarian:
                     if self.__process_line(line, known_dates):
                         lines_ok += 1
                 except MissingValuesInRowError as err:
-                    self.__logger.warning(err.__doc__)
+                    logger.warning(err.__doc__)
         except (utils.CouldNotLoadFileError, InvalidDataInFileError) as err:
             raise CannotAccessJournalError(self.__reader.source) from err
 
-        self.__logger.info(ErrorMsg.COUNT_ROWS.format(lines_total, lines_ok))
+        logger.info(ErrorMsg.COUNT_ROWS.format(lines_total, lines_ok))
 
         if lines_ok == 0:
             raise EmptyJournalError(self.__reader.source)

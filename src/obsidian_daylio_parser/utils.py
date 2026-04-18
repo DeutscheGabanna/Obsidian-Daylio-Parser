@@ -19,6 +19,7 @@ from typing import List, TextIO, Optional
 from rich import progress
 
 from obsidian_daylio_parser import logs
+from obsidian_daylio_parser.logs import logger
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
@@ -113,7 +114,6 @@ def slugify(text: str, taggify: bool) -> str:
     """
     Simple slugification function to transform text. Works on non-latin characters too.
     """
-    logger = logging.getLogger(__name__)
     text = str(text).lower().strip()  # get rid of trailing spaces left after splitting activities apart from one string
     text = re.sub(re.compile(r"\s+"), '-', text)  # Replace spaces with -
     text = re.sub(re.compile(r"[^\w\-]+"), '', text)  # Remove all non-word chars

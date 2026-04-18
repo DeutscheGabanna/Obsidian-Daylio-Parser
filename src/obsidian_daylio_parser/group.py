@@ -92,7 +92,6 @@ class EntriesFrom(utils.Core):
                  entries_builder: journal_entry.EntryBuilder = journal_entry.EntryBuilder(),
                  mood_set: Moodverse = Moodverse()):
 
-        self.__logger = logging.getLogger(self.__class__.__name__)
         super().__init__(utils.guess_date_type(date))
 
         # All good - initialise

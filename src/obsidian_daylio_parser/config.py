@@ -38,9 +38,6 @@ except PackageNotFoundError:
     # otherwise --> importlib.metadata.PackageNotFoundError: No package metadata was found for obsidian-daylio-parser
     __version__ = "dev"
 
-# Logging for config library
-logger = logging.getLogger(__name__)
-
 # I chose namedtuple for immutability
 DefaultSettings = namedtuple('DefaultSettings', [
     "filepath",
