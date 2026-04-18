@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import sys
 from pathlib import Path
@@ -13,6 +15,16 @@ from obsidian_daylio_parser.reader import CsvJournalReader
 from obsidian_daylio_parser.writer import MarkdownWriter
 
 app = typer.Typer()
+
+import importlib.metadata
+
+__version__ = importlib.metadata.version("obsidian-daylio-parser")
+
+
+def version_callback(value: bool):
+    if value:
+        print(__version__)
+        raise typer.Exit()
 
 
 @app.command()
@@ -56,6 +68,9 @@ def main(
                                                      help="Convert activities into valid front-matter tags",
                                                      rich_help_panel="How to print markdown"
                                                      )] = True,
+        version: Annotated[
+            bool | None, typer.Option("--version", "-v", callback=version_callback)
+        ] = None,
         colour: Annotated[bool, typer.Option("--color",
                                              help="Prepend a colour emoji to each entry depending on mood",
                                              rich_help_panel="How to print markdown"
