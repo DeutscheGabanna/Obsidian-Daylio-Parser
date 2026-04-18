@@ -13,7 +13,6 @@ from typing import IO
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn
 
 from obsidian_daylio_parser.journal import Journal
-from obsidian_daylio_parser.logs import console
 
 
 def _create_and_open(filename: str, mode: str) -> IO:
@@ -48,8 +47,7 @@ class MarkdownWriter:
                 TextColumn("[progress.description]{task.description}"),
                 BarColumn(),
                 TaskProgressColumn(),
-                TimeRemainingColumn(),
-                console=console
+                TimeRemainingColumn()
         ) as progress:
             task = progress.add_task(
                 f"[bold cyan]Creating markdown files in {self.__destination}...",
