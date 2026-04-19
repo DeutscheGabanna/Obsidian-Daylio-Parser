@@ -143,3 +143,15 @@ class TestEntryOutput:
             time="11:00", mood="great", title="Feeling pumped@!", header_multiplier=5
         ))
         assert result == "##### great | 11:00 | Feeling pumped@!"
+
+    def test_colouring_moods(self):
+        result = self._render(Entry(
+            time="15:00", mood="rad", title="Bruuuh", colour=True
+        ))
+        assert result == f"## {chr(0x1F7E9)} rad | 15:00 | Bruuuh"
+
+    def test_colouring_moods_fail(self):
+        result = self._render(Entry(
+            time="15:00", mood="wasted", title="I drank too much", colour=True # <-- even with colouring enabled
+        ))
+        assert result == f"## wasted | 15:00 | I drank too much"

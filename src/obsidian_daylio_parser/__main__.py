@@ -72,7 +72,7 @@ def main(
         version: Annotated[
             bool | None, typer.Option("--version", "-v", callback=version_callback)
         ] = None,
-        colour: Annotated[bool, typer.Option("--color",
+        colour: Annotated[bool, typer.Option("--colour", "--color",
                                              help="Prepend a colour emoji to each entry depending on mood",
                                              rich_help_panel="How to print markdown"
                                              )] = False,
@@ -92,7 +92,8 @@ def main(
         header_level,
         tag_activities,
         prefix,
-        suffix
+        suffix,
+        colour
     )
     file_template = EntriesFromBuilder(
         front_matter_tags,

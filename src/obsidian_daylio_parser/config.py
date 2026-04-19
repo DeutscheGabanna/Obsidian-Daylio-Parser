@@ -51,4 +51,4 @@ DefaultSettings = namedtuple('DefaultSettings', [
     "tag_activities",
     "colour"
 ])
-DEFAULTS = DefaultSettings(None, None, None, '|', 2, tuple(["daylio"]), '', '', True, bool)
+DEFAULTS = DefaultSettings(None, None, None, '|', 2, tuple(["daylio"]), '', '', True, False)
