@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from os import PathLike
 from typing import List
 
@@ -8,7 +9,15 @@ from obsidian_daylio_parser import logs
 from obsidian_daylio_parser.logs import logger
 from obsidian_daylio_parser.utils import JsonLoader, CouldNotLoadFileError
 
+# TODO: Unfortunately Daylio uses localised strings for mood groups, so these will work only for English exports :(
 DEFAULT_DAYLIO_MOOD_GROUPS = "rad good neutral bad awful"
+MOOD_GROUPS: tuple[tuple[str, str], ...] = (
+    ("rad", chr(0x1F7E9)),
+    ("good", chr(0x1F7E6)),
+    ("neutral", chr(0x2B1C)),
+    ("bad", chr(0x1F7E7)),
+    ("awful", chr(0x1F7E5))
+)
 
 
 class ErrorMsg(logs.LogMsg):
@@ -192,6 +201,14 @@ class Moodverse:
             return self.__known_moods[item]
         except KeyError:
             raise MoodNotFoundError(item)
+
+    def get_colour(self, item: str):
+        """
+        :param item: name of the mood
+        :return: colorful emoji as a hex value indicating the group it belongs to
+        """
+        return next(mood[1] for mood in MOOD_GROUPS if mood[0] == self[item])[0]
+
 
     @property
     def get_custom_moods(self) -> dict[str, str]:

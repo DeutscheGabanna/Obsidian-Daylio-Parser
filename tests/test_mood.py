@@ -87,3 +87,10 @@ class TestMoodverseFromFile:
         mv = Moodverse.from_file(resources_path / "moods_bad_missing_group.json")
         # incomplete.json has moods in rad, neutral, bad, awful but not good → 10 customs
         assert len(mv.get_custom_moods) == 10
+
+class TestMoodColouring:
+    def test_getting_proper_group(self, custom_moodverse):
+        assert custom_moodverse["annoyed"] == "bad"
+
+    def test_getting_proper_colour(self, custom_moodverse):
+        assert custom_moodverse.get_colour("annoyed") == chr(0x1F7E7)
