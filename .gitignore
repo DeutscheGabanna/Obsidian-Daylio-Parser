@@ -6,3 +6,5 @@ dist/
 build/
 **.egg-info
 /.venv/
+
+**theme_project_new.xml
