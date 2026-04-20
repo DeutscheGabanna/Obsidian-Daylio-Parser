@@ -49,7 +49,7 @@ jobs:
         # I deliberately set both to root directory of the repository in case the test dir gets renamed later
         # pipenv runs coverage, which in turns runs unittest
         run: |
-          pipenv run coverage run -m unittest discover -s . -t .
+          pipenv run coverage run -m pytest .
 
       - name: Check coverage requirement threshold
         uses: py-cov-action/python-coverage-comment-action@v3
