@@ -3,6 +3,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 def _tree(path: Path) -> str:
     if not path.exists():
@@ -13,7 +15,17 @@ def _tree(path: Path) -> str:
 
 
 class TestCli:
-    def test_generates_expected_markdown(self, ok_csv, ok_expected_dir, tmp_path):
+    before_scales = ("before_scales", "daylio_export_ok.csv")
+    after_scales = ("after_scales", "daylio_export_ok_scales.csv")
+
+    @pytest.mark.parametrize(
+        "subtype, ok_csv",
+        [before_scales, after_scales],
+        ids=["before scales", "after scales"],
+        indirect=["ok_csv"]
+    )
+    def test_generates_expected_markdown(self, ok_csv, ok_expected_dir, tmp_path, subtype):
+        golden_files = ok_expected_dir / subtype # e.g. tests/files/golden_files/after_scales
         completed = subprocess.run(
             [sys.executable, "-m", "obsidian_daylio_parser", ok_csv, tmp_path],
             capture_output=True, text=True, check=False
@@ -23,7 +35,7 @@ class TestCli:
         )
 
         generated = {p.name: p for p in sorted(tmp_path.rglob("*.md"))}
-        expected = {p.name: p for p in sorted(ok_expected_dir.glob("*.md"))}
+        expected = {p.name: p for p in sorted(golden_files.glob("*.md"))}
 
         assert set(expected) == set(generated), (
             f"missing: {sorted(set(expected) - set(generated))}\n"

@@ -165,7 +165,12 @@ class Entry(utils.Core):
             else:
                 logger.warning(ErrorMsg.WRONG_ACTIVITIES.format(activities))
         # Process scales
-        self.__scales = utils.strip_and_get_truthy(scales, self.__csv_delimiter)
+        self.__scales = []
+        if scales:
+            working_array = utils.strip_and_get_truthy(scales, self.__csv_delimiter)
+            if len(working_array) > 0:
+                for scale in working_array:
+                    self.__scales.append(scale)
         # Process title
         self.__title = utils.slice_quotes(title) if title else None
         # Process note
@@ -196,8 +201,15 @@ class Entry(utils.Core):
         chars_written += stream.write(header)
         # ACTIVITIES
         # e.g. "bicycle skating pool swimming"
+        # or "#bicycle #skating #pool #swimming" if tagging is enabled in settings
         if len(self.__activities) > 0:
             chars_written += stream.write("\n" + ' '.join(self.__activities))
+        # SCALES
+        # e.g. "sleep quality 9/10 pts"
+        # "sleep quality" is the name of the scale, 9 is the value, 10 is the limit, "pts" is the unit
+        # all of these individual elements are configured by Daylio and exported as a simple concatenated string
+        if len(self.__scales) > 0:
+            chars_written += stream.write("\n" + ' | '.join(self.scales))
         # NOTE
         # e.g. "Went swimming this evening."
         if self.__note is not None:

@@ -24,6 +24,7 @@ class TestParsing:
             Librarian(CsvJournalReader(path)).parse()
 
 
+# noinspection PyStatementEffect
 class TestJournalAccess:
     @pytest.mark.parametrize("date", ["2022-10-25", "2022-10-26", "2022-10-27", "2022-10-30"])
     def test_valid_dates_accessible(self, parsed_journal, date):
@@ -60,3 +61,10 @@ class TestMoodLoading:
         config = EntriesFromBuilder(entries_builder=EntryBuilder(tag_activities=True))
         journal = Librarian(reader, mood_set, config).parse()
         assert len(journal.mood_set.get_custom_moods) == 10
+
+    def test_unknown_fields_in_csv(self, resources_path):
+        """If Daylio decides to add a new field, and I'm not around to implement it,
+        best case scenario would be for the converter not to crash, at the very least."""
+        reader = CsvJournalReader(resources_path / "daylio_export_bad_unknown_fields.csv")
+        journal = Librarian(reader).parse()
+        assert len(journal) == 12
