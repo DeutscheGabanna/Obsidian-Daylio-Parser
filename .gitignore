@@ -94,3 +94,5 @@ fabric.properties
 # Editor-based Rest Client
 .idea/httpRequests
 /.venv/
+
+**theme_project_new.xml
