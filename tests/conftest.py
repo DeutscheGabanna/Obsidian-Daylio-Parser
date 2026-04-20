@@ -29,8 +29,9 @@ def resources_path() -> Path:
 
 
 @pytest.fixture
-def ok_csv() -> Path:
-    return FILES / f"daylio_export_ok.csv"
+def ok_csv(request, tmp_path) -> Path:
+    filepath = getattr(request, "param", "daylio_export_ok.csv")
+    return FILES / filepath
 
 
 @pytest.fixture

@@ -56,6 +56,14 @@ class TestStripping:
         assert utils.slice_quotes('""') is None
         assert utils.slice_quotes('" bicycle   "') == "bicycle"
 
+    def test_strip_and_get_truthy_replaces_nbsp_in_multivalue(self):
+        result = utils.strip_and_get_truthy("Sleep Quality: 6/10 points | Sleep Time: 7:30", "|")
+        assert result == ["Sleep Quality: 6/10 points", "Sleep Time: 7:30"]
+
+    def test_strip_and_get_truthy_plain_space_unaffected(self):
+        result = utils.strip_and_get_truthy(" 4/10 ", "|")
+        assert result == ["4/10"]
+
 
 # ---------------------------------------------------------------------------
 # IO context managers
