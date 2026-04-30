@@ -33,6 +33,10 @@ jobs:
           python -m pip install --upgrade pipenv wheel
           pipenv install --dev
 
+      - name: Install package itself
+        run: |
+          pip install -e .
+
       - name: Add directory to PYTHONPATH on Linux
         if: runner.os == 'Linux'
         run: |
@@ -47,7 +51,7 @@ jobs:
       - name: Gather test coverage data with unittest
         # -s is --start-directory and -t is --top-level-directory
         # I deliberately set both to root directory of the repository in case the test dir gets renamed later
-        # pipenv runs coverage, which in turns runs unittest
+        # pipenv runs coverage, which in turns runs pytest
         run: |
           pipenv run coverage run -m pytest .
 

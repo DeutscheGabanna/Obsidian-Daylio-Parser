@@ -60,7 +60,7 @@ class JournalReader(ABC):
 
     # fields not present in older Daylio .csv, for backwards compatibility
     OPTIONAL_FIELDS = (
-        "scales",
+        "scales"
     )
 
     @classmethod

@@ -4,8 +4,8 @@
         "blissful",
         "excited",
         "relieved",
-        "lecturing",
-        "beyond pleasure"
+        "beyond pleasure",
+        "ecstatic"
     ],
     "good": [
         "vaguely good",
@@ -20,13 +20,16 @@
         "grateful",
         "proud",
         "part of a group",
-        "relived",
         "hopeful",
         "social",
-        "on edge",
         "loving",
         "rested",
-        "happy exercise"
+        "happy exercise",
+        "cozy",
+        "familiar",
+        "independent",
+        "competitive",
+        "kind"
     ],
     "neutral": [
         "vaguely ok",
@@ -48,7 +51,12 @@
         "indifferent",
         "groggy",
         "cheering up",
-        "refreshed"
+        "refreshed",
+        "on edge",
+        "cold",
+        "hot",
+        "hungry",
+        "underwhelming"
     ],
     "bad": [
         "vaguely bad",
@@ -66,20 +74,20 @@
         "disgusted",
         "lonely",
         "distracted",
-        "cold",
         "impatient",
-        "hot",
         "cringe",
         "uncomfortable",
         "skimpy",
         "guilty",
         "sexual unease",
-        "hungry",
         "disappointed",
         "annoyed",
         "melting brain",
         "pass-aggressive",
-        "hurt emotionally"
+        "hurt emotionaly",
+        "lecturing",
+        "used",
+        "sad reflective"
     ],
     "awful": [
         "vaguely awful",
