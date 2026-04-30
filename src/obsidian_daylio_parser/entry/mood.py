@@ -16,6 +16,10 @@ class MoodGroup:
     name: str
     colour: str
 
+    def __post_init__(self):
+        if len(self.colour) != 1:
+            raise ValueError
+
 
 # TODO: Unfortunately Daylio uses localised strings for mood groups, so these will work only for English exports :(
 # Single source of truth for built-in groups. To add a new group, add one entry here — nothing else.

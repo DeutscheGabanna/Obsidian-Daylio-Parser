@@ -36,7 +36,7 @@ ERRORS
 
 class ErrorMsg(logs.LogMsg):
     STANDARD_MOODS_USED = "Standard mood set (rad, good, neutral, bad, awful) will be used."
-    COUNT_ROWS = "{} rows of data found. Of that, {} were processed correctly."
+    COUNT_ROWS = "{rows_parsed} rows of data found. Of that, {rows_ok} were processed correctly."
     ROW_MISSING_VALUES = "Row {row}: not enough cells — expected {expected}, got {got}."
     ROW_INCOMPLETE = "Row {row}: required field missing or empty — {detail}."
     ROW_INVALID_DATE = "Row {row}: {detail}"
@@ -109,7 +109,6 @@ class Librarian:
 
         try:
             for csv_row, line in enumerate(self.__reader.read(), start=2):
-                lines_total += 1
                 try:
                     if self.__process_line(line, known_dates, csv_row):
                         lines_ok += 1
@@ -120,7 +119,7 @@ class Librarian:
         except (utils.CouldNotLoadFileError, InvalidDataInFileError) as err:
             raise CannotAccessJournalError(self.__reader.source) from err
 
-        logger.info(ErrorMsg.COUNT_ROWS.format(lines_total, lines_ok))
+        logger.info(ErrorMsg.COUNT_ROWS.format(rows_parsed=csv_row, rows_ok=lines_ok))
 
         if lines_ok == 0:
             raise EmptyJournalError(self.__reader.source)

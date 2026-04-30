@@ -36,7 +36,7 @@ class ErrorMsg(logs.LogMsg):
     INVALID_MOOD = "Mood [italic]{}[/italic] is missing from a list of known moods"
     INVALID_MOOD_TO_COLOUR = f"{INVALID_MOOD}, so it won't have a color emoji."
     WRONG_TIME = "Received [italic]{}[/italic], expected valid time. Cannot create this entry without a valid time."
-    WRONG_ACTIVITIES = "Received a non-empty string containing activities. Parsing it resulted in an empty list."
+    WRONG_ACTIVITIES = "Received a non-empty string containing activities: '{}'. Parsing it resulted in an empty list."
 
 
 """---------------------------------------------------------------------------------------------------------------------
@@ -105,7 +105,7 @@ class Entry(utils.Core):
     :param suffix: Add a given string after the header
     :param mood_set: (opt.) Set if you want to use custom :class:`Moodverse` for mood handling
     :raise InvalidTimeError: if the passed time argument cannot be coerced into :class:`datetime.time`
-    :raise NoMoorError: if mood is falsy
+    :raise NoMoodError: if mood is falsy
     """
 
     def __init__(self,
