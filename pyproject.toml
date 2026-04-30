@@ -34,6 +34,9 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.dynamic]
 readme = {file = "README.md", content-type = "text/markdown"}
 
+[tool.versioningit]
+default-version = "0.0.0.dev0"
+
 [tool.versioningit.format]
 # Default format includes +gHASH local segment which PyPI rejects
 # Use .postN for untagged commits so Test PyPI accepts them
