@@ -1,7 +1,7 @@
 """Unit tests for Moodverse — mood loading, lookup, and validation."""
 import pytest
 
-from obsidian_daylio_parser.entry.mood import Moodverse, MoodNotFoundError
+from obsidian_daylio_parser.entry.mood import Moodverse, MoodNotFoundError, MoodGroup, BUILTIN_GROUPS
 
 
 class TestDefaultMoodverse:
@@ -10,7 +10,7 @@ class TestDefaultMoodverse:
 
     @pytest.mark.parametrize("mood", ["rad", "good", "neutral", "bad", "awful"])
     def test_standard_moods_present(self, default_moodverse, mood):
-        assert default_moodverse[mood] == mood
+        assert default_moodverse[mood].name == mood
 
     def test_unknown_mood_raises(self, default_moodverse):
         with pytest.raises(MoodNotFoundError):
@@ -20,9 +20,7 @@ class TestDefaultMoodverse:
         assert Moodverse() == Moodverse()
 
     def test_default_moods_dict(self, default_moodverse):
-        assert default_moodverse.get_moods == {
-            "rad": "rad", "good": "good", "neutral": "neutral", "bad": "bad", "awful": "awful"
-        }
+        assert default_moodverse.get_moods == {name: group for name, group in BUILTIN_GROUPS.items()}
 
 
 class TestCustomMoods:
@@ -90,7 +88,14 @@ class TestMoodverseFromFile:
 
 class TestMoodColouring:
     def test_getting_proper_group(self, custom_moodverse):
-        assert custom_moodverse["annoyed"] == "bad"
+        assert custom_moodverse["annoyed"].name == "bad"
 
     def test_getting_proper_colour(self, custom_moodverse):
-        assert custom_moodverse.get_colour("annoyed") == chr(0x1F7E7)
+        assert custom_moodverse["annoyed"].colour == chr(0x1F7E7)
+
+    def test_mood_group_carries_colour(self):
+        assert BUILTIN_GROUPS["rad"].colour == chr(0x1F7E9)
+        assert BUILTIN_GROUPS["good"].colour == chr(0x1F7E6)
+        assert BUILTIN_GROUPS["neutral"].colour == chr(0x2B1C)
+        assert BUILTIN_GROUPS["bad"].colour == chr(0x1F7E7)
+        assert BUILTIN_GROUPS["awful"].colour == chr(0x1F7E5)
