@@ -37,6 +37,10 @@ ERRORS
 class ErrorMsg(logs.LogMsg):
     STANDARD_MOODS_USED = "Standard mood set (rad, good, neutral, bad, awful) will be used."
     COUNT_ROWS = "{} rows of data found. Of that, {} were processed correctly."
+    ROW_MISSING_VALUES = "Row {row}: not enough cells — expected {expected}, got {got}."
+    ROW_INCOMPLETE = "Row {row}: required field missing or empty — {detail}."
+    ROW_INVALID_DATE = "Row {row}: {detail}"
+    ROW_UNEXPECTED_VALUE = "Row {row}: unexpected value, skipping."
 
 
 class MissingValuesInRowError(utils.ExpectedValueError):
@@ -104,13 +108,15 @@ class Librarian:
         lines_ok = 0
 
         try:
-            for line in self.__reader.read():
+            for csv_row, line in enumerate(self.__reader.read(), start=2):
                 lines_total += 1
                 try:
-                    if self.__process_line(line, known_dates):
+                    if self.__process_line(line, known_dates, csv_row):
                         lines_ok += 1
                 except MissingValuesInRowError as err:
-                    logger.warning(err.__doc__)
+                    logger.warning(ErrorMsg.ROW_MISSING_VALUES.format(
+                        row=csv_row, expected=err.expected_value, got=err.actual_value
+                    ))
         except (utils.CouldNotLoadFileError, InvalidDataInFileError) as err:
             raise CannotAccessJournalError(self.__reader.source) from err
 
@@ -122,12 +128,14 @@ class Librarian:
         return Journal(known_dates, self.__mood_set)
 
     def __process_line(self, line: dict[str, str],
-                       known_dates: dict[datetime.date, EntriesFrom]) -> bool:
+                       known_dates: dict[datetime.date, EntriesFrom],
+                       csv_row: int) -> bool:
         """
         Process a single row and add it to the appropriate :class:`EntriesFrom` group.
 
         :param line: a dictionary with values from the currently processed row.
         :param known_dates: mutable dict accumulating date -> EntriesFrom mappings.
+        :param csv_row: 1-based line number of this row in the source file (header = 1, first data row = 2).
         :return: True if the row was processed successfully, False otherwise.
         :raises MissingValuesInRowError: if the row lacks enough cells.
         """
@@ -141,9 +149,15 @@ class Librarian:
                 entries_from_this_date = self.__entries_from_builder.build(date, self.__mood_set)
             entries_from_this_date.create_entry(line)
             known_dates[date] = entries_from_this_date
-        except (group.TriedCreatingDuplicateDatedEntryError,
-                group.IncompleteDataRow,
-                utils.InvalidDateError,
-                ValueError):
+        except group.TriedCreatingDuplicateDatedEntryError:
+            return False
+        except group.IncompleteDataRow as err:
+            logger.warning(ErrorMsg.ROW_INCOMPLETE.format(row=csv_row, detail=str(err)))
+            return False
+        except (utils.InvalidDateError, utils.InvalidTimeError) as err:
+            logger.warning(ErrorMsg.ROW_INVALID_DATE.format(row=csv_row, detail=err.__doc__))
+            return False
+        except ValueError:
+            logger.warning(ErrorMsg.ROW_UNEXPECTED_VALUE.format(row=csv_row))
             return False
         return True

@@ -9,15 +9,23 @@ from obsidian_daylio_parser import logs
 from obsidian_daylio_parser.logs import logger
 from obsidian_daylio_parser.utils import JsonLoader, CouldNotLoadFileError
 
+
+@dataclass(frozen=True)
+class MoodGroup:
+    """A Daylio mood group: a named category that carries its own colour emoji."""
+    name: str
+    colour: str
+
+
 # TODO: Unfortunately Daylio uses localised strings for mood groups, so these will work only for English exports :(
-DEFAULT_DAYLIO_MOOD_GROUPS = "rad good neutral bad awful"
-MOOD_GROUPS: tuple[tuple[str, str], ...] = (
-    ("rad", chr(0x1F7E9)),
-    ("good", chr(0x1F7E6)),
-    ("neutral", chr(0x2B1C)),
-    ("bad", chr(0x1F7E7)),
-    ("awful", chr(0x1F7E5))
-)
+# Single source of truth for built-in groups. To add a new group, add one entry here — nothing else.
+BUILTIN_GROUPS: dict[str, MoodGroup] = {
+    "rad":     MoodGroup("rad",     chr(0x1F7E9)),
+    "good":    MoodGroup("good",    chr(0x1F7E6)),
+    "neutral": MoodGroup("neutral", chr(0x2B1C)),
+    "bad":     MoodGroup("bad",     chr(0x1F7E7)),
+    "awful":   MoodGroup("awful",   chr(0x1F7E5)),
+}
 
 
 class ErrorMsg(logs.LogMsg):
@@ -33,18 +41,19 @@ class MoodNotFoundError(KeyError):
 # noinspection SpellCheckingInspection
 class Moodverse:
     """
-    It is the single source of truth regarding moods in a ``dict[str, str]`` format. Keys are moods.
-    Values are mood groups to which this particular mood belongs to. It is used to colour them accordingly.
+    It is the single source of truth regarding moods in a ``dict[str, MoodGroup]`` format. Keys are moods.
+    Values are :class:`MoodGroup` objects the mood belongs to, carrying the group name and its colour emoji.
 
     Basic moodverse
     ---------------
-    The most basic instatiation of ``Moodverse()`` with no additional arguments is as follows::
+    The most basic instantiation of ``Moodverse()`` with no additional arguments seeds itself from
+    :data:`BUILTIN_GROUPS`, so each group name is also registered as its own first mood::
 
-        {"rad": "rad",
-        "good": "good",
-        "neutral": "neutral",
-        "bad": "bad",
-        "awful": "awful"}
+        {"rad": MoodGroup("rad", "🟩"),
+        "good": MoodGroup("good", "🟦"),
+        "neutral": MoodGroup("neutral", "⬜"),
+        "bad": MoodGroup("bad", "🟧"),
+        "awful": MoodGroup("awful", "🟥")}
 
     Custom moods
     ------------
@@ -67,29 +76,26 @@ class Moodverse:
     :raise MoodNotFoundError: when trying to access an unknown mood.
     """
     __slots__ = ('__known_moods', '__logger', '__custom_moods')
-    __known_moods: dict[str, str]
-    __custom_moods: dict[str, str]
+    __known_moods: dict[str, MoodGroup]
+    __custom_moods: dict[str, MoodGroup]
 
     def __init__(self, moods_to_process: dict[str, List[str]] = None):
 
         # DEFAULT PART OF INIT
         # --------------------
-        # Build a minimal-viable mood set with these five mood groups
+        # Seed from BUILTIN_GROUPS: each group name is its own first mood.
         # .
         # ├── known moods of 'rad' group
-        # │   └── rad
-        # ├── known moods of 'great' group
-        # │   └── great
+        # │   └── rad → MoodGroup("rad", "🟩")
+        # ├── known moods of 'good' group
+        # │   └── good → MoodGroup("good", "🟦")
         # ├── known moods of 'neutral' group
-        # │   └── neutral
+        # │   └── neutral → MoodGroup("neutral", "⬜")
         # ├── known moods of 'bad' group
-        # │   └── bad
+        # │   └── bad → MoodGroup("bad", "🟧")
         # └── known moods of 'awful' group
-        #     └── awful
-
-        # I know this line is shitty, but I don't have access to const or immutable lists, so I rely on str.strip()
-        # When I tried using mutable dicts or lists, the problem was that something in my code kept overwriting it
-        self.__known_moods = {mood: mood for mood in DEFAULT_DAYLIO_MOOD_GROUPS.split()}
+        #     └── awful → MoodGroup("awful", "🟥")
+        self.__known_moods = {name: group for name, group in BUILTIN_GROUPS.items()}
         self.__custom_moods = {}
 
         # We can stop here and be content with our "default" / "standard" mood-set if user did not pass a custom one
@@ -122,67 +128,44 @@ class Moodverse:
             )
             return cls()
 
-    def __expand_moodset_with_customs(self, moods_to_process: dict[str, List[str]]) -> dict[str, str]:
+    def __expand_moodset_with_customs(self, moods_to_process: dict[str, List[str]]) -> dict[str, MoodGroup]:
         """
         Expands the knowledge of this specific :class:`Moodverse` with new custom moods passed by user.
 
         What moods are skipped
         ----------------------
-        Dict keys present in the custom moodset but not present in the standard Daylio moodset are totally ignored.
+        Dict keys present in the custom moodset but not present in ``BUILTIN_GROUPS`` are totally ignored.
         Empty strings or non-string values in the List are ignored as well.
 
-        Why keys are moods and values are groups?
-        -----------------------------------------
-        In case you were wondering why I switched the logical ordering of the dictionary.
+        Why keys are moods and values are MoodGroup objects?
+        ----------------------------------------------------
         The mood groups used to be keys in the input arg, now they are values.
         Moods, in turn, were turned from a List into keys.
-        The logic behind it is that the reverse ordering lends itself better to actual practical usage of the moods.
-        When you want to colour a specific mood, you need to find its group colour.
-        Therefore, it's easy and ``O(n)`` to do ``dict[mood_name]`` and match it to a particular colour.
-        If we keep mood groups as keys, then we would need a dedicated method of finding a mood inside several mood
-        groups, and only then would we know which colour to use.
+        The logic behind it is that the reverse ordering lends itself better to actual practical usage.
+        When you want to colour a specific mood, you need its group's colour.
+        Therefore, it's O(1) to do ``dict[mood_name]`` and get a :class:`MoodGroup` carrying both the group
+        name and the colour emoji.
+        If we kept mood groups as keys, finding a mood would require iterating across several mood groups.
 
         :param moods_to_process: ``dict[str, List[str]]`` where keys are mood groups and lists contain specific moods.
-        :return: ``dict[str, str]`` where key is the name of the mood, and the value is the group it belongs to.
+        :return: ``dict[str, MoodGroup]`` where key is the name of the mood, value is the group it belongs to.
         """
-        # Then expand the minimal-viable mood set from Moodverse __init__
-        # .
-        # ├── known moods of 'rad' group
-        # │   └── rad
-        # │   └── (add more...)
-        # ├── known moods of 'great' group
-        # │   └── great
-        # │   └── (add more...)
-        # ├── known moods of 'neutral' group
-        # │   └── neutral
-        # │   └── (add more...)
-        # ├── known moods of 'bad' group
-        # │   └── bad
-        # │   └── (add more...)
-        # └── known moods of 'awful' group
-        #     └── awful
-        #     └── (add more...)
         custom_moods_found = {}
-        # By itering on the dictionary of known mood groups (which are always Daylio-compliant), we skip unknown groups.
-        # Unknown moods are OK, but they need to be within a known GROUP.
-        for group in DEFAULT_DAYLIO_MOOD_GROUPS.split():
-            # Set:
-            # - gets rid of duplicates
-            # - ignores values already in the known mood dict
-            # - ignores non-strings or empty strings
+        # By iterating BUILTIN_GROUPS keys we automatically skip any unknown groups from the JSON.
+        for group_name, mood_group in BUILTIN_GROUPS.items():
             try:
                 sanitised_moods = set(
                     mood
-                    for mood in moods_to_process[group]
+                    for mood in moods_to_process[group_name]
                     if isinstance(mood, str) and mood and mood not in self.__known_moods
                 )
                 for mood in sanitised_moods:
-                    self.__known_moods[mood] = group
-                    custom_moods_found[mood] = group
+                    self.__known_moods[mood] = mood_group
+                    custom_moods_found[mood] = mood_group
             except KeyError:
                 pass
 
-        # TODO: disallow duplicates in different mod groups - what colour to use if a mood is in more than one grup?
+        # TODO: disallow duplicates in different mood groups - what colour to use if a mood is in more than one group?
         return custom_moods_found
 
     def __repr__(self) -> str:
@@ -192,36 +175,29 @@ class Moodverse:
         if isinstance(other, Moodverse):
             return self.__known_moods == other.get_moods
 
-    def __getitem__(self, item: str) -> str:
+    def __getitem__(self, item: str) -> MoodGroup:
         """
-        :param item: key to access
-        :return: the name of the **group** the mood belongs to, from the list of known moods of this :class:`Moodverse`.
+        :param item: mood name to look up
+        :return: the :class:`MoodGroup` the mood belongs to (carries ``.name`` and ``.colour``).
+        :raises MoodNotFoundError: if the mood is not in the known set.
         """
         try:
             return self.__known_moods[item]
         except KeyError:
             raise MoodNotFoundError(item)
 
-    def get_colour(self, item: str):
-        """
-        :param item: name of the mood
-        :return: colorful emoji as a hex value indicating the group it belongs to
-        """
-        return next(mood[1] for mood in MOOD_GROUPS if mood[0] == self[item])[0]
-
-
     @property
-    def get_custom_moods(self) -> dict[str, str]:
+    def get_custom_moods(self) -> dict[str, MoodGroup]:
         """
         Get the dictionary of only the custom moods known to this instance of :class:`Moodverse`.
-        :return: ``dict[str, str]`` where keys are moods and their values are mood groups they belong to
+        :return: ``dict[str, MoodGroup]`` where keys are moods and values are the :class:`MoodGroup` they belong to.
         """
         return self.__custom_moods
 
     @property
-    def get_moods(self) -> dict[str, str]:
+    def get_moods(self) -> dict[str, MoodGroup]:
         """
         Get the dictionary of all moods known to this instance of :class:`Moodverse`.
-        :return: ``dict[str, str]`` where keys are moods and their values are mood groups they belong to
+        :return: ``dict[str, MoodGroup]`` where keys are moods and values are the :class:`MoodGroup` they belong to.
         """
         return self.__known_moods

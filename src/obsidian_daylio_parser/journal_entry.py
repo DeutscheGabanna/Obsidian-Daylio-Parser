@@ -149,7 +149,7 @@ class Entry(utils.Core):
         elif colour and mood not in mood_set.get_moods:
             logger.warning(ErrorMsg.INVALID_MOOD.format(mood))
         elif colour:
-            self.__emoji = mood_set.get_colour(mood_set[mood])
+            self.__emoji = mood_set[mood].colour
         # Warning is enough, it just disables colouring so not big of a deal
         self.__mood = mood
 
