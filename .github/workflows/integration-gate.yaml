@@ -26,4 +26,4 @@ jobs:
           python -m pip install .
       - name: Run CLI integration test
         run: |
-          python -m unittest tests.test_cli_integration -v
+          python -m pytest tests/test_cli.py
