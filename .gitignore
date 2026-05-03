@@ -6,5 +6,5 @@ dist/
 build/
 **.egg-info
 /.venv/
-
+**/__pycache__/**
 **theme_project_new.xml
