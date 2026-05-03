@@ -11,18 +11,23 @@ import logging
 import os
 import re
 import typing
+from collections.abc import Generator
 from contextlib import contextmanager
+from os import PathLike
 from typing import List, TextIO, Optional
 
-from obsidian_daylio_parser import errors
+from rich import progress
+
+from obsidian_daylio_parser import logs
+from obsidian_daylio_parser.logs import logger
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
 ---------------------------------------------------------------------------------------------------------------------"""
 
 
-class ErrorMsg(errors.ErrorMsgBase):
-    INVALID_OBSIDIAN_TAGS = "You want your activities as frontmatter_tags, but {} is invalid."
+class ErrorMsg(logs.LogMsg):
+    INVALID_OBSIDIAN_TAGS = "You want your activities as frontmatter_tags, but [italic]{}[/italic] is invalid."
 
 
 class ExpectedValueError(TypeError):
@@ -64,7 +69,7 @@ class InvalidTimeError(ExpectedValueError):
 class CouldNotLoadFileError(Exception):
     """The file {} could not be accessed."""
 
-    def __init__(self, path: str):
+    def __init__(self, path: os.PathLike):
         super().__init__()
         self.__path = path
         self.__doc__ = self.__doc__.format(self.__path)
@@ -109,7 +114,6 @@ def slugify(text: str, taggify: bool) -> str:
     """
     Simple slugification function to transform text. Works on non-latin characters too.
     """
-    logger = logging.getLogger(__name__)
     text = str(text).lower().strip()  # get rid of trailing spaces left after splitting activities apart from one string
     text = re.sub(re.compile(r"\s+"), '-', text)  # Replace spaces with -
     text = re.sub(re.compile(r"[^\w\-]+"), '', text)  # Remove all non-word chars
@@ -123,7 +127,7 @@ def slugify(text: str, taggify: bool) -> str:
     return '#' + text if taggify else text
 
 
-def expand_path(path: str) -> str:
+def expand_path(path: PathLike) -> PathLike:
     """
     Expand all %variables%, ~/home-directories and relative parts in the path. Return the expanded path.
     It does not use os.path.abspath() because it treats current script directory as root.
@@ -160,7 +164,9 @@ def strip_and_get_truthy(delimited_string: str, delimiter: str) -> List[str]:
 
     sliced_del_string = slice_quotes(delimited_string)
 
-    return [el for el in sliced_del_string.split(delimiter) if el] if sliced_del_string else []
+    return [
+        el.strip() for el in sliced_del_string.replace("\xa0", " ").split(delimiter) if el
+    ] if sliced_del_string else []
 
 
 class FileLoader:
@@ -171,14 +177,15 @@ class FileLoader:
         pass
 
     @contextmanager
-    def load(self, path: str) -> None:
+    def load(self, path: os.PathLike) -> Generator[typing.Any, None, None]:
         """
         Loads the file into context manager and catches exceptions thrown while doing so.
         It catches errors specific to the implementation first, then tries to catch more general IO errors.
         :return: It is not specified what kind of object will be returned when opened. Left up to implementation.
         """
         try:
-            with open(expand_path(path), encoding='UTF-8') as file:
+            # just in case it's a BOM file. UTF-8-sig can read files without BOM too, so it's more universal this way
+            with progress.open(expand_path(path), mode="r", encoding='UTF-8-sig') as file:
                 yield self._load_file(file)
         # TypeError is thrown when a None argument is passed
         except (FileNotFoundError, PermissionError, OSError, UnicodeDecodeError, TypeError) as err:

@@ -24,13 +24,53 @@ Obsidian is a markdown-based note-taking app that allows you to create a persona
 * group - a group of entries written on the same day
 
 ## Architecture
-The converter is a single module with a sub-module `entry` for interpreting the moods.
+The converter is a single module `obsidian-daylio-parser` with a sub-module `entry` for interpreting the moods.
 
 ### Input: Daylio .csv
 ```csv
 full_date,date,weekday,time,mood,activities,scales,note_title,note
 2026-04-01,April 1,Wednesday,18:00,vaguely good,"outdoors | volleyball","","","<b>test</b><br><br>test2<br><br>test3"
 ```
+The note, if user enabled the "rich editor" in Daylio, is written in HTML format.
+
+### Output: Obsidian .md
+```markdown
+---
+tags: daylio
+---
+
+## vaguely good | 18:00
+#outdoors #volleyball
+**test**<br><br>newline sentence.
+
+## fatigued | 00:00 | An optional title
+#allegro #working-remotely
+Phaśellus pharetra justo ac dui lacinia ullamcorper.
+```
+Obsidian tags cannot start with a number.
+
+## Why a separate module `shim/daylio-obsidian-parser`?
+The `shim/daylio-obsidian-parser` module exists for backward compatibility. It provides a CLI called `daylio_to_md` that forwards execution to the canonical CLI `obsidian-daylio-parser` and emits a deprecation warning. This allows users who have been using the old CLI to continue using it without breaking their workflow, while also encouraging them to switch to the new CLI.
+
+If for any reason whatsoever you want to update the old CLI, make the changes and then:
+```bash
+source .venv/bin/activate # if you have venv set up for this project
+cd shim/daylio-obsidian-parser
+rm -rf dist *.egg-info build
+python -m build
+# First upload to testpypi
+TWINE_REPOSITORY=testpypi python -m twine upload dist/*
+# check the package on testpypi and download it for testing
+pip uninstall daylio-obsidian-parser
+pip cache purge # if you have already installed the package before, you need to clear the cache to force pip to download the new version from testpypi
+pip install --index-url https://test.pypi.org/simple/ daylio-obsidian --extra-index-url https://pypi.org/simple # extra index in case there are dependencies not present in test-pypi
+# If everything looks good, proceed to upload to pypi
+TWINE_REPOSITORY=pypi python -m twine upload dist/*
+```
+
+If you get HTTP 400 errors when uploading to TestPyPI, it's likely because the version number of the package you're trying to upload already exists on TestPyPI.
+The only option is for you to increment the version number in `shim/daylio-obsidian-parser/pyproject.toml` and try uploading again.
+Deleting the version from TestPyPI or PyPI is not an option, as both repositories are immutable and do not allow deleting or overwriting existing versions.
 
 #### Scales
 Note that `scales` have been recently introduced in Daylio.
@@ -38,3 +78,5 @@ Scales are a different "kind" of activity. Instead of a single string, scales ca
 * numerical - ranging from any minimum value to a maximum value (0-10, for example). The min and max value is user-defined
 * categorical - a list of user-defined categories (e.g. "low", "medium", "high", etc.)
 * time - a time duration (e.g. "1 hour", "30 minutes", etc.). The user picks a duration from an Android time picker.
+
+

@@ -6,21 +6,23 @@ To add support for a new format, subclass :class:`JournalReader` and implement :
 """
 from __future__ import annotations
 
-import typing
 import logging
+import typing
 from abc import ABC, abstractmethod
+from os import PathLike
 
-from obsidian_daylio_parser import utils, errors
-
+from obsidian_daylio_parser import utils, logs
+from obsidian_daylio_parser.logs import logger
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
 ---------------------------------------------------------------------------------------------------------------------"""
 
 
-class ErrorMsg(errors.ErrorMsgBase):
+class ErrorMsg(logs.LogMsg):
     CSV_ALL_FIELDS_PRESENT = "All expected columns are present in the CSV file columns."
     CSV_FIELDS_MISSING = "The following expected columns are missing: {}"
+    CSV_NEW_FIELDS_MISSING = "This seems to be an old Daylio export without the new fields: {}. They are optional."
 
 
 class InvalidDataInFileError(utils.ExpectedValueError):
@@ -56,9 +58,18 @@ class JournalReader(ABC):
         "note",
     )
 
+    # fields not present in older Daylio .csv, for backwards compatibility
+    OPTIONAL_FIELDS = (
+        "scales"
+    )
+
+    @classmethod
+    def check_fields(cls, present: tuple[str, ...], expected: tuple[str, ...]):
+        return [ field for field in expected if field not in present ]
+
     @property
     @abstractmethod
-    def source(self) -> str:
+    def source(self) -> PathLike:
         """A human-readable description of the source (e.g. a filepath)."""
         ...
 
@@ -79,12 +90,11 @@ class CsvJournalReader(JournalReader):
     Opens the file, checks that all expected columns are present, and yields one dict per row.
     """
 
-    def __init__(self, filepath: str):
+    def __init__(self, filepath: PathLike):
         self.__filepath = filepath
-        self.__logger = logging.getLogger(self.__class__.__name__)
 
     @property
-    def source(self) -> str:
+    def source(self) -> PathLike:
         return self.__filepath
 
     def read(self) -> typing.Iterator[dict[str, str]]:
@@ -92,19 +102,21 @@ class CsvJournalReader(JournalReader):
         :raises utils.CouldNotLoadFileError: if the CSV cannot be opened or decoded.
         :raises InvalidDataInFileError: if required columns are missing from the CSV header.
         """
+
         try:
             with utils.CsvLoader().load(self.__filepath) as file:
                 # Validate that all expected columns are present
-                missing = [
-                    field for field in self.EXPECTED_FIELDS
-                    if field not in file.fieldnames
-                ]
+                missing = self.check_fields(file.fieldnames, self.EXPECTED_FIELDS)
                 if missing:
                     msg = ErrorMsg.CSV_FIELDS_MISSING.format(', '.join(missing))
-                    self.__logger.critical(msg)
+                    logger.critical(msg)
                     raise InvalidDataInFileError(file.fieldnames, msg)
 
-                self.__logger.debug(ErrorMsg.CSV_ALL_FIELDS_PRESENT)
+                logger.debug(ErrorMsg.CSV_ALL_FIELDS_PRESENT)
+                optionals = self.check_fields(file.fieldnames, self.OPTIONAL_FIELDS)
+                if optionals:
+                    msg = ErrorMsg.CSV_NEW_FIELDS_MISSING.format(', '.join(optionals))
+                    logger.info(msg)
 
                 for line in file:
                     yield line
@@ -114,4 +126,3 @@ class CsvJournalReader(JournalReader):
             raise
         except ValueError as err:
             raise utils.CouldNotLoadFileError(self.__filepath) from err
-

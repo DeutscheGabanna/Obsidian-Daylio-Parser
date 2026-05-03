@@ -7,7 +7,10 @@ To add support for a new output format, create a new writer class that accepts a
 from __future__ import annotations
 
 import os
+from os import PathLike
 from typing import IO
+
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn
 
 from obsidian_daylio_parser.journal import Journal
 
@@ -31,7 +34,7 @@ class MarkdownWriter:
         MarkdownWriter("/output").write_all(journal)
     """
 
-    def __init__(self, destination: str):
+    def __init__(self, destination: PathLike | str):
         self.__destination = destination
 
     def write_all(self, journal: Journal) -> None:
@@ -39,16 +42,27 @@ class MarkdownWriter:
         Loop through every day in the journal and write its entries to a Markdown file.
         :param journal: the parsed :class:`Journal` to output.
         """
-        for entries_from in journal:
-            date = entries_from.date
-            filename = f"{date}.md"
-            filepath = "/".join([
-                self.__destination,
-                str(date.year),
-                str(date.month),
-                filename
-            ])
-            # TODO: maybe add the mode option to settings in argparse? write/append
-            with _create_and_open(filepath, 'w') as file:
-                entries_from.output(file)
-
+        with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                TaskProgressColumn(),
+                TimeRemainingColumn()
+        ) as progress:
+            task = progress.add_task(
+                f"[bold cyan]Creating markdown files in {self.__destination}...",
+                total=len(journal)
+            )
+            for entries_from in journal:
+                date = entries_from.date
+                filename = f"{date}.md"
+                filepath = os.path.join(
+                    self.__destination,
+                    str(date.year),
+                    str(date.month),
+                    filename
+                )
+                # TODO: maybe add the mode option to settings in argparse? write/append
+                with _create_and_open(filepath, 'w') as file:
+                    entries_from.output(file)
+                    progress.update(task, advance=len(entries_from))

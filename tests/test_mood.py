@@ -1,110 +1,101 @@
-from unittest import TestCase
+"""Unit tests for Moodverse — mood loading, lookup, and validation."""
+import pytest
 
-from obsidian_daylio_parser.entry.mood import Moodverse, MoodNotFoundError
+from obsidian_daylio_parser.entry.mood import Moodverse, MoodNotFoundError, MoodGroup, BUILTIN_GROUPS
 
 
-# noinspection SpellCheckingInspection
-class TestMoodverse(TestCase):
-    def test_default_moodverse_no_customisation(self):
-        self.assertFalse(Moodverse().get_custom_moods)
-        self.assertEqual("rad", Moodverse()["rad"])
-        self.assertEqual("bad", Moodverse()["bad"])
-        with self.assertRaises(MoodNotFoundError):
-            # noinspection PyStatementEffect
-            Moodverse()["amazing"]
-        # don't compare Moodverses by their memory address, but by their contents
-        self.assertEqual(Moodverse(), Moodverse())
+class TestDefaultMoodverse:
+    def test_has_no_custom_moods(self, default_moodverse):
+        assert not default_moodverse.get_custom_moods
 
-    def test_loading_valid_moods_into_moodverse(self):
-        # These moods are self-sufficient, because even if standard mood set didn't exist, they satisfy all requirements
-        ok_moods_loaded_from_json = {
+    @pytest.mark.parametrize("mood", ["rad", "good", "neutral", "bad", "awful"])
+    def test_standard_moods_present(self, default_moodverse, mood):
+        assert default_moodverse[mood].name == mood
+
+    def test_unknown_mood_raises(self, default_moodverse):
+        with pytest.raises(MoodNotFoundError):
+            default_moodverse["amazing"]
+
+    def test_two_default_instances_are_equal(self):
+        assert Moodverse() == Moodverse()
+
+    def test_default_moods_dict(self, default_moodverse):
+        assert default_moodverse.get_moods == {name: group for name, group in BUILTIN_GROUPS.items()}
+
+
+class TestCustomMoods:
+    def test_valid_custom_moods_loaded(self):
+        moods = {
             "rad": ["rad", "amazing"],
             "good": ["good", "nice"],
             "neutral": ["neutral", "ok", "fine"],
             "bad": ["bad"],
-            "awful": ["awful", "miserable"]
+            "awful": ["awful", "miserable"],
         }
-        my_moodverse = Moodverse(ok_moods_loaded_from_json)
+        mv = Moodverse(moods)
+        # 5 non-duplicate customs: amazing, nice, ok, fine, miserable
+        assert len(mv.get_custom_moods) == 5
+        assert "nice" in mv.get_moods
+        assert "amazing" in mv.get_moods
+        assert "miserable" in mv.get_moods
 
-        self.assertNotEqual(
-            {"rad": "rad", "good": "good", "neutral": "neutral", "bad": "bad", "awful": "awful"},
-            my_moodverse.get_moods
-        )
-        # in total there are 10 moods, but there are only 5 additional moods if you skip duplicates from defaults
-        self.assertEqual(5, len(my_moodverse.get_custom_moods))
-        self.assertIn("nice", my_moodverse.get_moods)
-        self.assertIn("amazing", my_moodverse.get_moods)
-        self.assertIn("miserable", my_moodverse.get_moods)
-
-        self.assertIn("neutral", Moodverse().get_moods)
-        self.assertIn("bad", Moodverse().get_moods)
-        self.assertIn("awful", Moodverse().get_moods)
-        self.assertIn("good", Moodverse().get_moods)
-        self.assertIn("rad", Moodverse().get_moods)
-
-        with self.assertRaises(MoodNotFoundError):
-            # noinspection PyStatementEffect
-            Moodverse()["terrific"]
-
-    # noinspection PyStatementEffect
-    def test_loading_moodsets_with_unknown_keys(self):
-        # This mood set contains unknown mood groups. They should be skipped.
-        moodlist_with_unknown_group = {
-            "holy cow": ["badger", "fox", "falcon"],  # unknown group
+    def test_unknown_group_keys_are_skipped(self):
+        moods = {
+            "holy cow": ["badger", "fox", "falcon"],
             "rad": ["amazing"],
             "good": ["nice"],
             "neutral": ["ok", "fine"],
             "bad": ["bad"],
-            "awful": ["miserable"]
+            "awful": ["miserable"],
         }
+        mv = Moodverse(moods)
+        assert len(mv.get_custom_moods) == 5
+        for animal in ("badger", "fox", "falcon"):
+            with pytest.raises(MoodNotFoundError):
+                mv[animal]
 
-        my_moodverse = Moodverse(moodlist_with_unknown_group)
-        # There are 9 moods on the list, 8 non-standard ones. Should be less than 8 because we skip 3 from "holy cow".
-        self.assertEqual(len(my_moodverse.get_custom_moods), 5, msg=my_moodverse.get_custom_moods.keys())
-        # Standard moods should still be in the groups, irrespective of what was in the custom dictionary
-        self.assertIn("rad", my_moodverse.get_moods)
-        self.assertIn("good", my_moodverse.get_moods)
-        self.assertIn("awful", my_moodverse.get_moods)
-        self.assertIn("neutral", my_moodverse.get_moods)
-        with self.assertRaises(MoodNotFoundError):
-            my_moodverse["badger"]
-        with self.assertRaises(MoodNotFoundError):
-            my_moodverse["fox"]
-        with self.assertRaises(MoodNotFoundError):
-            my_moodverse["falcon"]
+    def test_incomplete_moodlist_still_has_defaults(self):
+        mv = Moodverse({"awful": ["miserable"]})
+        assert mv.get_custom_moods
+        assert "miserable" in mv.get_moods
+        assert "good" in mv.get_moods
 
-    def test_loading_incomplete_moodlists(self):
-        moodlist_incomplete = {
-            "awful": ["miserable"]
-        }
+    @pytest.mark.parametrize(("moods", "expected_custom_count"), [
+        ({"rad": ["", None], "good": [""], "neutral": ["", 15], "bad": ["", True], "awful": [""]}, 0),
+        ({"rad": ["rad"], "good": ["good"], "neutral": ["neutral"], "bad": ["FALCON"], "awful": [""]}, 1),
+        ({"rad": ["rad"], "good": ["good"], "neutral": ["neutral"], "bad": [None, 29, "badger"], "awful": [""]}, 1),
+    ])
+    def test_invalid_mood_values_skipped(self, moods, expected_custom_count):
+        assert len(Moodverse(moods).get_custom_moods) == expected_custom_count
 
-        my_moodverse = Moodverse(moodlist_incomplete)
-        self.assertGreater(len(my_moodverse.get_custom_moods), 0)
-        self.assertIn("miserable", my_moodverse.get_moods)
-        self.assertIn("awful", my_moodverse.get_moods)
-        self.assertIn("good", my_moodverse.get_moods)
 
-    def test_loading_invalid_moodlists(self):
-        bad_moods_loaded_from_json = {
-            "rad": ["", None],
-            "good": [""],
-            "neutral": ["", 15],
-            "bad": ["", True],
-            "awful": [""]
-        }
-        self.assertEqual(0, len(Moodverse(bad_moods_loaded_from_json).get_custom_moods))
+class TestMoodverseFromFile:
+    def test_from_valid_json(self, custom_moodverse):
+        assert custom_moodverse.get_custom_moods
 
-        bad_moods_loaded_from_json = {
-            "rad": ["rad"],
-            "good": ["good"],
-            "neutral": ["neutral"],
-            "bad": ["bed"],
-            "awful": [""]  # <--
-        }
-        self.assertEqual(1, len(Moodverse(bad_moods_loaded_from_json).get_custom_moods))
+    def test_from_none_gives_default(self):
+        mv = Moodverse.from_file(None)
+        assert not mv.get_custom_moods
 
-    def test_loading_same_moods_as_already_existing(self):
-        self.assertDictEqual(
-            {"rad": "rad", "good": "good", "neutral": "neutral", "bad": "bad", "awful": "awful"},
-            Moodverse().get_moods
-        )
+    def test_from_invalid_file_gives_default(self, resources_path):
+        mv = Moodverse.from_file(resources_path / "daylio_export_bad_empty.csv")
+        assert not mv.get_custom_moods
+
+    def test_incomplete_json_loads_partial_customs(self, resources_path):
+        mv = Moodverse.from_file(resources_path / "moods_bad_missing_group.json")
+        # incomplete.json has moods in rad, neutral, bad, awful but not good → 10 customs
+        assert len(mv.get_custom_moods) == 10
+
+class TestMoodColouring:
+    def test_getting_proper_group(self, custom_moodverse):
+        assert custom_moodverse["annoyed"].name == "bad"
+
+    def test_getting_proper_colour(self, custom_moodverse):
+        assert custom_moodverse["annoyed"].colour == chr(0x1F7E7)
+
+    def test_mood_group_carries_colour(self):
+        assert BUILTIN_GROUPS["rad"].colour == chr(0x1F7E9)
+        assert BUILTIN_GROUPS["good"].colour == chr(0x1F7E6)
+        assert BUILTIN_GROUPS["neutral"].colour == chr(0x2B1C)
+        assert BUILTIN_GROUPS["bad"].colour == chr(0x1F7E7)
+        assert BUILTIN_GROUPS["awful"].colour == chr(0x1F7E5)

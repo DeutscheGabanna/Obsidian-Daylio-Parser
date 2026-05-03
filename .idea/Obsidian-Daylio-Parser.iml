@@ -5,12 +5,17 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/shim/daylio-obsidian-parser/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv" />
       <excludeFolder url="file://$MODULE_DIR$/tests/files/output-results" />
     </content>
-    <orderEntry type="jdk" jdkName="Pipenv (Obsidian-Daylio-Parser)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.13 (Obsidian-Daylio-Parser)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PackageRequirementsSettings">
     <option name="requirementsPath" value="" />
+  </component>
+  <component name="PyDocumentationSettings">
+    <option name="format" value="GOOGLE" />
+    <option name="myDocStringFormat" value="Google" />
   </component>
 </module>

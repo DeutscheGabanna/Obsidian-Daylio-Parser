@@ -10,16 +10,15 @@ Here's a quick breakdown of what is the specialisation of this file in the journ
 """
 from __future__ import annotations
 
-import io
-import logging
-import typing
 import datetime
+import io
+import typing
 from dataclasses import dataclass
 
+from obsidian_daylio_parser import utils, logs
 from obsidian_daylio_parser.config import DEFAULTS
-from obsidian_daylio_parser import utils, errors
 from obsidian_daylio_parser.entry.mood import Moodverse
-
+from obsidian_daylio_parser.logs import logger
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
@@ -28,14 +27,16 @@ ERRORS
 
 class NoMoodError(utils.ExpectedValueError):
     """Required non-empty mood."""
+
     def __init__(self, expected_value, actual_value):
         super().__init__(expected_value, actual_value)
 
 
-class ErrorMsg(errors.ErrorMsgBase):
-    INVALID_MOOD = "Mood {} is missing from a list of known moods. Not critical, but colouring won't work on the entry."
-    WRONG_TIME = "Received {}, expected valid time. Cannot create this entry without a valid time."
-    WRONG_ACTIVITIES = "Received a non-empty string containing activities. Parsing it resulted in an empty list."
+class ErrorMsg(logs.LogMsg):
+    INVALID_MOOD = "Mood [italic]{}[/italic] is missing from a list of known moods"
+    INVALID_MOOD_TO_COLOUR = f"{INVALID_MOOD}, so it won't have a color emoji."
+    WRONG_TIME = "Received [italic]{}[/italic], expected valid time. Cannot create this entry without a valid time."
+    WRONG_ACTIVITIES = "Received a non-empty string containing activities: '{}'. Parsing it resulted in an empty list."
 
 
 """---------------------------------------------------------------------------------------------------------------------
@@ -59,19 +60,21 @@ class EntryBuilder:
     tag_activities: bool = DEFAULTS.tag_activities
     prefix: str = DEFAULTS.prefix
     suffix: str = DEFAULTS.suffix
+    colour: bool = DEFAULTS.colour
 
     def build(self,
               time: typing.Union[datetime.time, str, typing.List[str], typing.List[int]],
               mood: str,
               activities: str = None,
+              scales = None,
               title: str = None,
               note: str = None,
               mood_set: Moodverse = Moodverse()) -> Entry:
-
         return Entry(
             utils.guess_time_type(time),
             mood,
             activities,
+            scales,
             title,
             note,
             self.csv_delimiter,
@@ -79,6 +82,7 @@ class EntryBuilder:
             self.tag_activities,
             self.prefix,
             self.suffix,
+            self.colour,
             mood_set
         )
 
@@ -101,13 +105,14 @@ class Entry(utils.Core):
     :param suffix: Add a given string after the header
     :param mood_set: (opt.) Set if you want to use custom :class:`Moodverse` for mood handling
     :raise InvalidTimeError: if the passed time argument cannot be coerced into :class:`datetime.time`
-    :raise NoMoorError: if mood is falsy
+    :raise NoMoodError: if mood is falsy
     """
 
     def __init__(self,
                  time: typing.Union[datetime.time, str, typing.List[str], typing.List[int]],
                  mood: str,
                  activities: str = None,
+                 scales = None,
                  title: str = None,
                  note: str = None,
                  csv_delimiter: str = EntryBuilder.csv_delimiter,
@@ -115,14 +120,15 @@ class Entry(utils.Core):
                  tag_activities: bool = EntryBuilder.tag_activities,
                  prefix: str = EntryBuilder.prefix,
                  suffix: str = EntryBuilder.suffix,
+                 colour: bool = EntryBuilder.colour,
                  mood_set: Moodverse = Moodverse()):
 
-        self.__logger = logging.getLogger(self.__class__.__name__)
         self.__csv_delimiter = csv_delimiter
         self.__header_multiplier = header_multiplier
         self.__tag_activities = tag_activities
         self.__prefix = prefix
         self.__suffix = suffix
+        self.__colour = colour
 
         # Processing required properties
         # ---
@@ -137,8 +143,13 @@ class Entry(utils.Core):
             raise NoMoodError("any truthy string as mood", mood)
 
         # Check if the mood is valid - i.e. it does exist in the currently used Moodverse
-        if mood not in mood_set.get_moods:
-            self.__logger.warning(ErrorMsg.INVALID_MOOD.format(mood))
+        self.__emoji = None
+        if not colour and mood not in mood_set.get_moods:
+            logger.info(ErrorMsg.INVALID_MOOD.format(mood))
+        elif colour and mood not in mood_set.get_moods:
+            logger.warning(ErrorMsg.INVALID_MOOD.format(mood))
+        elif colour:
+            self.__emoji = mood_set[mood].colour
         # Warning is enough, it just disables colouring so not big of a deal
         self.__mood = mood
 
@@ -152,7 +163,14 @@ class Entry(utils.Core):
                 for activity in working_array:
                     self.__activities.append(utils.slugify(activity, self.__tag_activities))
             else:
-                self.__logger.warning(ErrorMsg.WRONG_ACTIVITIES.format(activities))
+                logger.warning(ErrorMsg.WRONG_ACTIVITIES.format(activities))
+        # Process scales
+        self.__scales = []
+        if scales:
+            working_array = utils.strip_and_get_truthy(scales, self.__csv_delimiter)
+            if len(working_array) > 0:
+                for scale in working_array:
+                    self.__scales.append(scale)
         # Process title
         self.__title = utils.slice_quotes(title) if title else None
         # Process note
@@ -173,9 +191,9 @@ class Entry(utils.Core):
         chars_written = 0
         # HEADER OF THE NOTE
         # e.g. "## great | 11:00 AM | Oh my, what a night!"
-        # header_multiplier is an int that multiplies the # to create headers in markdown
+        # header_multiplier is an int that multiplies the # to create headers in Markdown
         header_elements = [
-            self.__header_multiplier * "#" + ' ' + self.__mood,
+            ' '.join([str(el) for el in [self.__header_multiplier * "#", self.__emoji, self.__mood] if el is not None]),
             self.time.strftime("%H:%M"),
             self.__title
         ]
@@ -183,8 +201,15 @@ class Entry(utils.Core):
         chars_written += stream.write(header)
         # ACTIVITIES
         # e.g. "bicycle skating pool swimming"
+        # or "#bicycle #skating #pool #swimming" if tagging is enabled in settings
         if len(self.__activities) > 0:
             chars_written += stream.write("\n" + ' '.join(self.__activities))
+        # SCALES
+        # e.g. "sleep quality 9/10 pts"
+        # "sleep quality" is the name of the scale, 9 is the value, 10 is the limit, "pts" is the unit
+        # all of these individual elements are configured by Daylio and exported as a simple concatenated string
+        if len(self.__scales) > 0:
+            chars_written += stream.write("\n" + ' | '.join(self.scales))
         # NOTE
         # e.g. "Went swimming this evening."
         if self.__note is not None:
@@ -201,11 +226,15 @@ class Entry(utils.Core):
         return self.__activities
 
     @property
-    def title(self) -> str:
+    def scales(self) -> typing.List[str]:
+        return self.__scales
+
+    @property
+    def title(self) -> str | None:
         return self.__title
 
     @property
-    def note(self) -> str:
+    def note(self) -> str | None:
         return self.__note
 
     @property

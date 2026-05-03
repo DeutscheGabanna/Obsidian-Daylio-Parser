@@ -1,12 +1,16 @@
 [project]
 name = "obsidian-daylio-parser"
 dynamic = ["version", "readme"]
-requires-python = ">= 3.10"
+requires-python = ">= 3.11"
 authors = [
 	{name = "Paweł Ilnicki", email = "59067099+DeutscheGabanna@users.noreply.github.com"}
 ]
 description = "Converts Daylio app .csv file into markdown files for use in Obsidian."
 license = {file = "LICENSE", content-type = "text/markdown"}
+dependencies = [
+	"rich ~= 14.3.3",
+	"typer ~= 0.24"
+]
 classifiers = [
 	"Topic :: Text Processing :: Markup :: Markdown",
 	"Intended Audience :: Developers",
@@ -21,7 +25,7 @@ keywords = [ "csv", "markdown", ".md", ".csv", "daylio", "obsidian", "file conve
 [project.scripts]
 # Make obsidian-daylio-parser command be recognised by shell as a program
 # No need to type: python -m <package> anymore
-obsidian-daylio-parser = "obsidian_daylio_parser.__main__:main"
+obsidian-daylio-parser = "obsidian_daylio_parser.__main__:run"
 
 [build-system]
 requires = ["setuptools", "build", "wheel", "versioningit"]
@@ -31,13 +35,19 @@ build-backend = "setuptools.build_meta"
 readme = {file = "README.md", content-type = "text/markdown"}
 
 [tool.versioningit]
-vcs = "git"
-next-version = "null"
-[tool.versioningit.tag2version]
-rmprefix = "v."
+default-version = "0.0.0.dev0"
+
 [tool.versioningit.format]
 # Default format includes +gHASH local segment which PyPI rejects
 # Use .postN for untagged commits so Test PyPI accepts them
 distance = "{base_version}.post{distance}"
 dirty = "{base_version}.post{distance}+dirty"
 distance-dirty = "{base_version}.post{distance}+dirty"
+
+[tool.versioningit.tag2version]
+rmprefix = "v."
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-v"

@@ -18,24 +18,29 @@ Usage::
 """
 from __future__ import annotations
 
-import logging
 import datetime
+import logging
+from os import PathLike
 
-from obsidian_daylio_parser import utils, errors, group
+from obsidian_daylio_parser import utils, group, logs
 from obsidian_daylio_parser.entry.mood import Moodverse
 from obsidian_daylio_parser.group import EntriesFrom, EntriesFromBuilder
 from obsidian_daylio_parser.journal import Journal
+from obsidian_daylio_parser.logs import logger
 from obsidian_daylio_parser.reader import JournalReader, InvalidDataInFileError
-
 
 """---------------------------------------------------------------------------------------------------------------------
 ERRORS
 ---------------------------------------------------------------------------------------------------------------------"""
 
 
-class ErrorMsg(errors.ErrorMsgBase):
+class ErrorMsg(logs.LogMsg):
     STANDARD_MOODS_USED = "Standard mood set (rad, good, neutral, bad, awful) will be used."
-    COUNT_ROWS = "{} rows of data found. Of that, {} were processed correctly."
+    COUNT_ROWS = "{rows_parsed} rows of data found. Of that, {rows_ok} were processed correctly."
+    ROW_MISSING_VALUES = "Row {row}: not enough cells — expected {expected}, got {got}."
+    ROW_INCOMPLETE = "Row {row}: required field missing or empty — {detail}."
+    ROW_INVALID_DATE = "Row {row}: {detail}"
+    ROW_UNEXPECTED_VALUE = "Row {row}: unexpected value, skipping."
 
 
 class MissingValuesInRowError(utils.ExpectedValueError):
@@ -48,14 +53,14 @@ class MissingValuesInRowError(utils.ExpectedValueError):
 class CannotAccessJournalError(utils.CouldNotLoadFileError):
     """The journal {} could not be accessed or parsed."""
 
-    def __init__(self, path: str):
+    def __init__(self, path: PathLike):
         super().__init__(path)
 
 
 class EmptyJournalError(utils.CouldNotLoadFileError):
     """The journal {} did not produce any valid journal entries."""
 
-    def __init__(self, path: str):
+    def __init__(self, path: PathLike):
         super().__init__(path)
 
 
@@ -83,7 +88,6 @@ class Librarian:
                  mood_set: Moodverse = None,
                  entries_from_builder: EntriesFromBuilder = EntriesFromBuilder()):
 
-        self.__logger = logging.getLogger(self.__class__.__name__)
         self.__reader = reader
         self.__mood_set = mood_set or Moodverse()
         self.__entries_from_builder = entries_from_builder
@@ -97,24 +101,25 @@ class Librarian:
         :returns: a :class:`Journal` containing all successfully parsed entries.
         """
         if not self.__mood_set.get_custom_moods:
-            self.__logger.info(ErrorMsg.STANDARD_MOODS_USED)
+            logger.info(ErrorMsg.STANDARD_MOODS_USED)
 
         known_dates: dict[datetime.date, EntriesFrom] = {}
         lines_total = 0
         lines_ok = 0
 
         try:
-            for line in self.__reader.read():
-                lines_total += 1
+            for csv_row, line in enumerate(self.__reader.read(), start=2):
                 try:
-                    if self.__process_line(line, known_dates):
+                    if self.__process_line(line, known_dates, csv_row):
                         lines_ok += 1
                 except MissingValuesInRowError as err:
-                    self.__logger.warning(err.__doc__)
+                    logger.warning(ErrorMsg.ROW_MISSING_VALUES.format(
+                        row=csv_row, expected=err.expected_value, got=err.actual_value
+                    ))
         except (utils.CouldNotLoadFileError, InvalidDataInFileError) as err:
             raise CannotAccessJournalError(self.__reader.source) from err
 
-        self.__logger.info(ErrorMsg.COUNT_ROWS.format(lines_total, lines_ok))
+        logger.info(ErrorMsg.COUNT_ROWS.format(rows_parsed=csv_row, rows_ok=lines_ok))
 
         if lines_ok == 0:
             raise EmptyJournalError(self.__reader.source)
@@ -122,12 +127,14 @@ class Librarian:
         return Journal(known_dates, self.__mood_set)
 
     def __process_line(self, line: dict[str, str],
-                       known_dates: dict[datetime.date, EntriesFrom]) -> bool:
+                       known_dates: dict[datetime.date, EntriesFrom],
+                       csv_row: int) -> bool:
         """
         Process a single row and add it to the appropriate :class:`EntriesFrom` group.
 
         :param line: a dictionary with values from the currently processed row.
         :param known_dates: mutable dict accumulating date -> EntriesFrom mappings.
+        :param csv_row: 1-based line number of this row in the source file (header = 1, first data row = 2).
         :return: True if the row was processed successfully, False otherwise.
         :raises MissingValuesInRowError: if the row lacks enough cells.
         """
@@ -141,10 +148,15 @@ class Librarian:
                 entries_from_this_date = self.__entries_from_builder.build(date, self.__mood_set)
             entries_from_this_date.create_entry(line)
             known_dates[date] = entries_from_this_date
-        except (group.TriedCreatingDuplicateDatedEntryError,
-                group.IncompleteDataRow,
-                utils.InvalidDateError,
-                ValueError):
+        except group.TriedCreatingDuplicateDatedEntryError:
+            return False
+        except group.IncompleteDataRow as err:
+            logger.warning(ErrorMsg.ROW_INCOMPLETE.format(row=csv_row, detail=str(err)))
+            return False
+        except (utils.InvalidDateError, utils.InvalidTimeError) as err:
+            logger.warning(ErrorMsg.ROW_INVALID_DATE.format(row=csv_row, detail=err.__doc__))
+            return False
+        except ValueError:
+            logger.warning(ErrorMsg.ROW_UNEXPECTED_VALUE.format(row=csv_row))
             return False
         return True
-
