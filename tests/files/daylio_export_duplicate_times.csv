@@ -1,0 +1,7 @@
+full_date,date,weekday,time,mood,activities,note_title,note
+2022-10-30,October 30,Sunday,20:00,good,,First collision,Synthetic record one.
+2022-10-30,October 30,Sunday,08:00,good,,Earlier time,Synthetic record two.
+2022-10-31,October 31,Monday,20:00,good,,Other date,Synthetic record three.
+2022-10-30,October 30,Sunday,20:00,good,,Second collision,Synthetic record four.
+2022-10-30,October 30,Sunday,21:00,good,,Later time,Synthetic record five.
+2022-10-30,October 30,Sunday,8:00 PM,good,,Third collision,Synthetic record six.

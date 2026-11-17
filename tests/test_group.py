@@ -45,8 +45,8 @@ class TestDateParsing:
 # ---------------------------------------------------------------------------
 class TestEntryAccess:
     def test_access_by_time_string(self, sample_day):
-        assert str(sample_day["9:30 PM"]) == "21:30"
-        assert sample_day["10:00 AM"].time == datetime.time(10, 0)
+        assert str(sample_day["9:30 PM"][0]) == "21:30"
+        assert sample_day["10:00 AM"][0].time == datetime.time(10, 0)
 
     @pytest.mark.parametrize("bad_time", [
         "2: AM", "15:45 PM", "14:45 PM", "11:30 XM", "03:20 XM",
