@@ -138,7 +138,7 @@ full_date,date,weekday,time,mood,activities,note_title,note
 
 All columns must be present. `activities`, `note_title`, and `note` may be empty.
 
-> **Note:** Newer versions of Daylio may include a `scales` column in the export. Scales are not yet supported and may cause issues since the parser currently expects exactly 8 columns.
+The optional `scales` column is supported. Scale values appear below activities in Markdown, separated by ` | `. Older exports without this column are also supported.
 
 ## Known limitations
 
