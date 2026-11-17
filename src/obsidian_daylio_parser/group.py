@@ -77,7 +77,8 @@ class EntriesFromBuilder:
 
 class EntriesFrom(utils.Core):
     """
-    A group of entries written on the same day.
+    A group of entries written on the same day, in insertion (CSV) order.
+    Timestamps are nonunique: time lookup always returns a tuple of matches.
 
     :raises InvalidDateError: if the date cannot be type cast into :class:`datetime.date`
     :param date: The date for all child entries within. Always type-casted into :class:`datetime.date`
@@ -97,7 +98,8 @@ class EntriesFrom(utils.Core):
         # All good - initialise
         self.__front_matter_tags = front_matter_tags
         self.__entries_builder = entries_builder
-        self.__known_entries: dict[datetime.time, Entry] = {}
+        self.__entries: list[Entry] = []
+        self.__known_entries: dict[datetime.time, list[Entry]] = {}
         self.__known_moods: Moodverse = mood_set
 
     def create_entry(self, line: dict[str, str]) -> None:
@@ -105,7 +107,6 @@ class EntriesFrom(utils.Core):
         Create :class:`Entry` object with the specified parameters.
         Field with date is ignored, because :class:`Entry` inherits this field from parent :class:`EntriesFrom`.
         The assumption here is that .create_entry() should never be called for an entry from a different date.
-        :raises TriedCreatingDuplicateDatedEntryError: if it would result in making a duplicate :class:`DatedEntry`
         :raises IncompleteDataRow: if ``line`` does not have ``time mood`` keys at the very least, or either is empty
         :raises ValueError: re-raises ValueError from :class:`DatedEntry`
         :param line: a dictionary of strings. Required keys: mood, activities, note_title & note.
@@ -140,9 +141,9 @@ class EntriesFrom(utils.Core):
             mood_set=self.__known_moods,
         )
 
-    def __getitem__(self, item: typing.Union[datetime.time, str, typing.List[int], typing.List[str]]) -> Entry:
+    def __getitem__(self, item: typing.Union[datetime.time, str, typing.List[int], typing.List[str]]) -> tuple[Entry, ...]:
         """
-        Retrieve an already existing :class:`Entry` object.
+        Retrieve all entries at a time, in insertion order (even for a single match).
         e.g::
 
             my_entries["10:00 AM"]
@@ -151,17 +152,19 @@ class EntriesFrom(utils.Core):
 
         :param item: value that can be type-casted into a valid :class:`datetime.time` object
         :raises EntryMissingError: if the entry specified in ``time`` does not exist
-        :returns: :class:`DatedEntry`
+        :returns: a tuple of matching :class:`Entry` objects
         """
         time_lookup: datetime.time = utils.guess_time_type(item)
 
         if time_lookup in self.__known_entries:
-            return self.__known_entries[time_lookup]
+            return tuple(self.__known_entries[time_lookup])
         else:
             raise EntryMissingError(time_lookup, self.date)
 
     def __setitem__(self, key: typing.Union[datetime.time, str, typing.List[int], typing.List[str]], value: Entry):
         """
+        Append an entry at this lookup time; existing entries are never replaced.
+
         :param key: any of the three types that can be type-casted into valid :class:`datetime.time` object
         :param value: :class:`Entry` object
         :raise TypeError: if key cannot be coerced into proper object type or there is a type mismatch
@@ -173,7 +176,8 @@ class EntriesFrom(utils.Core):
                 date=self.date
             ))
         time = utils.guess_time_type(key)
-        self.__known_entries[time] = value
+        self.__entries.append(value)
+        self.__known_entries.setdefault(time, []).append(value)
 
     def add(self, *args: Entry) -> None:
         """
@@ -213,7 +217,7 @@ class EntriesFrom(utils.Core):
 
         # THE ACTUAL ENTRY CONTENTS
         # Each DatedEntry object now appends its contents into the stream
-        for entry in self.__known_entries.values():
+        for entry in self:
             # write returns the number of characters successfully written
             # https://docs.python.org/3/library/io.html#io.TextIOBase.write
             if entry.output(stream) > 0:
@@ -221,9 +225,14 @@ class EntriesFrom(utils.Core):
 
         return chars_written
 
+    def __iter__(self) -> typing.Iterator[Entry]:
+        """Iterate over every entry in insertion order, including duplicate times."""
+        return iter(self.__entries)
+
     @property
-    def known_entries(self):
-        return self.__known_entries
+    def known_entries(self) -> dict[datetime.time, tuple[Entry, ...]]:
+        """Snapshot of the time index; each value contains all matches in insertion order."""
+        return {time: tuple(entries) for time, entries in self.__known_entries.items()}
 
     @property
     def date(self):
@@ -238,6 +247,7 @@ class EntriesFrom(utils.Core):
         if isinstance(other, EntriesFrom):
             return all([
                 self.date == other.date,
+                self.__entries == other.__entries,
                 self.known_entries == other.known_entries
             ])
         return super().__eq__(other)
@@ -248,7 +258,7 @@ class EntriesFrom(utils.Core):
 
     def __len__(self):
         """:return: how many entries it groups on that particular date"""
-        return len(self.__known_entries)
+        return len(self.__entries)
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(date={self.date}, entries={len(self.__known_entries)})"
+        return f"{self.__class__.__name__}(date={self.date}, entries={len(self.__entries)})"

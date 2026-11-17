@@ -140,13 +140,13 @@ All columns must be present. `activities`, `note_title`, and `note` may be empty
 
 The optional `scales` column is supported. Scale values appear below activities in Markdown, separated by ` | `. Older exports without this column are also supported.
 
+Dates are grouped in first-seen order.
+
 ## Known limitations
 
 - **`--force` is not yet implemented.** The flag is accepted by the parser but has no effect — files are always silently overwritten.
 - **`--color` is not yet implemented.** The flag is accepted but mood colour coding is not applied.
 - **No CLI flag for custom moods.** Custom mood sets can only be used through the Python API, not from the command line.
-- **Scales are not supported.** The `scales` column introduced in newer Daylio exports is not parsed.
-- **Entries at the same time on the same day are overwritten.** If two entries share the exact same date and time, only the last one in the CSV is kept.
 
 ## Exit codes
 Contributors are encouraged to use custom exit codes when raising critical exceptions.
